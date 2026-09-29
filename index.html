@@ -920,7 +920,7 @@
       </div>
     </div>
 
-    <!-- کارت محاسبه‌گر بر اساس بازه دو تاریخ -->
+    <!-- کارت محاسبه‌‌گر بر اساس بازه دو تاریخ -->
     <div class="card no-print" style="background: var(--primary-light); border-color: var(--primary); padding: 14px 18px; margin-bottom: 16px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1003,8 +1003,10 @@
       </div>
       <div class="modal-body" id="modalDetailsBody">
       </div>
+      <!-- اضافه شدن دکمه حذف در کنار دکمه ویرایش در پایین پنجره جزئیات -->
       <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
         <button class="btn btn-outline" id="modalEditBtn"><i class="fa-solid fa-pen" style="color:var(--primary)"></i> ویرایش</button>
+        <button class="btn btn-outline" id="modalDeleteBtn"><i class="fa-solid fa-trash" style="color:var(--danger)"></i> حذف</button>
         <button class="btn btn-primary" onclick="closeModal()">بستن</button>
       </div>
     </div>
@@ -1538,6 +1540,12 @@
       document.getElementById('modalEditBtn').onclick = () => {
         closeModal();
         editCheck(c.serial);
+      };
+
+      // تنظیم عملکرد دکمه حذف جدید داخل پنجره جزئیات موبایل
+      document.getElementById('modalDeleteBtn').onclick = () => {
+        closeModal();
+        deleteCheck(c.serial);
       };
 
       document.getElementById('detailModal').classList.add('show');
