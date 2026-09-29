@@ -14,16 +14,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- کتابخانه تقویم هجری شمسی (Persian Datepicker) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
-
   <!-- کتابخانه اکسل با استایل کامل -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-
-  <!-- کتابخانه‌های جاوااسکریپت برای تقویم شمسی -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
@@ -123,13 +115,6 @@
       font-size: 13px;
       padding: 6px 12px;
       border-radius: 20px;
-    }
-
-    body.large-font input[type="checkbox"] {
-      width: 1.3em;
-      height: 1.3em;
-      transform: scale(1.25);
-      cursor: pointer;
     }
 
     .container {
@@ -444,6 +429,7 @@
       font-size: 12.5px;
       outline: none;
       width: 100%;
+      text-align: right;
     }
 
     .form-control:focus {
@@ -846,7 +832,7 @@
     <div class="card no-print">
       <div class="card-title">
         <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i>
-        ثبت / ویرایش سند
+        ثبت / ویرایش سند (سریال به عنوان شناسه یکتا)
       </div>
       <form id="checkForm" onsubmit="saveCheck(event)">
         <input type="hidden" id="checkId">
@@ -867,7 +853,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>شماره سریال *</label>
+            <label>شماره سریال * (یکتا / Primary)</label>
             <input type="text" id="serial" class="form-control" required placeholder="123456" oninput="formatDigitsInput(this)">
           </div>
           <div class="form-group">
@@ -879,8 +865,8 @@
             <input type="text" id="amount" class="form-control" required placeholder="مثلا: 10000000" oninput="formatDigitsInput(this)">
           </div>
           <div class="form-group">
-            <label>تاریخ سررسید *</label>
-            <input type="text" id="dueDate" class="form-control" placeholder="1403/07/10" autocomplete="off" required>
+            <label>تاریخ سررسید * (مثال: 1405/07/15)</label>
+            <input type="text" id="dueDate" class="form-control" placeholder="1405/07/15" autocomplete="off" required oninput="formatDigitsInput(this)">
           </div>
           <div class="form-group">
             <label>تحویل به بانک شده؟</label>
@@ -905,16 +891,16 @@
       </form>
     </div>
 
-    <!-- بخش فیلترهای تاریخ (از تاریخ / تا تاریخ) با تقویم -->
+    <!-- بخش فیلترهای تاریخ (از تاریخ / تا تاریخ) -->
     <div class="card no-print" style="padding: 12px 16px; margin-bottom: 12px;">
       <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <div style="display: flex; align-items: center; gap: 6px; flex: 1 1 200px;">
           <label style="font-size: 12px; font-weight: 700; white-space: nowrap;">از تاریخ:</label>
-          <input type="text" id="fromDateFilter" class="form-control" placeholder="1403/01/01" autocomplete="off" onchange="renderTable()">
+          <input type="text" id="fromDateFilter" class="form-control" placeholder="1405/01/01" autocomplete="off" oninput="formatDigitsInput(this)" onchange="renderTable()">
         </div>
         <div style="display: flex; align-items: center; gap: 6px; flex: 1 1 200px;">
           <label style="font-size: 12px; font-weight: 700; white-space: nowrap;">تا تاریخ:</label>
-          <input type="text" id="toDateFilter" class="form-control" placeholder="1403/12/29" autocomplete="off" onchange="renderTable()">
+          <input type="text" id="toDateFilter" class="form-control" placeholder="1405/12/29" autocomplete="off" oninput="formatDigitsInput(this)" onchange="renderTable()">
         </div>
         <button class="btn btn-outline" style="padding: 9px 12px;" onclick="clearDateFilters()"><i class="fa-solid fa-rotate-left"></i> حذف فیلتر تاریخ</button>
       </div>
@@ -1105,29 +1091,10 @@
 
       loadFontSizeState();
       
-      // راه‌اندازی تقویم شمسی برای فیلدها
-      $('#dueDate').persianDatepicker({
-        format: 'YYYY/MM/DD',
-        initialValue: true,
-        autoClose: true,
-        calendar: { persian: { leapYearMode: 'astronomical' } }
-      });
-
-      $('#fromDateFilter').persianDatepicker({
-        format: 'YYYY/MM/DD',
-        initialValue: false,
-        autoClose: true,
-        onSelect: function() { renderTable(); },
-        calendar: { persian: { leapYearMode: 'astronomical' } }
-      });
-
-      $('#toDateFilter').persianDatepicker({
-        format: 'YYYY/MM/DD',
-        initialValue: false,
-        autoClose: true,
-        onSelect: function() { renderTable(); },
-        calendar: { persian: { leapYearMode: 'astronomical' } }
-      });
+      // مقداردهی اولیه تاریخ امروز در صورت خالی بودن فرم
+      if (!document.getElementById('dueDate').value) {
+        document.getElementById('dueDate').value = getTodayJalaliNormalized();
+      }
 
       loadSavedLogo();
       renderTable();
@@ -1196,6 +1163,16 @@
     function saveCheck(e) {
       e.preventDefault();
       const id = document.getElementById('checkId').value;
+      const serialVal = toEnglishDigits(document.getElementById('serial').value).trim();
+      
+      // بررسی یکتا بودن شماره سریال (Primary)
+      const existingCheck = checks.find(c => c.serial === serialVal && (!id || c.id !== parseInt(id)));
+      if (existingCheck) {
+        alert('خطا: شماره سریال وارد شده قبلاً در سیستم ثبت شده است. شماره سریال باید یکتا باشد.');
+        document.getElementById('serial').focus();
+        return;
+      }
+
       const rawDueDate = document.getElementById('dueDate').value;
       const normDueDate = normalizeDateStr(rawDueDate);
       const statusValue = document.getElementById('status').value;
@@ -1206,7 +1183,7 @@
         issuer: document.getElementById('issuer').value,
         bank: document.getElementById('bank').value,
         type: document.getElementById('type').value,
-        serial: toEnglishDigits(document.getElementById('serial').value),
+        serial: serialVal,
         sayadi: document.getElementById('sayadi').disabled ? '' : toEnglishDigits(document.getElementById('sayadi').value),
         amount: parseFloat(rawAmount),
         dueDate: normDueDate,
