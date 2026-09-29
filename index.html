@@ -96,6 +96,7 @@
       margin-bottom: 16px;
       flex-wrap: wrap;
       gap: 12px;
+      position: relative;
     }
 
     .header-title {
@@ -206,6 +207,61 @@
       background: var(--card-bg); 
       border: 1px solid var(--border-color); 
       color: var(--text-main); 
+    }
+
+    /* منوی کشویی ابزارها برای موبایل */
+    .mobile-menu-wrapper {
+      display: none;
+      position: relative;
+    }
+
+    .mobile-menu-btn {
+      background: var(--primary-light);
+      border: 1px solid var(--border-color);
+      color: var(--primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-dropdown {
+      display: none;
+      position: absolute;
+      top: 48px;
+      left: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      width: 180px;
+      z-index: 1000;
+      padding: 6px;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mobile-dropdown.show {
+      display: flex;
+    }
+
+    .mobile-dropdown .btn {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 10px 12px;
+      font-size: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-main);
+    }
+
+    .mobile-dropdown .btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
     }
 
     /* تب‌ها */
@@ -358,7 +414,7 @@
     }
 
     .filter-bar .form-control {
-      flex: 1 1 160px;
+      flex: 1 1 150px;
     }
 
     .table-container {
@@ -447,35 +503,40 @@
       font-size: 12.5px;
     }
 
-    /* بهینه‌سازی اختصاصی برای موبایل (طراحی کاملا ریسپانسیو) */
+    /* تنظیمات اختصاصی موبایل */
     @media (max-width: 768px) {
       body {
         padding: 10px 8px;
       }
       header {
-        padding: 12px;
-        flex-direction: column;
-        align-items: stretch;
-      }
-      .header-title {
-        justify-content: flex-start;
-      }
-      .clock-widget {
+        padding: 10px 12px;
+        flex-direction: row;
         justify-content: space-between;
-        padding: 6px 12px;
+        align-items: center;
       }
-      .header-actions {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 6px;
+      .header-title h1 {
+        font-size: 15px;
       }
-      .header-actions .btn {
-        padding: 8px 4px;
-        font-size: 11px;
-        justify-content: center;
+      .header-title p {
+        display: none;
+      }
+      .logo-container {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
       }
 
-      /* آمار ۲ در ۲ در موبایل */
+      .header-actions {
+        display: none;
+      }
+      .mobile-menu-wrapper {
+        display: block;
+      }
+
+      .clock-widget {
+        display: none;
+      }
+
       .stats-grid {
         grid-template-columns: 1fr 1fr;
         gap: 8px;
@@ -492,7 +553,6 @@
         gap: 10px;
       }
 
-      /* تبدیل جدول به کارت‌های موبایلی تمیز */
       .table-container {
         border: none;
       }
@@ -500,7 +560,7 @@
         display: block;
       }
       thead {
-        display: none; /* مخفی کردن سربرگ جدول در موبایل */
+        display: none;
       }
       tbody tr {
         background: var(--card-bg);
@@ -527,7 +587,6 @@
         padding-top: 10px;
         justify-content: flex-end;
       }
-      /* اضافه کردن لیبل برای هر سطر در موبایل */
       td::before {
         content: attr(data-label);
         font-weight: 700;
@@ -541,7 +600,7 @@
 
     @media print {
       body { background: white !important; color: black !important; padding: 0; }
-      .no-print, header, .card-title, .filter-bar, .action-btns, .tabs-navigation { display: none !important; }
+      .no-print, header, .card-title, .filter-bar, .action-btns, .tabs-navigation, .mobile-menu-wrapper { display: none !important; }
       .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
       .container { max-width: 100%; }
       table, thead, tbody, th, td, tr { display: table !important; }
@@ -569,6 +628,7 @@
     </div>
 
     <header class="no-print">
+      <!-- سمت راست: لوگو و عنوان -->
       <div class="header-title">
         <div class="logo-container" onclick="document.getElementById('logoInput').click()" title="تغییر لوگو">
           <div id="logoPreview"><i class="fa-solid fa-money-check-dollar"></i></div>
@@ -581,6 +641,7 @@
         </div>
       </div>
 
+      <!-- ساعت (در دسکتاپ) -->
       <div class="clock-widget">
         <i class="fa-regular fa-clock"></i>
         <div class="clock-details">
@@ -589,14 +650,30 @@
         </div>
       </div>
 
+      <!-- سمت چپ دسکتاپ: دکمه‌های مستقیم -->
       <div class="header-actions">
-        <button class="btn btn-outline" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span class="hide-mobile">تم</span></button>
+        <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> <span>چاپ</span></button>
+        <button class="btn btn-outline" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span>تم</span></button>
         <button class="btn btn-outline" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>بک‌اپ</span></button>
         <button class="btn btn-outline" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> <span>بازیابی</span></button>
-        <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="importBackup(event)">
-        
         <button class="btn btn-success" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> <span>اکسل</span></button>
       </div>
+
+      <!-- سمت چپ موبایل: منوی همبرگری کشویی -->
+      <div class="mobile-menu-wrapper">
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu(event)">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="mobile-dropdown" id="mobileDropdown">
+          <button class="btn" onclick="window.print(); closeMobileMenu();"><i class="fa-solid fa-print"></i> چاپ صفحه</button>
+          <button class="btn" onclick="exportExcel(); closeMobileMenu();"><i class="fa-solid fa-file-excel" style="color:var(--success)"></i> خروجی اکسل</button>
+          <button class="btn" onclick="exportBackup(); closeMobileMenu();"><i class="fa-solid fa-download"></i> دانلود بک‌اپ</button>
+          <button class="btn" onclick="document.getElementById('backupFileInput').click(); closeMobileMenu();"><i class="fa-solid fa-upload"></i> بازیابی بک‌اپ</button>
+          <button class="btn" onclick="toggleTheme(); closeMobileMenu();"><i class="fa-solid fa-moon"></i> تغییر تم</button>
+        </div>
+      </div>
+
+      <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="importBackup(event)">
     </header>
 
     <div id="todayAlert" class="alert-banner">
@@ -688,7 +765,7 @@
       </form>
     </div>
 
-    <!-- بخش شیت‌بندی تب‌ها -->
+    <!-- شیت‌بندی تب‌ها -->
     <div class="tabs-navigation no-print">
       <button class="tab-btn active" id="tab-pending" onclick="switchTab('در انتظار')">
         <i class="fa-solid fa-clock"></i> اسناد در انتظار
@@ -708,6 +785,12 @@
       <div class="filter-bar no-print">
         <input type="text" id="searchInput" class="form-control" placeholder="🔍 جستجو (نام، بانک، سریال)..." style="flex: 2 1 180px;" oninput="renderTable()">
         
+        <!-- فیلتر مرتب‌سازی تاریخ اضافه شد -->
+        <select id="sortByDate" class="form-control" style="flex: 1 1 150px;" onchange="renderTable()">
+          <option value="asc">📅 سررسید: جدید به قدیم</option>
+          <option value="desc">📅 سررسید: قدیم به جدید</option>
+        </select>
+
         <select id="filterType" class="form-control" style="flex: 1 1 120px;" onchange="renderTable()">
           <option value="همه">همه انواع</option>
           <option value="چک">چک</option>
@@ -747,6 +830,22 @@
   <script>
     let checks = JSON.parse(localStorage.getItem('my_checks')) || [];
     let currentTab = 'در انتظار';
+
+    function toggleMobileMenu(e) {
+      e.stopPropagation();
+      document.getElementById('mobileDropdown').classList.toggle('show');
+    }
+
+    function closeMobileMenu() {
+      document.getElementById('mobileDropdown').classList.remove('show');
+    }
+
+    document.addEventListener('click', (e) => {
+      const dropdown = document.getElementById('mobileDropdown');
+      if (dropdown && dropdown.classList.contains('show')) {
+        dropdown.classList.remove('show');
+      }
+    });
 
     function toPersianDigits(str) {
       if (str === null || str === undefined) return '';
@@ -912,6 +1011,7 @@
       const search = document.getElementById('searchInput').value.toLowerCase();
       const filterType = document.getElementById('filterType').value;
       const filterDelivered = document.getElementById('filterDelivered').value;
+      const sortByDate = document.getElementById('sortByDate').value;
 
       tbody.innerHTML = '';
 
@@ -946,13 +1046,16 @@
         return matchesTab && matchesSearch && matchesType && matchesDelivered;
       });
 
+      // منطق سورت و مرتب‌سازی بر اساس تاریخ انتخاب‌شده
       filtered.sort((a, b) => {
-        const aIsDue = a.status === 'در انتظار' && isDueOrPast(a.dueDate);
-        const bIsDue = b.status === 'در انتظار' && isDueOrPast(b.dueDate);
-
-        if (aIsDue && !bIsDue) return -1;
-        if (!aIsDue && bIsDue) return 1;
-        return normalizeDateStr(a.dueDate).localeCompare(normalizeDateStr(b.dueDate));
+        const dateA = normalizeDateStr(a.dueDate);
+        const dateB = normalizeDateStr(b.dueDate);
+        
+        if (sortByDate === 'asc') {
+          return dateA.localeCompare(dateB);
+        } else {
+          return dateB.localeCompare(dateA);
+        }
       });
 
       if (filtered.length === 0) {
