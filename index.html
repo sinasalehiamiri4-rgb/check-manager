@@ -68,13 +68,13 @@
       font-family: 'Vazirmatn', sans-serif;
       margin: 0;
       padding: 0;
-      transition: background-color 0.25s, border-color 0.25s, color 0.25s;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
     }
 
     body {
       background-color: var(--bg-main);
       color: var(--text-main);
-      padding: 15px 10px;
+      padding: 15px 12px;
       min-height: 100vh;
     }
 
@@ -86,36 +86,36 @@
 
     header {
       background: var(--card-bg);
-      padding: 18px 20px;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+      padding: 16px 20px;
+      border-radius: 18px;
+      box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.04);
       border: 1px solid var(--border-color);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
       flex-wrap: wrap;
-      gap: 15px;
+      gap: 12px;
     }
 
     .header-title {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
     }
 
     .logo-container {
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
       overflow: hidden;
       display: flex;
       align-items: center;
       justify-content: center;
       background: linear-gradient(135deg, var(--primary), #818cf8);
       color: white;
-      font-size: 22px;
-      box-shadow: 0 8px 16px -4px rgba(79, 70, 229, 0.4);
+      font-size: 20px;
+      box-shadow: 0 6px 14px -3px rgba(79, 70, 229, 0.4);
       cursor: pointer;
       flex-shrink: 0;
     }
@@ -127,14 +127,14 @@
     }
 
     .header-title h1 {
-      font-size: 18px;
+      font-size: 17px;
       font-weight: 800;
     }
 
     .header-title p {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 1px;
     }
 
     .header-actions {
@@ -147,15 +147,15 @@
     .clock-widget {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
       background: var(--primary-light);
       border: 1px solid var(--border-color);
-      padding: 8px 16px;
-      border-radius: 14px;
+      padding: 6px 12px;
+      border-radius: 12px;
       color: var(--primary);
     }
 
-    .clock-widget i { font-size: 18px; }
+    .clock-widget i { font-size: 16px; }
 
     .clock-details {
       display: flex;
@@ -164,30 +164,30 @@
     }
 
     .clock-time {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 800;
-      letter-spacing: 1px;
+      letter-spacing: 0.5px;
       font-family: 'Vazirmatn', monospace;
       direction: ltr;
     }
 
     .clock-date {
-      font-size: 11.5px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--text-muted);
     }
 
     .btn {
-      padding: 10px 16px;
+      padding: 9px 14px;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
       font-weight: 600;
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      font-size: 13px;
+      gap: 6px;
+      font-size: 12.5px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
       white-space: nowrap;
     }
@@ -197,9 +197,8 @@
     .btn-primary { 
       background: linear-gradient(135deg, var(--primary), #6366f1); 
       color: white; 
-      box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
     }
-    .btn-primary:hover { background: linear-gradient(135deg, #4338ca, #4f46e5); }
 
     .btn-success { background: var(--success); color: white; }
     .btn-warning { background: var(--warning); color: #000; }
@@ -208,33 +207,32 @@
       border: 1px solid var(--border-color); 
       color: var(--text-main); 
     }
-    .btn-outline:hover { background: var(--border-color); }
 
-    /* استایل تب‌ها (شیت‌ها) */
+    /* تب‌ها */
     .tabs-navigation {
       display: flex;
-      gap: 8px;
-      margin-bottom: 20px;
+      gap: 6px;
+      margin-bottom: 16px;
       border-bottom: 2px solid var(--border-color);
       padding-bottom: 2px;
       overflow-x: auto;
       white-space: nowrap;
-      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
     }
+    .tabs-navigation::-webkit-scrollbar { display: none; }
 
     .tab-btn {
-      padding: 10px 16px;
+      padding: 8px 14px;
       border: none;
       background: transparent;
       color: var(--text-muted);
       font-weight: 700;
-      font-size: 13.5px;
+      font-size: 13px;
       cursor: pointer;
-      border-radius: 12px 12px 0 0;
+      border-radius: 10px 10px 0 0;
       display: flex;
       align-items: center;
-      gap: 8px;
-      position: relative;
+      gap: 6px;
       flex-shrink: 0;
     }
 
@@ -246,9 +244,9 @@
     }
 
     .tab-btn .badge-count {
-      padding: 2px 8px;
+      padding: 2px 7px;
       border-radius: 20px;
-      font-size: 11px;
+      font-size: 10.5px;
       background: var(--border-color);
       color: var(--text-main);
     }
@@ -260,17 +258,16 @@
 
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
     }
 
     .stat-card {
       background: var(--card-bg);
-      padding: 16px;
-      border-radius: 18px;
+      padding: 12px 14px;
+      border-radius: 14px;
       border: 1px solid var(--border-color);
-      box-shadow: 0 4px 15px -3px rgba(0,0,0,0.03);
       position: relative;
       overflow: hidden;
     }
@@ -280,7 +277,7 @@
       position: absolute;
       top: 0;
       right: 0;
-      width: 5px;
+      width: 4px;
       height: 100%;
     }
 
@@ -289,54 +286,54 @@
     .stat-card.passed::before { background: var(--success); }
     .stat-card.bounced::before { background: var(--danger); }
 
-    .stat-card h4 { font-size: 12px; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
-    .stat-card .amount { font-size: 18px; font-weight: 800; word-break: break-all; }
+    .stat-card h4 { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+    .stat-card .amount { font-size: 16px; font-weight: 800; word-break: break-all; }
 
     .card {
       background: var(--card-bg);
-      padding: 20px;
-      border-radius: 20px;
+      padding: 16px;
+      border-radius: 16px;
       border: 1px solid var(--border-color);
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.03);
-      margin-bottom: 20px;
+      box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.02);
+      margin-bottom: 16px;
     }
 
     .card-title {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
-      margin-bottom: 18px;
+      margin-bottom: 14px;
       display: flex;
       align-items: center;
-      gap: 10px;
-      padding-bottom: 12px;
+      gap: 8px;
+      padding-bottom: 10px;
       border-bottom: 1px dashed var(--border-color);
     }
 
     .form-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
     }
 
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
 
     .form-group label {
-      font-size: 12px;
+      font-size: 11.5px;
       font-weight: 600;
       color: var(--text-main);
     }
 
     .form-control {
-      padding: 10px 12px;
+      padding: 9px 11px;
       border: 1px solid var(--border-color);
-      border-radius: 12px;
+      border-radius: 10px;
       background: var(--bg-main);
       color: var(--text-main);
-      font-size: 13px;
+      font-size: 12.5px;
       outline: none;
       width: 100%;
     }
@@ -344,7 +341,7 @@
     .form-control:focus {
       border-color: var(--primary);
       background: var(--card-bg);
-      box-shadow: 0 0 0 4px var(--primary-light);
+      box-shadow: 0 0 0 3px var(--primary-light);
     }
 
     .form-control:disabled {
@@ -355,42 +352,40 @@
 
     .filter-bar {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
     }
 
     .filter-bar .form-control {
-      flex: 1 1 180px;
+      flex: 1 1 160px;
     }
 
     .table-container {
       overflow-x: auto;
-      border-radius: 14px;
+      border-radius: 12px;
       border: 1px solid var(--border-color);
-      -webkit-overflow-scrolling: touch;
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
       text-align: right;
-      min-width: 800px;
     }
 
     th {
       background: var(--primary-light);
       color: var(--primary);
       font-weight: 700;
-      font-size: 12.5px;
-      padding: 12px 14px;
+      font-size: 12px;
+      padding: 10px 12px;
       white-space: nowrap;
     }
 
     td {
-      padding: 12px 14px;
+      padding: 10px 12px;
       border-bottom: 1px solid var(--border-color);
-      font-size: 13px;
+      font-size: 12.5px;
       white-space: nowrap;
       background: var(--card-bg);
       color: var(--text-main);
@@ -408,13 +403,13 @@
     }
 
     .badge {
-      padding: 4px 10px;
-      border-radius: 30px;
-      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 10.5px;
       font-weight: 700;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
+      gap: 4px;
     }
 
     .badge-pending { background: var(--warning-light); color: var(--warning); }
@@ -435,26 +430,30 @@
       background: var(--danger-light);
       border: 1px solid var(--danger);
       color: var(--danger);
-      padding: 12px 16px;
-      border-radius: 16px;
-      margin-bottom: 20px;
+      padding: 10px 14px;
+      border-radius: 14px;
+      margin-bottom: 16px;
       display: none;
       align-items: center;
       justify-content: space-between;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
     }
 
     .alert-content {
       display: flex;
       align-items: center;
-      gap: 10px;
-      font-size: 13px;
+      gap: 8px;
+      font-size: 12.5px;
     }
 
-    /* Media Queries برای واکنش‌گرایی کامل */
-    @media (max-width: 992px) {
+    /* بهینه‌سازی اختصاصی برای موبایل (طراحی کاملا ریسپانسیو) */
+    @media (max-width: 768px) {
+      body {
+        padding: 10px 8px;
+      }
       header {
+        padding: 12px;
         flex-direction: column;
         align-items: stretch;
       }
@@ -462,51 +461,81 @@
         justify-content: flex-start;
       }
       .clock-widget {
-        justify-content: center;
+        justify-content: space-between;
+        padding: 6px 12px;
       }
       .header-actions {
-        justify-content: stretch;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
       }
       .header-actions .btn {
-        flex: 1 1 calc(50% - 8px);
-      }
-    }
-
-    @media (max-width: 576px) {
-      body {
-        padding: 10px 6px;
-      }
-      .card {
-        padding: 15px;
-        border-radius: 16px;
-      }
-      .header-title h1 {
-        font-size: 16px;
-      }
-      .header-actions .btn {
-        flex: 1 1 100%;
-      }
-      .form-grid {
-        grid-template-columns: 1fr;
-      }
-      .form-actions {
-        display: flex;
-        flex-direction: column-reverse;
-        gap: 8px;
-      }
-      .form-actions .btn {
-        width: 100%;
-      }
-      .alert-banner {
-        flex-direction: column;
-        align-items: stretch;
-        text-align: center;
-      }
-      .alert-content {
+        padding: 8px 4px;
+        font-size: 11px;
         justify-content: center;
       }
-      .alert-banner .btn {
-        width: 100%;
+
+      /* آمار ۲ در ۲ در موبایل */
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .stat-card {
+        padding: 10px;
+      }
+      .stat-card .amount {
+        font-size: 14px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      /* تبدیل جدول به کارت‌های موبایلی تمیز */
+      .table-container {
+        border: none;
+      }
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead {
+        display: none; /* مخفی کردن سربرگ جدول در موبایل */
+      }
+      tbody tr {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+      }
+      tbody tr.row-due-today {
+        border: 1px solid var(--due-today-border);
+      }
+      td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px dashed var(--border-color);
+        white-space: normal;
+        font-size: 12px;
+      }
+      td:last-child {
+        border-bottom: none;
+        padding-top: 10px;
+        justify-content: flex-end;
+      }
+      /* اضافه کردن لیبل برای هر سطر در موبایل */
+      td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-muted);
+        font-size: 11.5px;
+      }
+      td.action-btns::before {
+        display: none;
       }
     }
 
@@ -515,9 +544,12 @@
       .no-print, header, .card-title, .filter-bar, .action-btns, .tabs-navigation { display: none !important; }
       .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
       .container { max-width: 100%; }
-      table { border: 1px solid #000; width: 100%; min-width: 100%; }
+      table, thead, tbody, th, td, tr { display: table !important; }
+      thead { display: table-header-group !important; }
+      tr { display: table-row !important; border: none !important; }
+      td { display: table-cell !important; border-bottom: 1px solid #000 !important; }
+      td::before { display: none !important; }
       th, td { border: 1px solid #000; padding: 8px; color: black !important; background: transparent !important; }
-      tr.row-due-today td { background: transparent !important; }
       .print-header { display: flex !important; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px; }
       .print-logo { max-width: 80px; max-height: 80px; }
     }
@@ -545,7 +577,7 @@
         
         <div>
           <h1>مدیریت چک و حواله</h1>
-          <p>سامانه هوشمند ثبت و پیگیری اسناد مالی</p>
+          <p>سامانه هوشمند ثبت و پیگیری اسناد</p>
         </div>
       </div>
 
@@ -558,31 +590,30 @@
       </div>
 
       <div class="header-actions">
-        <button class="btn btn-outline" onclick="toggleTheme()" title="تغییر تم"><i class="fa-solid fa-moon"></i></button>
-        <button class="btn btn-outline" onclick="exportBackup()"><i class="fa-solid fa-download"></i> بک‌اپ</button>
-        <button class="btn btn-outline" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> بازیابی</button>
+        <button class="btn btn-outline" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span class="hide-mobile">تم</span></button>
+        <button class="btn btn-outline" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>بک‌اپ</span></button>
+        <button class="btn btn-outline" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> <span>بازیابی</span></button>
         <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="importBackup(event)">
         
-        <button class="btn btn-success" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> اکسل</button>
-        <button class="btn btn-warning" onclick="window.print()"><i class="fa-solid fa-print"></i> چاپ / PDF</button>
+        <button class="btn btn-success" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> <span>اکسل</span></button>
       </div>
     </header>
 
     <div id="todayAlert" class="alert-banner">
       <div class="alert-content">
         <i class="fa-solid fa-bell fa-bounce fa-lg"></i>
-        <span>هشدار مهم: شما <strong id="alertCount">۰</strong> مورد **سررسید شده یا تاریخ‌گذشته** بلاتکلیف دارید!</span>
+        <span><strong id="alertCount">۰</strong> مورد سررسید شده بلاتکلیف دارید!</span>
       </div>
-      <button class="btn btn-outline" style="padding: 5px 12px; font-size: 12px;" onclick="filterToday()">مشاهده موارد سررسید</button>
+      <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11.5px;" onclick="filterToday()">مشاهده</button>
     </div>
 
     <div class="stats-grid no-print">
       <div class="stat-card pending">
-        <h4>کل موارد در انتظار</h4>
+        <h4>در انتظار</h4>
         <div class="amount" id="statPending" style="color: var(--warning);">۰</div>
       </div>
       <div class="stat-card delivered">
-        <h4>تحویل داده شده به بانک</h4>
+        <h4>تحویل بانک</h4>
         <div class="amount" id="statDelivered" style="color: var(--info);">۰ عدد</div>
       </div>
       <div class="stat-card passed">
@@ -598,7 +629,7 @@
     <div class="card no-print">
       <div class="card-title">
         <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i>
-        ثبت / ویرایش اطلاعات سند
+        ثبت / ویرایش سند
       </div>
       <form id="checkForm" onsubmit="saveCheck(event)">
         <input type="hidden" id="checkId">
@@ -609,7 +640,7 @@
           </div>
           <div class="form-group">
             <label>نام بانک *</label>
-            <input type="text" id="bank" class="form-control" required placeholder="مثلا: ملی، ملت، سپه">
+            <input type="text" id="bank" class="form-control" required placeholder="مثلا: ملی">
           </div>
           <div class="form-group">
             <label>نوع سند</label>
@@ -623,7 +654,7 @@
             <input type="text" id="serial" class="form-control" required placeholder="123456">
           </div>
           <div class="form-group">
-            <label id="sayadiLabel">شناسه صیادی (۱۶ رقمی)</label>
+            <label id="sayadiLabel">شناسه صیادی</label>
             <input type="text" id="sayadi" class="form-control" maxlength="19" placeholder="1234-5678-9012-3456" oninput="formatSayadi(this)">
           </div>
           <div class="form-group">
@@ -631,7 +662,7 @@
             <input type="number" id="amount" class="form-control" required placeholder="مثلا: 10000000">
           </div>
           <div class="form-group">
-            <label>تاریخ سررسید (YYYY/MM/DD) *</label>
+            <label>تاریخ سررسید *</label>
             <input type="text" id="dueDate" class="form-control" placeholder="1403/07/10" required>
           </div>
           <div class="form-group">
@@ -650,9 +681,9 @@
             </select>
           </div>
         </div>
-        <div class="form-actions" style="margin-top: 18px; text-align: left;">
+        <div class="form-actions" style="margin-top: 14px; text-align: left; display: flex; gap: 8px; justify-content: flex-end;">
           <button type="button" class="btn btn-outline" onclick="resetForm()">انصراف</button>
-          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> ذخیره اطلاعات</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> ذخیره سند</button>
         </div>
       </form>
     </div>
@@ -675,16 +706,16 @@
 
     <div class="card">
       <div class="filter-bar no-print">
-        <input type="text" id="searchInput" class="form-control" placeholder="🔍 جستجو بر اساس نام، بانک، سریال، صیادی..." style="flex: 2 1 200px;" oninput="renderTable()">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 جستجو (نام، بانک، سریال)..." style="flex: 2 1 180px;" oninput="renderTable()">
         
-        <select id="filterType" class="form-control" style="flex: 1 1 140px;" onchange="renderTable()">
-          <option value="همه">همه انواع (چک و حواله)</option>
+        <select id="filterType" class="form-control" style="flex: 1 1 120px;" onchange="renderTable()">
+          <option value="همه">همه انواع</option>
           <option value="چک">چک</option>
           <option value="حواله">حواله</option>
         </select>
 
-        <select id="filterDelivered" class="form-control" style="flex: 1 1 140px;" onchange="renderTable()">
-          <option value="همه">وضعیت تحویل (همه)</option>
+        <select id="filterDelivered" class="form-control" style="flex: 1 1 130px;" onchange="renderTable()">
+          <option value="همه">وضعیت تحویل</option>
           <option value="بله">تحویل داده شده</option>
           <option value="خیر">تحویل داده نشده</option>
         </select>
@@ -694,11 +725,11 @@
         <table>
           <thead>
             <tr>
-              <th>نام طرف حساب</th>
+              <th>طرف حساب</th>
               <th>بانک</th>
               <th>نوع سند</th>
-              <th>شماره سریال</th>
-              <th>شناسه صیادی</th>
+              <th>سریال</th>
+              <th>صیادی</th>
               <th>مبلغ (ریال)</th>
               <th>تاریخ سررسید</th>
               <th>تحویل بانک</th>
@@ -769,7 +800,7 @@
       const timeStr = `${hours}:${minutes}:${seconds}`;
       document.getElementById('liveClock').innerText = toPersianDigits(timeStr);
 
-      const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      const dateOptions = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
       const dateStr = now.toLocaleDateString('fa-IR', dateOptions);
       document.getElementById('liveDate').innerText = dateStr;
       document.getElementById('print-date').innerText = dateStr + ' - ' + toPersianDigits(`${hours}:${minutes}`);
@@ -925,7 +956,7 @@
       });
 
       if (filtered.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-muted); padding: 25px;">هیچ سندی در این بخش یافت نشد.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-muted); padding: 20px;">هیچ سندی در این بخش یافت نشد.</td></tr>`;
         return;
       }
 
@@ -953,27 +984,27 @@
         if (c.sayadi) {
           sayadiDisplay = toPersianDigits(c.sayadi);
         } else if (c.type === 'حواله') {
-          sayadiDisplay = '<span style="color:var(--text-muted); font-size:12px;">— (حواله)</span>';
+          sayadiDisplay = '<span style="color:var(--text-muted); font-size:11px;">— (حواله)</span>';
         }
 
         const tr = document.createElement('tr');
         if (isDue) tr.classList.add('row-due-today');
 
         tr.innerHTML = `
-          <td><strong>${c.issuer}</strong></td>
-          <td>${c.bank}</td>
-          <td>${c.type || 'چک'}</td>
-          <td>${toPersianDigits(c.serial)}</td>
-          <td dir="ltr" style="text-align: right;">${sayadiDisplay}</td>
-          <td><strong>${toPersianDigits(c.amount.toLocaleString('fa-IR'))}</strong></td>
-          <td><strong>${toPersianDigits(c.dueDate)}</strong></td>
-          <td>
+          <td data-label="طرف حساب"><strong>${c.issuer}</strong></td>
+          <td data-label="بانک">${c.bank}</td>
+          <td data-label="نوع سند">${c.type || 'چک'}</td>
+          <td data-label="سریال">${toPersianDigits(c.serial)}</td>
+          <td data-label="صیادی" dir="ltr" style="text-align: right;">${sayadiDisplay}</td>
+          <td data-label="مبلغ (ریال)"><strong>${toPersianDigits(c.amount.toLocaleString('fa-IR'))}</strong></td>
+          <td data-label="سررسید"><strong>${toPersianDigits(c.dueDate)}</strong></td>
+          <td data-label="تحویل بانک">
             ${deliveredBadge}
-            <button class="btn btn-outline no-print" style="padding:2px 6px; font-size:11px; margin-right:4px;" title="تغییر وضعیت تحویل" onclick="toggleDelivery(${c.id})">
+            <button class="btn btn-outline no-print" style="padding:2px 6px; font-size:11px; margin-right:4px;" title="تغییر وضعیت" onclick="toggleDelivery(${c.id})">
               <i class="fa-solid fa-arrows-rotate"></i>
             </button>
           </td>
-          <td><span class="badge ${badgeClass}">${statusText}</span></td>
+          <td data-label="وضعیت"><span class="badge ${badgeClass}">${statusText}</span></td>
           <td class="action-btns no-print">
             <button class="btn btn-outline" style="padding:5px 9px;" title="ویرایش" onclick="editCheck(${c.id})"><i class="fa-solid fa-pen" style="color:var(--primary)"></i></button>
             <button class="btn btn-outline" style="padding:5px 9px;" title="حذف" onclick="deleteCheck(${c.id})"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>
@@ -1254,3 +1285,4 @@
   </script>
 </body>
 </html>
+```<FollowUp/>
