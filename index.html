@@ -849,7 +849,7 @@
         ثبت / ویرایش سند
       </div>
       <form id="checkForm" onsubmit="saveCheck(event)">
-        <input type="hidden" id="checkId">
+        <input type="hidden" id="originalSerial"> <!-- نگهداری سریال قبلی برای حالت ویرایش -->
         <div class="form-grid">
           <div class="form-group">
             <label>نام طرف حساب *</label>
@@ -867,7 +867,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>شماره سریال *</label>
+            <label>شماره سریال (یکتا) *</label>
             <input type="text" id="serial" class="form-control" required placeholder="123456" oninput="formatDigitsInput(this)">
           </div>
           <div class="form-group">
@@ -990,9 +990,58 @@
     </div>
   </div>
 
+  <!-- اتصال SDK های فایربیس -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    // تنظیمات فایربیس شما
+    const firebaseConfig = {
+      apiKey: "AIzaSyAKENJiZka9ynVjYLCsz8-5mjlvaryCHaQ",
+      authDomain: "check-manager-fcea9.firebaseapp.com",
+      projectId: "check-manager-fcea9",
+      storageBucket: "check-manager-fcea9.firebasestorage.app",
+      messagingSenderId: "869718533155",
+      appId: "1:869718533155:web:684f32d47a62ed096c7d96",
+      measurementId: "G-48JFJNQQJY"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.db = db;
+    window.collection = collection;
+    window.doc = doc;
+    window.setDoc = setDoc;
+    window.getDocs = getDocs;
+    window.deleteDoc = deleteDoc;
+    window.getDoc = getDoc;
+
+    // بارگذاری اولیه داده‌ها از فایربیس پس از آماده شدن اسکریپت
+    fetchChecksFromFirebase();
+  </script>
+
   <script>
-    let checks = JSON.parse(localStorage.getItem('my_checks')) || [];
+    let checks = [];
     let currentTab = 'در انتظار';
+
+    async function fetchChecksFromFirebase() {
+      if (!window.db) {
+        setTimeout(fetchChecksFromFirebase, 300);
+        return;
+      }
+      try {
+        const querySnapshot = await window.getDocs(window.collection(window.db, "checks"));
+        checks = [];
+        querySnapshot.forEach((docSnap) => {
+          checks.push({ serial: docSnap.id, ...docSnap.data() });
+        });
+        renderTable();
+        checkAlerts();
+      } catch (error) {
+        console.error("خطا در دریافت اطلاعات از فایربیس: ", error);
+      }
+    }
 
     function toggleFontSize() {
       document.body.classList.toggle('large-font');
@@ -1105,7 +1154,6 @@
 
       loadFontSizeState();
       
-      // راه‌اندازی تقویم شمسی برای فیلدها
       $('#dueDate').persianDatepicker({
         format: 'YYYY/MM/DD',
         initialValue: true,
@@ -1130,8 +1178,6 @@
       });
 
       loadSavedLogo();
-      renderTable();
-      checkAlerts();
     });
 
     function switchTab(tabName) {
@@ -1193,20 +1239,19 @@
       document.getElementById('printLogoContainer').innerHTML = `<img src="${src}" class="print-logo" alt="Logo">`;
     }
 
-    function saveCheck(e) {
+    async function saveCheck(e) {
       e.preventDefault();
-      const id = document.getElementById('checkId').value;
+      const originalSerial = document.getElementById('originalSerial').value;
+      const serial = toEnglishDigits(document.getElementById('serial').value).trim();
       const rawDueDate = document.getElementById('dueDate').value;
       const normDueDate = normalizeDateStr(rawDueDate);
       const statusValue = document.getElementById('status').value;
       const rawAmount = toEnglishDigits(document.getElementById('amount').value).replace(/,/g, '');
 
-      const newCheck = {
-        id: id ? parseInt(id) : Date.now(),
+      const checkData = {
         issuer: document.getElementById('issuer').value,
         bank: document.getElementById('bank').value,
         type: document.getElementById('type').value,
-        serial: toEnglishDigits(document.getElementById('serial').value),
         sayadi: document.getElementById('sayadi').disabled ? '' : toEnglishDigits(document.getElementById('sayadi').value),
         amount: parseFloat(rawAmount),
         dueDate: normDueDate,
@@ -1214,17 +1259,31 @@
         status: statusValue
       };
 
-      if (id) {
-        checks = checks.map(c => c.id === parseInt(id) ? newCheck : c);
-      } else {
-        checks.push(newCheck);
-      }
+      try {
+        // اگر سریال تغییر کرده یا رکورد جدید است، بررسی می‌کنیم که آیا تکراری است یا خیر
+        if (!originalSerial || originalSerial !== serial) {
+          const docRef = window.doc(window.db, "checks", serial);
+          const docSnap = await window.getDoc(docRef);
+          if (docSnap.exists()) {
+            alert("خطا: شماره سریال وارد شده تکراری است و قبلاً ثبت شده است!");
+            return;
+          }
+          // اگر سریال تغییر کرده بود، رکورد قبلی را پاک می‌کنیم
+          if (originalSerial) {
+            await window.deleteDoc(window.doc(window.db, "checks", originalSerial));
+          }
+        }
 
-      localStorage.setItem('my_checks', JSON.stringify(checks));
-      
-      switchTab(statusValue);
-      resetForm();
-      checkAlerts();
+        // ذخیره اطلاعات با کلید اصلی شماره سریال در فایربیس
+        await window.setDoc(window.doc(window.db, "checks", serial), checkData);
+        
+        await fetchChecksFromFirebase();
+        switchTab(statusValue);
+        resetForm();
+      } catch (error) {
+        console.error("خطا در ذخیره اطلاعات: ", error);
+        alert("خطا در ارتباط با پایگاه داده!");
+      }
     }
 
     function clearDateFilters() {
@@ -1330,7 +1389,7 @@
         tr.onclick = (e) => {
           if (window.innerWidth <= 768) {
             if (!e.target.closest('button')) {
-              openModal(c.id);
+              openModal(c.serial);
             }
           }
         };
@@ -1345,22 +1404,22 @@
           <td data-label="سررسید"><strong>${toPersianDigits(c.dueDate)}</strong></td>
           <td data-label="تحویل بانک">
             ${deliveredBadge}
-            <button class="btn btn-outline no-print" style="padding:2px 6px; font-size:11px; margin-right:4px;" title="تغییر وضعیت" onclick="toggleDelivery(${c.id})">
+            <button class="btn btn-outline no-print" style="padding:2px 6px; font-size:11px; margin-right:4px;" title="تغییر وضعیت" onclick="toggleDelivery('${c.serial}')">
               <i class="fa-solid fa-arrows-rotate"></i>
             </button>
           </td>
           <td data-label="وضعیت"><span class="badge ${badgeClass}">${statusText}</span></td>
           <td class="action-btns no-print">
-            <button class="btn btn-outline" style="padding:5px 9px;" title="ویرایش" onclick="editCheck(${c.id})"><i class="fa-solid fa-pen" style="color:var(--primary)"></i></button>
-            <button class="btn btn-outline" style="padding:5px 9px;" title="حذف" onclick="deleteCheck(${c.id})"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>
+            <button class="btn btn-outline" style="padding:5px 9px;" title="ویرایش" onclick="editCheck('${c.serial}')"><i class="fa-solid fa-pen" style="color:var(--primary)"></i></button>
+            <button class="btn btn-outline" style="padding:5px 9px;" title="حذف" onclick="deleteCheck('${c.serial}')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>
           </td>
         `;
         tbody.appendChild(tr);
       });
     }
 
-    function openModal(id) {
-      const c = checks.find(item => item.id === id);
+    function openModal(serial) {
+      const c = checks.find(item => item.serial === serial);
       if (!c) return;
 
       let sayadiText = c.sayadi ? toPersianDigits(c.sayadi) : (c.type === 'حواله' ? '— (حواله)' : '-');
@@ -1383,7 +1442,7 @@
 
       document.getElementById('modalEditBtn').onclick = () => {
         closeModal();
-        editCheck(c.id);
+        editCheck(c.serial);
       };
 
       document.getElementById('detailModal').classList.add('show');
@@ -1393,30 +1452,35 @@
       document.getElementById('detailModal').classList.remove('show');
     }
 
-    function toggleDelivery(id) {
-      checks = checks.map(c => {
-        if (c.id === id) {
-          c.isDelivered = (c.isDelivered === 'بله') ? 'خیر' : 'بله';
-        }
-        return c;
-      });
-      localStorage.setItem('my_checks', JSON.stringify(checks));
-      renderTable();
-    }
+    async function toggleDelivery(serial) {
+      const c = checks.find(item => item.serial === serial);
+      if (!c) return;
+      c.isDelivered = (c.isDelivered === 'بله') ? 'خیر' : 'بله';
 
-    function deleteCheck(id) {
-      if (confirm('آیا از حذف این ردیف مطمئن هستید؟')) {
-        checks = checks.filter(c => c.id !== id);
-        localStorage.setItem('my_checks', JSON.stringify(checks));
+      try {
+        await window.setDoc(window.doc(window.db, "checks", serial), c);
         renderTable();
-        checkAlerts();
+      } catch (error) {
+        console.error("خطا در تغییر وضعیت تحویل: ", error);
       }
     }
 
-    function editCheck(id) {
-      const c = checks.find(item => item.id === id);
+    async function deleteCheck(serial) {
+      if (confirm('آیا از حذف این ردیف مطمئن هستید؟')) {
+        try {
+          await window.deleteDoc(window.doc(window.db, "checks", serial));
+          await fetchChecksFromFirebase();
+          checkAlerts();
+        } catch (error) {
+          console.error("خطا در حذف سند: ", error);
+        }
+      }
+    }
+
+    function editCheck(serial) {
+      const c = checks.find(item => item.serial === serial);
       if (c) {
-        document.getElementById('checkId').value = c.id;
+        document.getElementById('originalSerial').value = c.serial;
         document.getElementById('issuer').value = c.issuer;
         document.getElementById('bank').value = c.bank;
         document.getElementById('type').value = c.type || 'چک';
@@ -1432,7 +1496,7 @@
     }
 
     function resetForm() {
-      document.getElementById('checkId').value = '';
+      document.getElementById('originalSerial').value = '';
       document.getElementById('checkForm').reset();
       handleTypeChange('چک');
       document.getElementById('dueDate').value = getTodayJalaliNormalized();
@@ -1470,22 +1534,25 @@
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = async function(e) {
         try {
           const importedData = JSON.parse(e.target.result);
+          const importedChecks = importedData.checks || importedData;
           
-          if (Array.isArray(importedData.checks) || Array.isArray(importedData)) {
-            if (confirm('آیا مطمئن هستید؟ با بازیابی اطلاعات جدید، اطلاعات سیستم جایگزین خواهد شد.')) {
-              checks = importedData.checks || importedData;
-              localStorage.setItem('my_checks', JSON.stringify(checks));
+          if (Array.isArray(importedChecks)) {
+            if (confirm('آیا مطمئن هستید؟ اطلاعات جدید به پایگاه داده اضافه یا جایگزین خواهد شد.')) {
+              for (const c of importedChecks) {
+                if (c.serial) {
+                  await window.setDoc(window.doc(window.db, "checks", c.serial), c);
+                }
+              }
 
               if (importedData.logo) {
                 localStorage.setItem('my_custom_logo', importedData.logo);
                 displayLogo(importedData.logo);
               }
 
-              renderTable();
-              checkAlerts();
+              await fetchChecksFromFirebase();
               alert('اطلاعات با موفقیت بازیابی شد.');
             }
           } else {
