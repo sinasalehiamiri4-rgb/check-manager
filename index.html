@@ -167,7 +167,7 @@
       font-size: 16px;
       font-weight: 800;
       letter-spacing: 1px;
-      font-family: monospace, 'Vazirmatn';
+      font-family: 'Vazirmatn', monospace;
       direction: ltr;
     }
 
@@ -552,7 +552,7 @@
       <div class="clock-widget">
         <i class="fa-regular fa-clock"></i>
         <div class="clock-details">
-          <div class="clock-time" id="liveClock">00:00:00</div>
+          <div class="clock-time" id="liveClock">۰۰:۰۰:۰۰</div>
           <div class="clock-date" id="liveDate">در حال دریافت...</div>
         </div>
       </div>
@@ -765,12 +765,14 @@
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
       const seconds = String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('liveClock').innerText = `${hours}:${minutes}:${seconds}`;
+      
+      const timeStr = `${hours}:${minutes}:${seconds}`;
+      document.getElementById('liveClock').innerText = toPersianDigits(timeStr);
 
       const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
       const dateStr = now.toLocaleDateString('fa-IR', dateOptions);
       document.getElementById('liveDate').innerText = dateStr;
-      document.getElementById('print-date').innerText = dateStr + ' - ' + `${hours}:${minutes}`;
+      document.getElementById('print-date').innerText = dateStr + ' - ' + toPersianDigits(`${hours}:${minutes}`);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
