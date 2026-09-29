@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>سیستم مدیریت چک و حواله</title>
+  <title>سیستم مدیریت چک و حواله (همگام‌سازی ابری)</title>
 
   <!-- آیکون اختصاصی برای صفحه اصلی آیفون (iOS) -->
   <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background:linear-gradient(135deg, %234f46e5, %23818cf8);'><text x='50%' y='54%' font-size='280' text-anchor='middle' dominant-baseline='middle'>💰</text></svg>">
@@ -16,6 +16,10 @@
   
   <!-- کتابخانه اکسل با استایل کامل -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+  <!-- کتابخانه‌های سرویس ابری Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
@@ -85,9 +89,6 @@
       min-height: 100vh;
     }
 
-    /* ========================================================
-       کلاس حالت فونت بزرگ (اعمال بولد شدن و افزایش سایز)
-       ======================================================== */
     body.large-font {
       font-weight: 700;
     }
@@ -114,7 +115,6 @@
     body.large-font .tab-btn { font-size: 15px; }
     body.large-font .modal-item { font-size: 15px; }
 
-    /* بزرگ‌تر کردن بج‌ها، چک‌باکس‌ها و وضعیت‌ها */
     body.large-font .badge {
       font-size: 13px;
       padding: 6px 12px;
@@ -257,6 +257,17 @@
       background: var(--card-bg); 
       border: 1px solid var(--border-color); 
       color: var(--text-main); 
+    }
+
+    .sync-status {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--primary-light);
+      color: var(--primary);
     }
 
     .mobile-menu-wrapper {
@@ -454,7 +465,6 @@
       background: var(--border-color);
     }
 
-    /* نوار فیلتر و جستجو */
     .filter-bar {
       display: flex;
       gap: 8px;
@@ -553,7 +563,6 @@
       font-size: 12.5px;
     }
 
-    /* استایل مودال نمایش اطلاعات کامل چک */
     .modal-overlay {
       display: none;
       position: fixed;
@@ -627,7 +636,6 @@
       font-weight: 700;
     }
 
-    /* بهبود بهینه‌سازی ریسپانسیو در موبایل */
     @media (max-width: 768px) {
       body {
         padding: 10px 8px;
@@ -661,7 +669,6 @@
         display: none;
       }
 
-      /* اصلاح کامل نوار فیلتر در موبایل */
       .filter-bar {
         flex-direction: column;
         gap: 8px;
@@ -782,6 +789,10 @@
         </div>
       </div>
 
+      <div class="sync-status" id="syncStatus">
+        <i class="fa-solid fa-rotate fa-spin"></i> در حال اتصال به ابر...
+      </div>
+
       <div class="clock-widget">
         <i class="fa-regular fa-clock"></i>
         <div class="clock-details">
@@ -900,7 +911,7 @@
         </div>
         <div class="form-actions" style="margin-top: 14px; text-align: left; display: flex; gap: 8px; justify-content: flex-end;">
           <button type="button" class="btn btn-outline" onclick="resetForm()">انصراف</button>
-          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> ذخیره سند</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> ذخیره سند در انبار ابری</button>
         </div>
       </form>
     </div>
@@ -981,10 +992,61 @@
   </div>
 
   <script>
-    let checks = JSON.parse(localStorage.getItem('my_checks')) || [];
+    // -------------------------------------------------------------
+    // ۱. کلیدهای اختصاصی دیتابیس ابری فایربیس شما
+    // -------------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyAKeNJizka9ynVjYLCsz8-5mjlvarYCHaQ",
+      authDomain: "check-manager-fcea9.firebaseapp.com",
+      projectId: "check-manager-fcea9",
+      storageBucket: "check-manager-fcea9.firebasestorage.app",
+      messagingSenderId: "869718533155",
+      appId: "1:869718533155:web:684f32d47a62ed096c7d96",
+      measurementId: "G-48JFJNQQJY"
+    };
+
+    let db;
+    let checks = [];
     let currentTab = 'در انتظار';
 
-    /* تابع تغییر سایز فونت و بولد کردن متون */
+    try {
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.firestore();
+    } catch (e) {
+      console.error("خطا در تنظیمات فایربیس:", e);
+    }
+
+    // -------------------------------------------------------------
+    // ۲. دریافت زنده و آنلاین تغییرات بین همه دستگاه‌ها (گوشی و سیستم)
+    // -------------------------------------------------------------
+    function initRealtimeSync() {
+      if (!db) return;
+
+      const syncStatus = document.getElementById('syncStatus');
+      
+      db.collection("checks").onSnapshot((snapshot) => {
+        checks = [];
+        snapshot.forEach((doc) => {
+          checks.push(doc.data());
+        });
+
+        // پشتیبان‌گیری محلی برای دسترسی آفلاین احتمالی
+        localStorage.setItem('my_checks_cache', JSON.stringify(checks));
+
+        syncStatus.innerHTML = `<i class="fa-solid fa-cloud-check" style="color:var(--success)"></i> آنلاین و همگام`;
+        renderTable();
+        checkAlerts();
+      }, (error) => {
+        console.error("خطا در دریافت داده‌ها:", error);
+        syncStatus.innerHTML = `<i class="fa-solid fa-cloud-slash" style="color:var(--danger)"></i> قطع ارتباط ابری`;
+        
+        // در صورت عدم دسترسی به اینترنت، خواندن از کش محلی
+        checks = JSON.parse(localStorage.getItem('my_checks_cache')) || [];
+        renderTable();
+        checkAlerts();
+      });
+    }
+
     function toggleFontSize() {
       document.body.classList.toggle('large-font');
       const isLarge = document.body.classList.contains('large-font');
@@ -996,7 +1058,6 @@
       }
     }
 
-    /* بررسی و بازیابی وضعیت فونت در هنگام بارگذاری صفحه */
     function loadFontSizeState() {
       const isLarge = localStorage.getItem('is_large_font') === 'true';
       if (isLarge) {
@@ -1087,8 +1148,8 @@
       loadFontSizeState();
       document.getElementById('dueDate').value = toPersianDigits(getTodayJalaliNormalized());
       loadSavedLogo();
-      renderTable();
-      checkAlerts();
+
+      initRealtimeSync();
     });
 
     function switchTab(tabName) {
@@ -1149,15 +1210,17 @@
       document.getElementById('printLogoContainer').innerHTML = `<img src="${src}" class="print-logo" alt="Logo">`;
     }
 
-    function saveCheck(e) {
+    async function saveCheck(e) {
       e.preventDefault();
       const id = document.getElementById('checkId').value;
       const rawDueDate = document.getElementById('dueDate').value;
       const normDueDate = normalizeDateStr(rawDueDate);
       const statusValue = document.getElementById('status').value;
 
+      const checkIdNumber = id ? parseInt(id) : Date.now();
+
       const newCheck = {
-        id: id ? parseInt(id) : Date.now(),
+        id: checkIdNumber,
         issuer: document.getElementById('issuer').value,
         bank: document.getElementById('bank').value,
         type: document.getElementById('type').value,
@@ -1169,17 +1232,16 @@
         status: statusValue
       };
 
-      if (id) {
-        checks = checks.map(c => c.id === parseInt(id) ? newCheck : c);
-      } else {
-        checks.push(newCheck);
+      if (db) {
+        try {
+          await db.collection("checks").doc(String(checkIdNumber)).set(newCheck);
+        } catch (err) {
+          alert("خطا در ذخیره ابری: " + err.message);
+        }
       }
 
-      localStorage.setItem('my_checks', JSON.stringify(checks));
-      
       switchTab(statusValue);
       resetForm();
-      checkAlerts();
     }
 
     function renderTable() {
@@ -1334,23 +1396,19 @@
       document.getElementById('detailModal').classList.remove('show');
     }
 
-    function toggleDelivery(id) {
-      checks = checks.map(c => {
-        if (c.id === id) {
-          c.isDelivered = (c.isDelivered === 'بله') ? 'خیر' : 'بله';
-        }
-        return c;
-      });
-      localStorage.setItem('my_checks', JSON.stringify(checks));
-      renderTable();
+    async function toggleDelivery(id) {
+      const c = checks.find(item => item.id === id);
+      if (c && db) {
+        const newDeliveryStatus = (c.isDelivered === 'بله') ? 'خیر' : 'بله';
+        await db.collection("checks").doc(String(id)).update({ isDelivered: newDeliveryStatus });
+      }
     }
 
-    function deleteCheck(id) {
+    async function deleteCheck(id) {
       if (confirm('آیا از حذف این ردیف مطمئن هستید؟')) {
-        checks = checks.filter(c => c.id !== id);
-        localStorage.setItem('my_checks', JSON.stringify(checks));
-        renderTable();
-        checkAlerts();
+        if (db) {
+          await db.collection("checks").doc(String(id)).delete();
+        }
       }
     }
 
@@ -1406,28 +1464,34 @@
       downloadAnchor.remove();
     }
 
-    function importBackup(event) {
+    async function importBackup(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       const reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = async function(e) {
         try {
           const importedData = JSON.parse(e.target.result);
-          
-          if (Array.isArray(importedData.checks) || Array.isArray(importedData)) {
-            if (confirm('آیا مطمئن هستید؟ با بازیابی اطلاعات جدید، اطلاعات سیستم جایگزین خواهد شد.')) {
-              checks = importedData.checks || importedData;
-              localStorage.setItem('my_checks', JSON.stringify(checks));
+          const importedChecks = importedData.checks || importedData;
+
+          if (Array.isArray(importedChecks)) {
+            if (confirm('آیا مطمئن هستید؟ با بازیابی اطلاعات، تمامی موارد در دیتابیس ابری ذخیره خواهند شد.')) {
+              
+              if (db) {
+                const batch = db.batch();
+                importedChecks.forEach(item => {
+                  const docRef = db.collection("checks").doc(String(item.id));
+                  batch.set(docRef, item);
+                });
+                await batch.commit();
+              }
 
               if (importedData.logo) {
                 localStorage.setItem('my_custom_logo', importedData.logo);
                 displayLogo(importedData.logo);
               }
 
-              renderTable();
-              checkAlerts();
-              alert('اطلاعات با موفقیت بازیابی شد.');
+              alert('اطلاعات با موفقیت در دیتابیس ابری همگام شد.');
             }
           } else {
             alert('فرمت فایل پشتیبان معتبر نیست.');
