@@ -6,10 +6,10 @@
   <title>سیستم مدیریت چک و حواله</title>
 
   <!-- آیکون اختصاصی برای صفحه اصلی آیفون (iOS) -->
-  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background:%234f46e5;'><text x='50%' y='55%' font-size='260' text-anchor='middle' dominant-baseline='middle' fill='%23ffffff'>💎</text></svg>">
+  <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background:linear-gradient(135deg, %234f46e5, %23818cf8);'><text x='50%' y='54%' font-size='280' text-anchor='middle' dominant-baseline='middle'>💰</text></svg>">
   
   <!-- آیکون تب مرورگر (Favicon) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background:%234f46e5;'><text x='50%' y='55%' font-size='260' text-anchor='middle' dominant-baseline='middle' fill='%23ffffff'>💎</text></svg>">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background:linear-gradient(135deg, %234f46e5, %23818cf8);'><text x='50%' y='54%' font-size='280' text-anchor='middle' dominant-baseline='middle'>💰</text></svg>">
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -75,7 +75,7 @@
       font-family: 'Vazirmatn', sans-serif;
       margin: 0;
       padding: 0;
-      transition: background-color 0.2s, border-color 0.2s, color 0.2s;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s, font-size 0.2s;
     }
 
     body {
@@ -83,6 +83,49 @@
       color: var(--text-main);
       padding: 15px 12px;
       min-height: 100vh;
+    }
+
+    /* ========================================================
+       کلاس حالت فونت بزرگ (اعمال بولد شدن و افزایش سایز)
+       ======================================================== */
+    body.large-font {
+      font-weight: 700;
+    }
+
+    body.large-font *,
+    body.large-font input,
+    body.large-font select,
+    body.large-font button,
+    body.large-font table,
+    body.large-font td,
+    body.large-font th {
+      font-weight: 800 !important;
+    }
+
+    body.large-font .header-title h1 { font-size: 21px; }
+    body.large-font .header-title p { font-size: 14px; }
+    body.large-font .btn { font-size: 15px; padding: 11px 16px; }
+    body.large-font .form-control { font-size: 15px; padding: 11px; }
+    body.large-font .form-group label { font-size: 14px; }
+    body.large-font th { font-size: 14.5px; }
+    body.large-font td { font-size: 15px; }
+    body.large-font .stat-card h4 { font-size: 13px; }
+    body.large-font .stat-card .amount { font-size: 19px; }
+    body.large-font .tab-btn { font-size: 15px; }
+    body.large-font .modal-item { font-size: 15px; }
+
+    /* بزرگ‌تر کردن بج‌ها، چک‌باکس‌ها و وضعیت‌ها */
+    body.large-font .badge {
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    body.large-font input[type="checkbox"] {
+      width: 1.3em;
+      height: 1.3em;
+      transform: scale(1.25);
+      cursor: pointer;
     }
 
     .container {
@@ -510,6 +553,80 @@
       font-size: 12.5px;
     }
 
+    /* استایل مودال نمایش اطلاعات کامل چک */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(3px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      position: relative;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .modal-header h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+    }
+    .modal-item:last-child {
+      border-bottom: none;
+    }
+    .modal-item .label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .modal-item .value {
+      font-weight: 700;
+    }
+
     /* بهبود بهینه‌سازی ریسپانسیو در موبایل */
     @media (max-width: 768px) {
       body {
@@ -586,12 +703,14 @@
         padding: 12px;
         margin-bottom: 10px;
         box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        cursor: pointer;
       }
       tbody tr.row-due-today {
         border: 1px solid var(--due-today-border);
       }
+      
       td {
-        display: flex;
+        display: none;
         justify-content: space-between;
         align-items: center;
         padding: 6px 0;
@@ -599,11 +718,17 @@
         white-space: normal;
         font-size: 12px;
       }
-      td:last-child {
-        border-bottom: none;
-        padding-top: 10px;
-        justify-content: flex-end;
+      
+      td[data-label="سریال"],
+      td[data-label="مبلغ (ریال)"],
+      td[data-label="سررسید"] {
+        display: flex !important;
       }
+
+      td[data-label="سررسید"] {
+        border-bottom: none;
+      }
+
       td::before {
         content: attr(data-label);
         font-weight: 700;
@@ -617,7 +742,7 @@
 
     @media print {
       body { background: white !important; color: black !important; padding: 0; }
-      .no-print, header, .card-title, .filter-bar, .action-btns, .tabs-navigation, .mobile-menu-wrapper { display: none !important; }
+      .no-print, header, .card-title, .filter-bar, .action-btns, .tabs-navigation, .mobile-menu-wrapper, .modal-overlay { display: none !important; }
       .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
       .container { max-width: 100%; }
       table, thead, tbody, th, td, tr { display: table !important; }
@@ -666,6 +791,7 @@
       </div>
 
       <div class="header-actions">
+        <button class="btn btn-outline" onclick="toggleFontSize()" title="تغییر سایز فونت"><i class="fa-solid fa-font"></i> <span id="fontSizeBtnText">فونت بزرگ</span></button>
         <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> <span>چاپ</span></button>
         <button class="btn btn-outline" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span>تم</span></button>
         <button class="btn btn-outline" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>بک‌اپ</span></button>
@@ -678,6 +804,7 @@
           <i class="fa-solid fa-bars"></i>
         </button>
         <div class="mobile-dropdown" id="mobileDropdown">
+          <button class="btn" onclick="toggleFontSize(); closeMobileMenu();"><i class="fa-solid fa-font"></i> تغییر سایز/بولد</button>
           <button class="btn" onclick="window.print(); closeMobileMenu();"><i class="fa-solid fa-print"></i> چاپ صفحه</button>
           <button class="btn" onclick="exportExcel(); closeMobileMenu();"><i class="fa-solid fa-file-excel" style="color:var(--success)"></i> خروجی اکسل</button>
           <button class="btn" onclick="exportBackup(); closeMobileMenu();"><i class="fa-solid fa-download"></i> دانلود بک‌اپ</button>
@@ -794,7 +921,6 @@
     </div>
 
     <div class="card">
-      <!-- بخش اصلاح‌شده جستجو و فیلتر -->
       <div class="filter-bar no-print">
         <input type="text" id="searchInput" class="form-control" placeholder="🔍 جستجو (نام، بانک، سریال)..." style="flex: 2 1 180px;" oninput="renderTable()">
         
@@ -839,9 +965,46 @@
     </div>
   </div>
 
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-circle-info"></i> جزئیات کامل سند</h3>
+        <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="modalDetailsBody">
+      </div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-outline" id="modalEditBtn"><i class="fa-solid fa-pen" style="color:var(--primary)"></i> ویرایش</button>
+        <button class="btn btn-primary" onclick="closeModal()">بستن</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let checks = JSON.parse(localStorage.getItem('my_checks')) || [];
     let currentTab = 'در انتظار';
+
+    /* تابع تغییر سایز فونت و بولد کردن متون */
+    function toggleFontSize() {
+      document.body.classList.toggle('large-font');
+      const isLarge = document.body.classList.contains('large-font');
+      localStorage.setItem('is_large_font', isLarge);
+      
+      const btnText = document.getElementById('fontSizeBtnText');
+      if (btnText) {
+        btnText.innerText = isLarge ? 'فونت معمولی' : 'فونت بزرگ';
+      }
+    }
+
+    /* بررسی و بازیابی وضعیت فونت در هنگام بارگذاری صفحه */
+    function loadFontSizeState() {
+      const isLarge = localStorage.getItem('is_large_font') === 'true';
+      if (isLarge) {
+        document.body.classList.add('large-font');
+        const btnText = document.getElementById('fontSizeBtnText');
+        if (btnText) btnText.innerText = 'فونت معمولی';
+      }
+    }
 
     function toggleMobileMenu(e) {
       e.stopPropagation();
@@ -921,6 +1084,7 @@
       setInterval(updateLiveClock, 1000);
       updateLiveClock();
 
+      loadFontSizeState();
       document.getElementById('dueDate').value = toPersianDigits(getTodayJalaliNormalized());
       loadSavedLogo();
       renderTable();
@@ -1104,6 +1268,14 @@
         const tr = document.createElement('tr');
         if (isDue) tr.classList.add('row-due-today');
 
+        tr.onclick = (e) => {
+          if (window.innerWidth <= 768) {
+            if (!e.target.closest('button')) {
+              openModal(c.id);
+            }
+          }
+        };
+
         tr.innerHTML = `
           <td data-label="طرف حساب"><strong>${c.issuer}</strong></td>
           <td data-label="بانک">${c.bank}</td>
@@ -1126,6 +1298,40 @@
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    function openModal(id) {
+      const c = checks.find(item => item.id === id);
+      if (!c) return;
+
+      let sayadiText = c.sayadi ? toPersianDigits(c.sayadi) : (c.type === 'حواله' ? '— (حواله)' : '-');
+      const isDue = c.status === 'در انتظار' && isDueOrPast(c.dueDate);
+      let statusText = c.status;
+      if (isDue) statusText = '⚠️ سررسید شده';
+
+      const modalBody = document.getElementById('modalDetailsBody');
+      modalBody.innerHTML = `
+        <div class="modal-item"><span class="label">طرف حساب:</span><span class="value">${c.issuer}</span></div>
+        <div class="modal-item"><span class="label">بانک:</span><span class="value">${c.bank}</span></div>
+        <div class="modal-item"><span class="label">نوع سند:</span><span class="value">${c.type || 'چک'}</span></div>
+        <div class="modal-item"><span class="label">شماره سریال:</span><span class="value">${toPersianDigits(c.serial)}</span></div>
+        <div class="modal-item"><span class="label">شناسه صیادی:</span><span class="value" dir="ltr">${sayadiText}</span></div>
+        <div class="modal-item"><span class="label">مبلغ:</span><span class="value" style="color:var(--primary)">${toPersianDigits(c.amount.toLocaleString('fa-IR'))} ریال</span></div>
+        <div class="modal-item"><span class="label">تاریخ سررسید:</span><span class="value">${toPersianDigits(c.dueDate)}</span></div>
+        <div class="modal-item"><span class="label">تحویل به بانک:</span><span class="value">${c.isDelivered || 'خیر'}</span></div>
+        <div class="modal-item"><span class="label">وضعیت:</span><span class="value">${statusText}</span></div>
+      `;
+
+      document.getElementById('modalEditBtn').onclick = () => {
+        closeModal();
+        editCheck(c.id);
+      };
+
+      document.getElementById('detailModal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').classList.remove('show');
     }
 
     function toggleDelivery(id) {
@@ -1399,4 +1605,3 @@
   </script>
 </body>
 </html>
-```<FollowUp/>
