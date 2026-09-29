@@ -849,7 +849,7 @@
         ثبت / ویرایش سند
       </div>
       <form id="checkForm" onsubmit="saveCheck(event)">
-        <input type="hidden" id="originalSerial"> <!-- نگهداری سریال قبلی برای حالت ویرایش -->
+        <input type="hidden" id="originalSerial">
         <div class="form-grid">
           <div class="form-group">
             <label>نام طرف حساب *</label>
@@ -1043,6 +1043,7 @@
     let checks = [];
     let currentTab = 'در انتظار';
 
+    // ایجاد نشانگر اتصال پویا در هدر صفحه
     document.addEventListener("DOMContentLoaded", function() {
       const headerActions = document.querySelector('header .header-actions');
       if (!headerActions) return;
@@ -1050,17 +1051,16 @@
       const cloudBadge = document.createElement('div');
       cloudBadge.id = 'cloudStatusBadge';
       cloudBadge.innerHTML = `
-        <span style="
+        <span id="cloudDot" style="
           display: inline-block;
           width: 8px;
           height: 8px;
-          background-color: #10b981;
+          background-color: #f59e0b;
           border-radius: 50%;
-          box-shadow: 0 0 8px #10b981;
+          box-shadow: 0 0 8px #f59e0b;
           margin-left: 5px;
-          animation: pulseCloud 2s infinite;
         "></span>
-        <span>متصل به فضای ابری</span>
+        <span id="cloudText">در حال اتصال...</span>
       `;
       
       cloudBadge.style.cssText = `
@@ -1076,17 +1076,25 @@
         gap: 4px;
       `;
 
-      const styleSheet = document.createElement("style");
-      styleSheet.innerText = `
-        @keyframes pulseCloud {
-          0% { transform: scale(0.95); opacity: 0.8; }
-          50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #10b981; }
-          100% { transform: scale(0.95); opacity: 0.8; }
-        }
-      `;
-      document.head.appendChild(styleSheet);
       headerActions.insertBefore(cloudBadge, headerActions.firstChild);
     });
+
+    // تابع تغییر وضعیت رنگ و متن نشانگر اتصال ابری
+    function updateCloudStatus(isConnected, message) {
+      const dot = document.getElementById('cloudDot');
+      const text = document.getElementById('cloudText');
+      if (!dot || !text) return;
+
+      if (isConnected) {
+        dot.style.backgroundColor = '#10b981';
+        dot.style.boxShadow = '0 0 8px #10b981';
+        text.innerText = message || 'متصل به فضای ابری';
+      } else {
+        dot.style.backgroundColor = '#ef4444';
+        dot.style.boxShadow = '0 0 8px #ef4444';
+        text.innerText = message || 'خطای اتصال به ابری';
+      }
+    }
 
     async function fetchChecksFromFirebase() {
       if (!window.db) {
@@ -1101,8 +1109,13 @@
         });
         renderTable();
         checkAlerts();
+        
+        // در صورت موفقیت در ارتباط با دیتابیس
+        updateCloudStatus(true, 'متصل به فضای ابری');
       } catch (error) {
         console.error("خطا در دریافت اطلاعات از فایربیس: ", error);
+        // در صورت بروز خطا در ارتباط با دیتابیس
+        updateCloudStatus(false, 'خطای اتصال به ابری');
       }
     }
 
@@ -1217,7 +1230,6 @@
 
       loadFontSizeState();
       
-      // فعال‌سازی تقویم گرافیکی فقط روی سیستم‌های دسکتاپ (برای عدم تداخل روی صفحه موبایل)
       if (window.innerWidth > 768) {
         $('#dueDate').persianDatepicker({
           format: 'YYYY/MM/DD',
@@ -1243,7 +1255,6 @@
         });
       }
 
-      // مقداردهی پیش‌فرض تاریخ امروز اگر خالی بود
       if (!document.getElementById('dueDate').value) {
         document.getElementById('dueDate').value = getTodayJalaliNormalized();
       }
@@ -1800,7 +1811,7 @@
     }
 
     function checkAlerts() {
-      ThedueChecks = checks.filter(c => c.status === 'در انتظار' && isDueOrPast(c.dueDate));
+      const dueChecks = checks.filter(c => c.status === 'در انتظار' && isDueOrPast(c.dueDate));
       if (dueChecks.length > 0) {
         document.getElementById('todayAlert').style.display = 'flex';
         document.getElementById('alertCount').innerText = toPersianDigits(dueChecks.length);
