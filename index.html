@@ -880,7 +880,7 @@
           </div>
           <div class="form-group">
             <label>تاریخ سررسید *</label>
-            <input type="text" id="dueDate" class="form-control" placeholder="1403/07/10" autocomplete="off" required>
+            <input type="text" id="dueDate" class="form-control" placeholder="1405/07/10" autocomplete="off" required oninput="formatDigitsInput(this)">
           </div>
           <div class="form-group">
             <label>تحویل به بانک شده؟</label>
@@ -905,18 +905,38 @@
       </form>
     </div>
 
-    <!-- بخش فیلترهای تاریخ (از تاریخ / تا تاریخ) با تقویم -->
+    <!-- بخش فیلترهای تاریخ (از تاریخ / تا تاریخ) -->
     <div class="card no-print" style="padding: 12px 16px; margin-bottom: 12px;">
       <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <div style="display: flex; align-items: center; gap: 6px; flex: 1 1 200px;">
           <label style="font-size: 12px; font-weight: 700; white-space: nowrap;">از تاریخ:</label>
-          <input type="text" id="fromDateFilter" class="form-control" placeholder="1403/01/01" autocomplete="off" onchange="renderTable()">
+          <input type="text" id="fromDateFilter" class="form-control" placeholder="1405/01/01" autocomplete="off" oninput="formatDigitsInput(this)" onchange="renderTable()">
         </div>
         <div style="display: flex; align-items: center; gap: 6px; flex: 1 1 200px;">
           <label style="font-size: 12px; font-weight: 700; white-space: nowrap;">تا تاریخ:</label>
-          <input type="text" id="toDateFilter" class="form-control" placeholder="1403/12/29" autocomplete="off" onchange="renderTable()">
+          <input type="text" id="toDateFilter" class="form-control" placeholder="1405/12/29" autocomplete="off" oninput="formatDigitsInput(this)" onchange="renderTable()">
         </div>
         <button class="btn btn-outline" style="padding: 9px 12px;" onclick="clearDateFilters()"><i class="fa-solid fa-rotate-left"></i> حذف فیلتر تاریخ</button>
+      </div>
+    </div>
+
+    <!-- کارت محاسبه‌گر بر اساس بازه دو تاریخ -->
+    <div class="card no-print" style="background: var(--primary-light); border-color: var(--primary); padding: 14px 18px; margin-bottom: 16px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-calculator" style="color: var(--primary); font-size: 18px;"></i>
+          <span style="font-weight: 800; font-size: 13.5px; color: var(--primary);">محاسبه‌گر اسناد در بازه تاریخی انتخاب‌شده:</span>
+        </div>
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
+          <div>
+            <span style="font-size: 12px; color: var(--text-muted);">تعداد اسناد:</span>
+            <strong id="calcCount" style="font-size: 15px; margin-right: 4px;">۰ عدد</strong>
+          </div>
+          <div>
+            <span style="font-size: 12px; color: var(--text-muted);">مجمع مبلغ (ریال):</span>
+            <strong id="calcAmount" style="font-size: 16px; color: var(--primary); margin-right: 4px;">۰</strong>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -995,7 +1015,6 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // تنظیمات فایربیس شما
     const firebaseConfig = {
       apiKey: "AIzaSyAKENJiZka9ynVjYLCsz8-5mjlvaryCHaQ",
       authDomain: "check-manager-fcea9.firebaseapp.com",
@@ -1017,7 +1036,6 @@
     window.deleteDoc = deleteDoc;
     window.getDoc = getDoc;
 
-    // بارگذاری اولیه داده‌ها از فایربیس پس از آماده شدن اسکریپت
     fetchChecksFromFirebase();
   </script>
 
@@ -1025,7 +1043,6 @@
     let checks = [];
     let currentTab = 'در انتظار';
 
-    // اسکریپت تزریق خودکار نشانگر اتصال به فضای ابری بالای هدر صفحه
     document.addEventListener("DOMContentLoaded", function() {
       const headerActions = document.querySelector('header .header-actions');
       if (!headerActions) return;
@@ -1200,28 +1217,36 @@
 
       loadFontSizeState();
       
-      $('#dueDate').persianDatepicker({
-        format: 'YYYY/MM/DD',
-        initialValue: true,
-        autoClose: true,
-        calendar: { persian: { leapYearMode: 'astronomical' } }
-      });
+      // فعال‌سازی تقویم گرافیکی فقط روی سیستم‌های دسکتاپ (برای عدم تداخل روی صفحه موبایل)
+      if (window.innerWidth > 768) {
+        $('#dueDate').persianDatepicker({
+          format: 'YYYY/MM/DD',
+          initialValue: false,
+          autoClose: true,
+          calendar: { persian: { leapYearMode: 'astronomical' } }
+        });
 
-      $('#fromDateFilter').persianDatepicker({
-        format: 'YYYY/MM/DD',
-        initialValue: false,
-        autoClose: true,
-        onSelect: function() { renderTable(); },
-        calendar: { persian: { leapYearMode: 'astronomical' } }
-      });
+        $('#fromDateFilter').persianDatepicker({
+          format: 'YYYY/MM/DD',
+          initialValue: false,
+          autoClose: true,
+          onSelect: function() { renderTable(); },
+          calendar: { persian: { leapYearMode: 'astronomical' } }
+        });
 
-      $('#toDateFilter').persianDatepicker({
-        format: 'YYYY/MM/DD',
-        initialValue: false,
-        autoClose: true,
-        onSelect: function() { renderTable(); },
-        calendar: { persian: { leapYearMode: 'astronomical' } }
-      });
+        $('#toDateFilter').persianDatepicker({
+          format: 'YYYY/MM/DD',
+          initialValue: false,
+          autoClose: true,
+          onSelect: function() { renderTable(); },
+          calendar: { persian: { leapYearMode: 'astronomical' } }
+        });
+      }
+
+      // مقداردهی پیش‌فرض تاریخ امروز اگر خالی بود
+      if (!document.getElementById('dueDate').value) {
+        document.getElementById('dueDate').value = getTodayJalaliNormalized();
+      }
 
       loadSavedLogo();
     });
@@ -1387,6 +1412,22 @@
 
         return matchesTab && matchesSearch && matchesType && matchesDelivered && matchesDateRange;
       });
+
+      let rangeCount = 0;
+      let rangeSumAmount = 0;
+      checks.forEach(c => {
+        const normDue = normalizeDateStr(c.dueDate);
+        let inRange = true;
+        if (normFromDate && normDue < normFromDate) inRange = false;
+        if (normToDate && normDue > normToDate) inRange = false;
+        if (inRange) {
+          rangeCount++;
+          rangeSumAmount += (Number(c.amount) || 0);
+        }
+      });
+
+      document.getElementById('calcCount').innerText = toPersianDigits(rangeCount) + ' عدد';
+      document.getElementById('calcAmount').innerText = toPersianDigits(rangeSumAmount.toLocaleString('fa-IR'));
 
       filtered.sort((a, b) => {
         const dateA = normalizeDateStr(a.dueDate);
@@ -1759,7 +1800,7 @@
     }
 
     function checkAlerts() {
-      const dueChecks = checks.filter(c => c.status === 'در انتظار' && isDueOrPast(c.dueDate));
+      ThedueChecks = checks.filter(c => c.status === 'در انتظار' && isDueOrPast(c.dueDate));
       if (dueChecks.length > 0) {
         document.getElementById('todayAlert').style.display = 'flex';
         document.getElementById('alertCount').innerText = toPersianDigits(dueChecks.length);
