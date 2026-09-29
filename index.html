@@ -840,6 +840,13 @@
   </div>
 
   <script>
+    // ==========================================
+    // تنظیمات ربات تلگرام خود را اینجا قرار دهید
+    // ==========================================
+    const TELEGRAM_BOT_TOKEN = "YOUR_BOT_TOKEN_HERE"; 
+    const TELEGRAM_CHAT_ID = "YOUR_CHAT_ID_HERE";     
+    // ==========================================
+
     let checks = JSON.parse(localStorage.getItem('my_checks')) || [];
     let currentTab = 'در انتظار';
 
@@ -985,6 +992,35 @@
       document.getElementById('printLogoContainer').innerHTML = `<img src="${src}" class="print-logo" alt="Logo">`;
     }
 
+    // تابع ارسال پیام به تلگرام
+    function sendToTelegram(check, isEdit = false) {
+      if (TELEGRAM_BOT_TOKEN === "YOUR_BOT_TOKEN_HERE" || TELEGRAM_CHAT_ID === "YOUR_CHAT_ID_HERE") {
+        return; // تنظیمات تلگرام هنوز اعمال نشده است
+      }
+
+      const actionText = isEdit ? "✏️ *ویرایش سند*" : "🆕 *ثبت سند جدید*";
+      const message = `${actionText}
+👤 *طرف حساب:* ${check.issuer}
+🏦 *بانک:* ${check.bank}
+📄 *نوع سند:* ${check.type}
+🔢 *سریال:* ${check.serial}
+🆔 *شناسه صیادی:* ${check.sayadi || 'ندارد'}
+💰 *مبلغ:* ${Number(check.amount).toLocaleString('fa-IR')} ریال
+📅 *تاریخ سررسید:* ${check.dueDate}
+🏦 *تحویل بانک:* ${check.isDelivered}
+📌 *وضعیت:* ${check.status}`;
+
+      fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: TELEGRAM_CHAT_ID,
+          text: message,
+          parse_mode: 'Markdown'
+        })
+      }).catch(err => console.error('خطا در ارسال به تلگرام:', err));
+    }
+
     function saveCheck(e) {
       e.preventDefault();
       const id = document.getElementById('checkId').value;
@@ -1005,7 +1041,9 @@
         status: statusValue
       };
 
-      if (id) {
+      const isEdit = Boolean(id);
+
+      if (isEdit) {
         checks = checks.map(c => c.id === parseInt(id) ? newCheck : c);
       } else {
         checks.push(newCheck);
@@ -1013,6 +1051,9 @@
 
       localStorage.setItem('my_checks', JSON.stringify(checks));
       
+      // ارسال اطلاعات جدید/ویرایش شده به تلگرام
+      sendToTelegram(newCheck, isEdit);
+
       switchTab(statusValue);
       resetForm();
       checkAlerts();
@@ -1399,4 +1440,3 @@
   </script>
 </body>
 </html>
-```<FollowUp/>
