@@ -5,236 +5,1004 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>سیستم مدیریت چک و حواله</title>
 
+  <!-- آیکون اختصاصی برای صفحه اصلی آیفون (iOS) -->
   <link rel="apple-touch-icon" sizes="180x180" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background:linear-gradient(135deg, %234f46e5, %23818cf8);'><text x='50%' y='54%' font-size='280' text-anchor='middle' dominant-baseline='middle'>💰</text></svg>">
+  
+  <!-- آیکون تب مرورگر (Favicon) -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512' style='background:linear-gradient(135deg, %234f46e5, %23818cf8);'><text x='50%' y='54%' font-size='280' text-anchor='middle' dominant-baseline='middle'>💰</text></svg>">
 
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- کتابخانه تقویم هجری شمسی (Persian Datepicker) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
 
+  <!-- کتابخانه اکسل با استایل کامل -->
   <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+  <!-- کتابخانه‌های جاوااسکریپت برای تقویم شمسی -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
 
   <style>
-    /* ⬇️ استایل‌های قبلی خودت رو اینجا بذار - هیچ تغییری لازم نیست ⬇️ */
-    /* (همون استایلی که توی فایل خودت داشتی رو دست نزن) */
+    @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700;800&display=swap');
+
+    :root {
+      --bg-main: #f4f6f9;
+      --card-bg: #ffffff;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --border-color: #e2e8f0;
+      
+      --primary: #4f46e5;
+      --primary-hover: #4338ca;
+      --primary-light: #eef2ff;
+      
+      --success: #10b981;
+      --success-light: #ecfdf5;
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --danger: #ef4444;
+      --danger-light: #fef2f2;
+      --info: #0284c7;
+      --info-light: #f0f9ff;
+
+      --due-today-bg: #fef3c7;
+      --due-today-border: #f59e0b;
+      --due-today-text: #92400e;
+    }
+
+    body.dark-mode {
+      --bg-main: #0f172a;
+      --card-bg: #1e293b;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border-color: #334155;
+      
+      --primary: #6366f1;
+      --primary-hover: #818cf8;
+      --primary-light: rgba(99, 102, 241, 0.15);
+      
+      --success: #10b981;
+      --success-light: rgba(16, 185, 129, 0.15);
+      --warning: #fbbf24;
+      --warning-light: rgba(251, 191, 36, 0.15);
+      --danger: #f87171;
+      --danger-light: rgba(248, 113, 113, 0.15);
+      --info: #38bdf8;
+      --info-light: rgba(56, 189, 248, 0.15);
+
+      --due-today-bg: #451a03;
+      --due-today-border: #f59e0b;
+      --due-today-text: #fde68a;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Vazirmatn', sans-serif;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.2s, border-color 0.2s, color 0.2s, font-size 0.2s;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      padding: 15px 12px;
+      min-height: 100vh;
+    }
+
+    body.large-font {
+      font-weight: 700;
+    }
+
+    body.large-font *,
+    body.large-font input,
+    body.large-font select,
+    body.large-font button,
+    body.large-font table,
+    body.large-font td,
+    body.large-font th {
+      font-weight: 800 !important;
+    }
+
+    body.large-font .header-title h1 { font-size: 21px; }
+    body.large-font .header-title p { font-size: 14px; }
+    body.large-font .btn { font-size: 15px; padding: 11px 16px; }
+    body.large-font .form-control { font-size: 15px; padding: 11px; }
+    body.large-font .form-group label { font-size: 14px; }
+    body.large-font th { font-size: 14.5px; }
+    body.large-font td { font-size: 15px; }
+    body.large-font .stat-card h4 { font-size: 13px; }
+    body.large-font .stat-card .amount { font-size: 19px; }
+    body.large-font .tab-btn { font-size: 15px; }
+    body.large-font .modal-item { font-size: 15px; }
+
+    body.large-font .badge {
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: 20px;
+    }
+
+    body.large-font input[type="checkbox"] {
+      width: 1.3em;
+      height: 1.3em;
+      transform: scale(1.25);
+      cursor: pointer;
+    }
+
+    .container {
+      max-width: 1320px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    header {
+      background: var(--card-bg);
+      padding: 16px 20px;
+      border-radius: 18px;
+      box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.04);
+      border: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+      position: relative;
+    }
+
+    .header-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-container {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, var(--primary), #818cf8);
+      color: white;
+      font-size: 20px;
+      box-shadow: 0 6px 14px -3px rgba(79, 70, 229, 0.4);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .logo-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .header-title h1 {
+      font-size: 17px;
+      font-weight: 800;
+    }
+
+    .header-title p {
+      font-size: 11.5px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .clock-widget {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--primary-light);
+      border: 1px solid var(--border-color);
+      padding: 6px 12px;
+      border-radius: 12px;
+      color: var(--primary);
+    }
+
+    .clock-widget i { font-size: 16px; }
+
+    .clock-details {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .clock-time {
+      font-size: 15px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      font-family: 'Vazirmatn', monospace;
+      direction: ltr;
+    }
+
+    .clock-date {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .btn {
+      padding: 9px 14px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12.5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+      white-space: nowrap;
+    }
+
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary { 
+      background: linear-gradient(135deg, var(--primary), #6366f1); 
+      color: white; 
+      box-shadow: 0 4px 10px rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-success { background: var(--success); color: white; }
+    .btn-warning { background: var(--warning); color: #000; }
+    .btn-outline { 
+      background: var(--card-bg); 
+      border: 1px solid var(--border-color); 
+      color: var(--text-main); 
+    }
+
+    .mobile-menu-wrapper {
+      display: none;
+      position: relative;
+    }
+
+    .mobile-menu-btn {
+      background: var(--primary-light);
+      border: 1px solid var(--border-color);
+      color: var(--primary);
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-dropdown {
+      display: none;
+      position: absolute;
+      top: 48px;
+      left: 0;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      width: 180px;
+      z-index: 1000;
+      padding: 6px;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .mobile-dropdown.show {
+      display: flex;
+    }
+
+    .mobile-dropdown .btn {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 10px 12px;
+      font-size: 12px;
+      border: none;
+      background: transparent;
+      color: var(--text-main);
+    }
+
+    .mobile-dropdown .btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .tabs-navigation {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 2px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+    }
+    .tabs-navigation::-webkit-scrollbar { display: none; }
+
+    .tab-btn {
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 10px 10px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-bottom: 2px solid var(--primary);
+    }
+
+    .tab-btn .badge-count {
+      padding: 2px 7px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      background: var(--border-color);
+      color: var(--text-main);
+    }
+
+    .tab-btn.active .badge-count {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+    }
+
+    .stat-card.pending::before { background: var(--warning); }
+    .stat-card.delivered::before { background: var(--info); }
+    .stat-card.passed::before { background: var(--success); }
+    .stat-card.bounced::before { background: var(--danger); }
+
+    .stat-card h4 { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+    .stat-card .amount { font-size: 16px; font-weight: 800; word-break: break-all; }
+
+    .card {
+      background: var(--card-bg);
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 6px 18px -4px rgba(0, 0, 0, 0.02);
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .form-group label {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .form-control {
+      padding: 9px 11px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      background: var(--bg-main);
+      color: var(--text-main);
+      font-size: 12.5px;
+      outline: none;
+      width: 100%;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      background: var(--card-bg);
+      box-shadow: 0 0 0 3px var(--primary-light);
+    }
+
+    .form-control:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: var(--border-color);
+    }
+
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+      width: 100%;
+    }
+
+    .filter-bar .form-control {
+      flex: 1 1 150px;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: right;
+    }
+
+    th {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 700;
+      font-size: 12px;
+      padding: 10px 12px;
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 12.5px;
+      white-space: nowrap;
+      background: var(--card-bg);
+      color: var(--text-main);
+    }
+
+    tbody tr:hover td {
+      background-color: var(--primary-light);
+    }
+
+    tr.row-due-today td {
+      background-color: var(--due-today-bg) !important;
+      border-bottom: 1px solid var(--due-today-border);
+      color: var(--due-today-text) !important;
+      font-weight: 600;
+    }
+
+    .badge {
+      padding: 3px 8px;
+      border-radius: 20px;
+      font-size: 10.5px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .badge-pending { background: var(--warning-light); color: var(--warning); }
+    .badge-due-alert { background: #f59e0b; color: #000; animation: pulse 1.8s infinite; }
+    .badge-passed { background: var(--success-light); color: var(--success); }
+    .badge-bounced { background: var(--danger-light); color: var(--danger); }
+
+    .badge-delivered-yes { background: var(--info-light); color: var(--info); }
+    .badge-delivered-no { background: var(--border-color); color: var(--text-muted); }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+
+    .alert-banner {
+      background: var(--danger-light);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 10px 14px;
+      border-radius: 14px;
+      margin-bottom: 16px;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .alert-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+    }
+
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(3px);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-content {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      width: 100%;
+      max-width: 420px;
+      padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+      position: relative;
+      animation: modalFadeIn 0.2s ease-out;
+    }
+    @keyframes modalFadeIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed var(--border-color);
+      padding-bottom: 12px;
+      margin-bottom: 14px;
+    }
+    .modal-header h3 {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .modal-close {
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+    .modal-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .modal-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 13px;
+    }
+    .modal-item:last-child {
+      border-bottom: none;
+    }
+    .modal-item .label {
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .modal-item .value {
+      font-weight: 700;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 10px 8px;
+      }
+      header {
+        padding: 10px 12px;
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header-title h1 {
+        font-size: 15px;
+      }
+      .header-title p {
+        display: none;
+      }
+      .logo-container {
+        width: 38px;
+        height: 38px;
+        font-size: 16px;
+      }
+
+      .header-actions {
+        display: none;
+      }
+      .mobile-menu-wrapper {
+        display: block;
+      }
+
+      .clock-widget {
+        display: none;
+      }
+
+      .filter-bar {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .filter-bar .form-control {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .stat-card {
+        padding: 10px;
+      }
+      .stat-card .amount {
+        font-size: 14px;
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .table-container {
+        border: none;
+      }
+      table, thead, tbody, th, td, tr {
+        display: block;
+      }
+      thead {
+        display: none;
+      }
+      tbody tr {
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 14px;
+        padding: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        cursor: pointer;
+      }
+      tbody tr.row-due-today {
+        border: 1px solid var(--due-today-border);
+      }
+      
+      td {
+        display: none;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 0;
+        border-bottom: 1px dashed var(--border-color);
+        white-space: normal;
+        font-size: 12px;
+      }
+      
+      td[data-label="سریال"],
+      td[data-label="مبلغ (ریال)"],
+      td[data-label="سررسید"] {
+        display: flex !important;
+      }
+
+      td[data-label="سررسید"] {
+        border-bottom: none;
+      }
+
+      td::before {
+        content: attr(data-label);
+        font-weight: 700;
+        color: var(--text-muted);
+        font-size: 11.5px;
+      }
+      td.action-btns::before {
+        display: none;
+      }
+    }
+
+    @media print {
+      body { background: white !important; color: black !important; padding: 0; }
+      .no-print, header, .card-title, .filter-bar, .action-btns, .tabs-navigation, .mobile-menu-wrapper, .modal-overlay { display: none !important; }
+      .card { border: none !important; box-shadow: none !important; padding: 0 !important; }
+      .container { max-width: 100%; }
+      table, thead, tbody, th, td, tr { display: table !important; }
+      thead { display: table-header-group !important; }
+      tr { display: table-row !important; border: none !important; }
+      td { display: table-cell !important; border-bottom: 1px solid #000 !important; }
+      td::before { display: none !important; }
+      th, td { border: 1px solid #000; padding: 8px; color: black !important; background: transparent !important; }
+      .print-header { display: flex !important; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 15px; }
+      .print-logo { max-width: 80px; max-height: 80px; }
+    }
+
+    .print-header { display: none; }
   </style>
 </head>
 <body>
 
-  <!-- ⬇️ تمام HTML قبلی خودت رو دست نزن ⬇️ -->
-  <!-- فقط این خط رو قبل از </body> اضافه کن: -->
-  
-  <div id="fbStatus">
-    <i class="fa-solid fa-circle-notch fa-spin"></i>
-    <span>در حال اتصال به Firebase...</span>
+  <div class="container">
+    <div class="print-header">
+      <div>
+        <h2>گزارش جامع چک‌ها و حواله‌ها</h2>
+        <p>تاریخ و زمان خروجی: <span id="print-date"></span></p>
+      </div>
+      <div id="printLogoContainer"></div>
+    </div>
+
+    <header class="no-print">
+      <div class="header-title">
+        <div class="logo-container" onclick="document.getElementById('logoInput').click()" title="تغییر لوگو">
+          <div id="logoPreview"><i class="fa-solid fa-money-check-dollar"></i></div>
+        </div>
+        <input type="file" id="logoInput" accept="image/*" style="display: none;" onchange="uploadLogo(event)">
+        
+        <div>
+          <h1>مدیریت چک و حواله</h1>
+          <p>سامانه هوشمند ثبت و پیگیری اسناد</p>
+        </div>
+      </div>
+
+      <div class="clock-widget">
+        <i class="fa-regular fa-clock"></i>
+        <div class="clock-details">
+          <div class="clock-time" id="liveClock">۰۰:۰۰:۰۰</div>
+          <div class="clock-date" id="liveDate">در حال دریافت...</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button class="btn btn-outline" onclick="toggleFontSize()" title="تغییر سایز فونت"><i class="fa-solid fa-font"></i> <span id="fontSizeBtnText">فونت بزرگ</span></button>
+        <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> <span>چاپ</span></button>
+        <button class="btn btn-outline" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span>تم</span></button>
+        <button class="btn btn-outline" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>بک‌اپ</span></button>
+        <button class="btn btn-outline" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> <span>بازیابی</span></button>
+        <button class="btn btn-success" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> <span>اکسل</span></button>
+      </div>
+
+      <div class="mobile-menu-wrapper">
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu(event)">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="mobile-dropdown" id="mobileDropdown">
+          <button class="btn" onclick="toggleFontSize(); closeMobileMenu();"><i class="fa-solid fa-font"></i> تغییر سایز/بولد</button>
+          <button class="btn" onclick="window.print(); closeMobileMenu();"><i class="fa-solid fa-print"></i> چاپ صفحه</button>
+          <button class="btn" onclick="exportExcel(); closeMobileMenu();"><i class="fa-solid fa-file-excel" style="color:var(--success)"></i> خروجی اکسل</button>
+          <button class="btn" onclick="exportBackup(); closeMobileMenu();"><i class="fa-solid fa-download"></i> دانلود بک‌اپ</button>
+          <button class="btn" onclick="document.getElementById('backupFileInput').click(); closeMobileMenu();"><i class="fa-solid fa-upload"></i> بازیابی بک‌اپ</button>
+          <button class="btn" onclick="toggleTheme(); closeMobileMenu();"><i class="fa-solid fa-moon"></i> تغییر تم</button>
+        </div>
+      </div>
+
+      <input type="file" id="backupFileInput" accept=".json" style="display: none;" onchange="importBackup(event)">
+    </header>
+
+    <div id="todayAlert" class="alert-banner">
+      <div class="alert-content">
+        <i class="fa-solid fa-bell fa-bounce fa-lg"></i>
+        <span><strong id="alertCount">۰</strong> مورد سررسید شده بلاتکلیف دارید!</span>
+      </div>
+      <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11.5px;" onclick="filterToday()">مشاهده</button>
+    </div>
+
+    <div class="stats-grid no-print">
+      <div class="stat-card pending">
+        <h4>در انتظار</h4>
+        <div class="amount" id="statPending" style="color: var(--warning);">۰</div>
+      </div>
+      <div class="stat-card delivered">
+        <h4>تحویل بانک</h4>
+        <div class="amount" id="statDelivered" style="color: var(--info);">۰ عدد</div>
+      </div>
+      <div class="stat-card passed">
+        <h4>پاس شده</h4>
+        <div class="amount" id="statPassed" style="color: var(--success);">۰</div>
+      </div>
+      <div class="stat-card bounced">
+        <h4>برگشتی</h4>
+        <div class="amount" id="statBounced" style="color: var(--danger);">۰</div>
+      </div>
+    </div>
+
+    <div class="card no-print">
+      <div class="card-title">
+        <i class="fa-solid fa-pen-to-square" style="color: var(--primary);"></i>
+        ثبت / ویرایش سند
+      </div>
+      <form id="checkForm" onsubmit="saveCheck(event)">
+        <input type="hidden" id="checkId">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>نام طرف حساب *</label>
+            <input type="text" id="issuer" class="form-control" required placeholder="مثلا: علی محمدی">
+          </div>
+          <div class="form-group">
+            <label>نام بانک *</label>
+            <input type="text" id="bank" class="form-control" required placeholder="مثلا: ملی">
+          </div>
+          <div class="form-group">
+            <label>نوع سند</label>
+            <select id="type" class="form-control" onchange="handleTypeChange(this.value)">
+              <option value="چک">چک</option>
+              <option value="حواله">حواله</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>شماره سریال *</label>
+            <input type="text" id="serial" class="form-control" required placeholder="123456" oninput="formatDigitsInput(this)">
+          </div>
+          <div class="form-group">
+            <label id="sayadiLabel">شناسه صیادی</label>
+            <input type="text" id="sayadi" class="form-control" maxlength="19" placeholder="1234-5678-9012-3456" oninput="formatSayadi(this)">
+          </div>
+          <div class="form-group">
+            <label>مبلغ (ریال) *</label>
+            <input type="text" id="amount" class="form-control" required placeholder="مثلا: 10000000" oninput="formatDigitsInput(this)">
+          </div>
+          <div class="form-group">
+            <label>تاریخ سررسید *</label>
+            <input type="text" id="dueDate" class="form-control" placeholder="1403/07/10" autocomplete="off" required>
+          </div>
+          <div class="form-group">
+            <label>تحویل به بانک شده؟</label>
+            <select id="isDelivered" class="form-control">
+              <option value="خیر">خیر (نزد خودمان)</option>
+              <option value="بله">بله (تحویل بانک شده)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>وضعیت پاس</label>
+            <select id="status" class="form-control">
+              <option value="در انتظار">در انتظار پاس</option>
+              <option value="پاس شده">پاس شده</option>
+              <option value="برگشتی">برگشتی</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions" style="margin-top: 14px; text-align: left; display: flex; gap: 8px; justify-content: flex-end;">
+          <button type="button" class="btn btn-outline" onclick="resetForm()">انصراف</button>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> ذخیره سند</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- بخش فیلترهای تاریخ (از تاریخ / تا تاریخ) با تقویم -->
+    <div class="card no-print" style="padding: 12px 16px; margin-bottom: 12px;">
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 6px; flex: 1 1 200px;">
+          <label style="font-size: 12px; font-weight: 700; white-space: nowrap;">از تاریخ:</label>
+          <input type="text" id="fromDateFilter" class="form-control" placeholder="1403/01/01" autocomplete="off" onchange="renderTable()">
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; flex: 1 1 200px;">
+          <label style="font-size: 12px; font-weight: 700; white-space: nowrap;">تا تاریخ:</label>
+          <input type="text" id="toDateFilter" class="form-control" placeholder="1403/12/29" autocomplete="off" onchange="renderTable()">
+        </div>
+        <button class="btn btn-outline" style="padding: 9px 12px;" onclick="clearDateFilters()"><i class="fa-solid fa-rotate-left"></i> حذف فیلتر تاریخ</button>
+      </div>
+    </div>
+
+    <div class="tabs-navigation no-print">
+      <button class="tab-btn active" id="tab-pending" onclick="switchTab('در انتظار')">
+        <i class="fa-solid fa-clock"></i> اسناد در انتظار
+        <span class="badge-count" id="countPending">۰</span>
+      </button>
+      <button class="tab-btn" id="tab-passed" onclick="switchTab('پاس شده')">
+        <i class="fa-solid fa-circle-check" style="color: var(--success);"></i> پاس شده
+        <span class="badge-count" id="countPassed">۰</span>
+      </button>
+      <button class="tab-btn" id="tab-bounced" onclick="switchTab('برگشتی')">
+        <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> برگشتی
+        <span class="badge-count" id="countBounced">۰</span>
+      </button>
+    </div>
+
+    <div class="card">
+      <div class="filter-bar no-print">
+        <input type="text" id="searchInput" class="form-control" placeholder="🔍 جستجو (نام، بانک، سریال)..." style="flex: 2 1 180px;" oninput="renderTable()">
+
+        <select id="filterType" class="form-control" style="flex: 1 1 120px;" onchange="renderTable()">
+          <option value="همه">همه انواع</option>
+          <option value="چک">چک</option>
+          <option value="حواله">حواله</option>
+        </select>
+
+        <select id="filterDelivered" class="form-control" style="flex: 1 1 130px;" onchange="renderTable()">
+          <option value="همه">وضعیت تحویل</option>
+          <option value="بله">تحویل داده شده</option>
+          <option value="خیر">تحویل داده نشده</option>
+        </select>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>طرف حساب</th>
+              <th>بانک</th>
+              <th>نوع سند</th>
+              <th>سریال</th>
+              <th>صیادی</th>
+              <th>مبلغ (ریال)</th>
+              <th>تاریخ سررسید</th>
+              <th>تحویل بانک</th>
+              <th>وضعیت</th>
+              <th class="action-btns no-print">عملیات</th>
+            </tr>
+          </thead>
+          <tbody id="checkTableBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
-  <!-- ⬇️ اسکریپت‌ها رو با این جایگزین کن ⬇️ -->
-
-  <!-- Firebase SDK -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-    import { 
-      getFirestore, collection, doc, addDoc, updateDoc, deleteDoc,
-      onSnapshot, query, orderBy, getDoc, setDoc
-    } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-    // 🔥 کانفیگ Firebase خودت
-    const firebaseConfig = {
-      apiKey: "AIzaSyAKeNJizka9ynVjYLCsz8-5mJ1varYcHaQ",
-      authDomain: "check-manager-fcea9.firebaseapp.com",
-      projectId: "check-manager-fcea9",
-      storageBucket: "check-manager-fcea9.firebasestorage.app",
-      messagingSenderId: "869718533155",
-      appId: "1:869718533155:web:684f32d47a62ed096c7d96",
-      measurementId: "G-48JFJNQQJY"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // 🌐 در دسترس قرار دادن برای اسکریپت اصلی
-    window.__firebase = {
-      db,
-      collection,
-      doc,
-      addDoc,
-      updateDoc,
-      deleteDoc,
-      onSnapshot,
-      query,
-      orderBy,
-      getDoc,
-      setDoc
-    };
-
-    // آپدیت وضعیت اتصال
-    const statusEl = document.getElementById('fbStatus');
-    statusEl.classList.add('connected');
-    statusEl.innerHTML = '<i class="fa-solid fa-circle-check"></i><span>متصل به Firebase</span>';
-
-    // فراخوانی راه‌اندازی بعد از لود شدن ماژول
-    window.dispatchEvent(new Event('firebase-ready'));
-  </script>
+  <div class="modal-overlay" id="detailModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-circle-info"></i> جزئیات کامل سند</h3>
+        <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body" id="modalDetailsBody">
+      </div>
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn-outline" id="modalEditBtn"><i class="fa-solid fa-pen" style="color:var(--primary)"></i> ویرایش</button>
+        <button class="btn btn-primary" onclick="closeModal()">بستن</button>
+      </div>
+    </div>
+  </div>
 
   <script>
-    // ============================================================
-    // ⬇️ اینجا اسکریپت اصلی خودت رو با تغییرات زیر قرار بده ⬇️
-    // ============================================================
-
-    let checks = [];
+    let checks = JSON.parse(localStorage.getItem('my_checks')) || [];
     let currentTab = 'در انتظار';
-    let fbReady = false;
-    let unsubscribeChecks = null;
-
-    // منتظر Firebase بمون
-    window.addEventListener('firebase-ready', () => {
-      fbReady = true;
-      initFirebaseSync();
-    });
-
-    // 🔥 اتصال Real-time به Firestore
-    function initFirebaseSync() {
-      const { db, collection, onSnapshot } = window.__firebase;
-
-      unsubscribeChecks = onSnapshot(collection(db, "checks"), (snapshot) => {
-        checks = [];
-        snapshot.forEach((docSnap) => {
-          checks.push({ id: docSnap.id, ...docSnap.data() });
-        });
-        renderTable();
-        checkAlerts();
-      }, (error) => {
-        console.error("Firestore error:", error);
-        const statusEl = document.getElementById('fbStatus');
-        statusEl.classList.add('error');
-        statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i><span>خطا در اتصال</span>';
-      });
-
-      // بارگذاری لوگو از Firestore
-      loadLogoFromFirestore();
-    }
-
-    // 🖼️ ذخیره لوگو در Firestore
-    async function loadLogoFromFirestore() {
-      const { db, doc, getDoc } = window.__firebase;
-      try {
-        const logoDoc = await getDoc(doc(db, "settings", "logo"));
-        if (logoDoc.exists()) {
-          displayLogo(logoDoc.data().data);
-        }
-      } catch (e) {
-        console.warn("لوگو یافت نشد:", e);
-      }
-    }
-
-    async function uploadLogo(event) {
-      const file = event.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = async function(e) {
-          const logoData = e.target.result;
-          displayLogo(logoData);
-          try {
-            const { db, doc, setDoc } = window.__firebase;
-            await setDoc(doc(db, "settings", "logo"), { data: logoData, updatedAt: new Date() });
-          } catch (err) {
-            console.error("خطا در ذخیره لوگو:", err);
-            alert("خطا در ذخیره لوگو توی Firebase");
-          }
-        };
-        reader.readAsDataURL(file);
-      }
-    }
-
-    function displayLogo(src) {
-      document.getElementById('logoPreview').innerHTML = `<img src="${src}" alt="Logo">`;
-      document.getElementById('printLogoContainer').innerHTML = `<img src="${src}" class="print-logo" alt="Logo">`;
-    }
-
-    // 💾 ذخیره چک (جدید یا ویرایش)
-    async function saveCheck(e) {
-      e.preventDefault();
-      if (!fbReady) { alert("اتصال به Firebase برقرار نیست"); return; }
-
-      const id = document.getElementById('checkId').value;
-      const rawDueDate = document.getElementById('dueDate').value;
-      const normDueDate = normalizeDateStr(rawDueDate);
-      const statusValue = document.getElementById('status').value;
-      const rawAmount = toEnglishDigits(document.getElementById('amount').value).replace(/,/g, '');
-
-      const checkData = {
-        issuer: document.getElementById('issuer').value,
-        bank: document.getElementById('bank').value,
-        type: document.getElementById('type').value,
-        serial: toEnglishDigits(document.getElementById('serial').value),
-        sayadi: document.getElementById('sayadi').disabled ? '' : toEnglishDigits(document.getElementById('sayadi').value),
-        amount: parseFloat(rawAmount),
-        dueDate: normDueDate,
-        isDelivered: document.getElementById('isDelivered').value,
-        status: statusValue,
-        updatedAt: new Date()
-      };
-
-      const { db, collection, doc, addDoc, updateDoc } = window.__firebase;
-
-      try {
-        if (id) {
-          // ویرایش (id الان یه string از Firestore هست)
-          await updateDoc(doc(db, "checks", id), checkData);
-        } else {
-          // جدید
-          checkData.createdAt = new Date();
-          await addDoc(collection(db, "checks"), checkData);
-        }
-        switchTab(statusValue);
-        resetForm();
-      } catch (err) {
-        console.error("خطا در ذخیره:", err);
-        alert("خطا در ذخیره سند!");
-      }
-    }
-
-    // 🗑️ حذف از Firestore
-    async function deleteCheck(id) {
-      if (!confirm('آیا از حذف این ردیف مطمئن هستید؟')) return;
-      const { db, doc, deleteDoc } = window.__firebase;
-      try {
-        await deleteDoc(doc(db, "checks", id));
-      } catch (err) {
-        console.error("خطا در حذف:", err);
-        alert("خطا در حذف!");
-      }
-    }
-
-    // 🔄 تغییر وضعیت تحویل
-    async function toggleDelivery(id) {
-      const { db, doc, updateDoc } = window.__firebase;
-      const c = checks.find(item => item.id === id);
-      if (!c) return;
-      try {
-        await updateDoc(doc(db, "checks", id), {
-          isDelivered: c.isDelivered === 'بله' ? 'خیر' : 'بله'
-        });
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    // ============================================================
-    // ⬇️ بقیه توابع خودت رو بدون تغییر نگه دار ⬇️
-    // (فقط توابع مربوط به localStorage رو حذف کن)
-    // ============================================================
 
     function toggleFontSize() {
       document.body.classList.toggle('large-font');
       const isLarge = document.body.classList.contains('large-font');
       localStorage.setItem('is_large_font', isLarge);
+      
       const btnText = document.getElementById('fontSizeBtnText');
-      if (btnText) btnText.innerText = isLarge ? 'فونت معمولی' : 'فونت بزرگ';
+      if (btnText) {
+        btnText.innerText = isLarge ? 'فونت معمولی' : 'فونت بزرگ';
+      }
     }
 
     function loadFontSizeState() {
@@ -255,7 +1023,7 @@
       document.getElementById('mobileDropdown').classList.remove('show');
     }
 
-    document.addEventListener('click', () => {
+    document.addEventListener('click', (e) => {
       const dropdown = document.getElementById('mobileDropdown');
       if (dropdown && dropdown.classList.contains('show')) {
         dropdown.classList.remove('show');
@@ -277,14 +1045,19 @@
       let converted = toEnglishDigits(input.value);
       if (input.value !== converted) {
         input.value = converted;
-        try { input.setSelectionRange(cursorPos, cursorPos); } catch (err) {}
+        try {
+          input.setSelectionRange(cursorPos, cursorPos);
+        } catch (err) {}
       }
     }
 
     function getTodayJalaliNormalized() {
       const parts = new Intl.DateTimeFormat('fa-IR-u-nu-latn', {
-        year: 'numeric', month: '2-digit', day: '2-digit'
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
       }).formatToParts(new Date());
+
       const y = parts.find(p => p.type === 'year').value;
       const m = parts.find(p => p.type === 'month').value;
       const d = parts.find(p => p.type === 'day').value;
@@ -296,60 +1069,86 @@
       let cleanStr = toEnglishDigits(dateStr).trim().replace(/-/g, '/');
       const parts = cleanStr.split('/');
       if (parts.length === 3) {
-        return `${parts[0]}/${parts[1].padStart(2, '0')}/${parts[2].padStart(2, '0')}`;
+        let y = parts[0];
+        let m = parts[1].padStart(2, '0');
+        let d = parts[2].padStart(2, '0');
+        return `${y}/${m}/${d}`;
       }
       return cleanStr;
     }
 
     function isDueOrPast(dueDateStr) {
       if (!dueDateStr) return false;
-      return normalizeDateStr(dueDateStr) <= getTodayJalaliNormalized();
+      const normDue = normalizeDateStr(dueDateStr);
+      const normToday = getTodayJalaliNormalized();
+      return normDue <= normToday;
     }
 
     function updateLiveClock() {
       const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      const s = String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('liveClock').innerText = toPersianDigits(`${h}:${m}:${s}`);
-      const dateStr = now.toLocaleDateString('fa-IR', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      
+      const timeStr = `${hours}:${minutes}:${seconds}`;
+      document.getElementById('liveClock').innerText = toPersianDigits(timeStr);
+
+      const dateOptions = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+      const dateStr = now.toLocaleDateString('fa-IR', dateOptions);
       document.getElementById('liveDate').innerText = dateStr;
-      document.getElementById('print-date').innerText = dateStr + ' - ' + toPersianDigits(`${h}:${m}`);
+      document.getElementById('print-date').innerText = dateStr + ' - ' + toPersianDigits(`${hours}:${minutes}`);
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       setInterval(updateLiveClock, 1000);
       updateLiveClock();
-      loadFontSizeState();
 
+      loadFontSizeState();
+      
+      // راه‌اندازی تقویم شمسی برای فیلدها
       $('#dueDate').persianDatepicker({
-        format: 'YYYY/MM/DD', initialValue: true, autoClose: true,
+        format: 'YYYY/MM/DD',
+        initialValue: true,
+        autoClose: true,
         calendar: { persian: { leapYearMode: 'astronomical' } }
       });
+
       $('#fromDateFilter').persianDatepicker({
-        format: 'YYYY/MM/DD', initialValue: false, autoClose: true,
-        onSelect: () => renderTable(),
+        format: 'YYYY/MM/DD',
+        initialValue: false,
+        autoClose: true,
+        onSelect: function() { renderTable(); },
         calendar: { persian: { leapYearMode: 'astronomical' } }
       });
+
       $('#toDateFilter').persianDatepicker({
-        format: 'YYYY/MM/DD', initialValue: false, autoClose: true,
-        onSelect: () => renderTable(),
+        format: 'YYYY/MM/DD',
+        initialValue: false,
+        autoClose: true,
+        onSelect: function() { renderTable(); },
         calendar: { persian: { leapYearMode: 'astronomical' } }
       });
+
+      loadSavedLogo();
+      renderTable();
+      checkAlerts();
     });
 
     function switchTab(tabName) {
       currentTab = tabName;
       document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      
       if (tabName === 'در انتظار') document.getElementById('tab-pending').classList.add('active');
       if (tabName === 'پاس شده') document.getElementById('tab-passed').classList.add('active');
       if (tabName === 'برگشتی') document.getElementById('tab-bounced').classList.add('active');
+
       renderTable();
     }
 
     function handleTypeChange(typeValue) {
       const sayadiInput = document.getElementById('sayadi');
       const sayadiLabel = document.getElementById('sayadiLabel');
+      
       if (typeValue === 'حواله') {
         sayadiInput.value = '';
         sayadiInput.disabled = true;
@@ -371,6 +1170,63 @@
       input.value = parts ? parts.join('-') : '';
     }
 
+    function uploadLogo(event) {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const logoData = e.target.result;
+          localStorage.setItem('my_custom_logo', logoData);
+          displayLogo(logoData);
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function loadSavedLogo() {
+      const savedLogo = localStorage.getItem('my_custom_logo');
+      if (savedLogo) displayLogo(savedLogo);
+    }
+
+    function displayLogo(src) {
+      document.getElementById('logoPreview').innerHTML = `<img src="${src}" alt="Logo">`;
+      document.getElementById('printLogoContainer').innerHTML = `<img src="${src}" class="print-logo" alt="Logo">`;
+    }
+
+    function saveCheck(e) {
+      e.preventDefault();
+      const id = document.getElementById('checkId').value;
+      const rawDueDate = document.getElementById('dueDate').value;
+      const normDueDate = normalizeDateStr(rawDueDate);
+      const statusValue = document.getElementById('status').value;
+      const rawAmount = toEnglishDigits(document.getElementById('amount').value).replace(/,/g, '');
+
+      const newCheck = {
+        id: id ? parseInt(id) : Date.now(),
+        issuer: document.getElementById('issuer').value,
+        bank: document.getElementById('bank').value,
+        type: document.getElementById('type').value,
+        serial: toEnglishDigits(document.getElementById('serial').value),
+        sayadi: document.getElementById('sayadi').disabled ? '' : toEnglishDigits(document.getElementById('sayadi').value),
+        amount: parseFloat(rawAmount),
+        dueDate: normDueDate,
+        isDelivered: document.getElementById('isDelivered').value,
+        status: statusValue
+      };
+
+      if (id) {
+        checks = checks.map(c => c.id === parseInt(id) ? newCheck : c);
+      } else {
+        checks.push(newCheck);
+      }
+
+      localStorage.setItem('my_checks', JSON.stringify(checks));
+      
+      switchTab(statusValue);
+      resetForm();
+      checkAlerts();
+    }
+
     function clearDateFilters() {
       document.getElementById('fromDateFilter').value = '';
       document.getElementById('toDateFilter').value = '';
@@ -382,8 +1238,11 @@
       const search = document.getElementById('searchInput').value.toLowerCase();
       const filterType = document.getElementById('filterType').value;
       const filterDelivered = document.getElementById('filterDelivered').value;
-      const normFromDate = normalizeDateStr(document.getElementById('fromDateFilter').value);
-      const normToDate = normalizeDateStr(document.getElementById('toDateFilter').value);
+      
+      const rawFromDate = document.getElementById('fromDateFilter').value;
+      const rawToDate = document.getElementById('toDateFilter').value;
+      const normFromDate = normalizeDateStr(rawFromDate);
+      const normToDate = normalizeDateStr(rawToDate);
 
       tbody.innerHTML = '';
 
@@ -391,36 +1250,47 @@
       let countP = 0, countPass = 0, countB = 0;
 
       checks.forEach(c => {
-        if (c.status === 'در انتظار') { pendingTotal += c.amount; countP++; }
-        if (c.status === 'پاس شده') { passedTotal += c.amount; countPass++; }
-        if (c.status === 'برگشتی') { bouncedTotal += c.amount; countB++; }
-        if (c.isDelivered === 'بله') deliveredCount++;
+        if(c.status === 'در انتظار') { pendingTotal += c.amount; countP++; }
+        if(c.status === 'پاس شده') { passedTotal += c.amount; countPass++; }
+        if(c.status === 'برگشتی') { bouncedTotal += c.amount; countB++; }
+        if(c.isDelivered === 'بله') deliveredCount++;
       });
 
       document.getElementById('statPending').innerText = toPersianDigits(pendingTotal.toLocaleString('fa-IR'));
       document.getElementById('statDelivered').innerText = toPersianDigits(deliveredCount) + ' عدد';
       document.getElementById('statPassed').innerText = toPersianDigits(passedTotal.toLocaleString('fa-IR'));
       document.getElementById('statBounced').innerText = toPersianDigits(bouncedTotal.toLocaleString('fa-IR'));
+
       document.getElementById('countPending').innerText = toPersianDigits(countP);
       document.getElementById('countPassed').innerText = toPersianDigits(countPass);
       document.getElementById('countBounced').innerText = toPersianDigits(countB);
 
       let filtered = checks.filter(c => {
         const matchesTab = (c.status === currentTab);
-        const matchesSearch = (c.issuer || '').toLowerCase().includes(search) ||
-                              (c.bank || '').toLowerCase().includes(search) ||
-                              (c.serial || '').includes(search) ||
+        const matchesSearch = c.issuer.toLowerCase().includes(search) || 
+                              c.bank.toLowerCase().includes(search) || 
+                              c.serial.includes(search) ||
                               (c.sayadi && c.sayadi.includes(search));
         const matchesType = filterType === 'همه' || c.type === filterType;
         const matchesDelivered = filterDelivered === 'همه' || (c.isDelivered || 'خیر') === filterDelivered;
+
         const normDue = normalizeDateStr(c.dueDate);
         let matchesDateRange = true;
-        if (normFromDate && normDue < normFromDate) matchesDateRange = false;
-        if (normToDate && normDue > normToDate) matchesDateRange = false;
+        if (normFromDate && normDue < normFromDate) {
+          matchesDateRange = false;
+        }
+        if (normToDate && normDue > normToDate) {
+          matchesDateRange = false;
+        }
+
         return matchesTab && matchesSearch && matchesType && matchesDelivered && matchesDateRange;
       });
 
-      filtered.sort((a, b) => normalizeDateStr(a.dueDate).localeCompare(normalizeDateStr(b.dueDate)));
+      filtered.sort((a, b) => {
+        const dateA = normalizeDateStr(a.dueDate);
+        const dateB = normalizeDateStr(b.dueDate);
+        return dateA.localeCompare(dateB);
+      });
 
       if (filtered.length === 0) {
         tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; color:var(--text-muted); padding: 20px;">هیچ سندی در این بخش یافت نشد.</td></tr>`;
@@ -429,25 +1299,40 @@
 
       filtered.forEach((c) => {
         const isDue = c.status === 'در انتظار' && isDueOrPast(c.dueDate);
+
         let badgeClass = 'badge-pending';
         let statusText = c.status;
-        if (isDue) { badgeClass = 'badge-due-alert'; statusText = '⚠️ سررسید شده'; }
-        else if (c.status === 'پاس شده') badgeClass = 'badge-passed';
-        else if (c.status === 'برگشتی') badgeClass = 'badge-bounced';
+
+        if (isDue) {
+          badgeClass = 'badge-due-alert';
+          statusText = '⚠️ سررسید شده';
+        } else if (c.status === 'پاس شده') {
+          badgeClass = 'badge-passed';
+        } else if (c.status === 'برگشتی') {
+          badgeClass = 'badge-bounced';
+        }
 
         const isDelivered = c.isDelivered === 'بله';
-        const deliveredBadge = isDelivered
-          ? `<span class="badge badge-delivered-yes"><i class="fa-solid fa-check"></i> بله</span>`
+        const deliveredBadge = isDelivered 
+          ? `<span class="badge badge-delivered-yes"><i class="fa-solid fa-check"></i> بله</span>` 
           : `<span class="badge badge-delivered-no"><i class="fa-solid fa-xmark"></i> خیر</span>`;
 
         let sayadiDisplay = '-';
-        if (c.sayadi) sayadiDisplay = toPersianDigits(c.sayadi);
-        else if (c.type === 'حواله') sayadiDisplay = '<span style="color:var(--text-muted); font-size:11px;">— (حواله)</span>';
+        if (c.sayadi) {
+          sayadiDisplay = toPersianDigits(c.sayadi);
+        } else if (c.type === 'حواله') {
+          sayadiDisplay = '<span style="color:var(--text-muted); font-size:11px;">— (حواله)</span>';
+        }
 
         const tr = document.createElement('tr');
         if (isDue) tr.classList.add('row-due-today');
+
         tr.onclick = (e) => {
-          if (window.innerWidth <= 768 && !e.target.closest('button')) openModal(c.id);
+          if (window.innerWidth <= 768) {
+            if (!e.target.closest('button')) {
+              openModal(c.id);
+            }
+          }
         };
 
         tr.innerHTML = `
@@ -456,18 +1341,18 @@
           <td data-label="نوع سند">${c.type || 'چک'}</td>
           <td data-label="سریال">${toPersianDigits(c.serial)}</td>
           <td data-label="صیادی" dir="ltr" style="text-align: right;">${sayadiDisplay}</td>
-          <td data-label="مبلغ (ریال)"><strong>${toPersianDigits(Number(c.amount).toLocaleString('fa-IR'))}</strong></td>
+          <td data-label="مبلغ (ریال)"><strong>${toPersianDigits(c.amount.toLocaleString('fa-IR'))}</strong></td>
           <td data-label="سررسید"><strong>${toPersianDigits(c.dueDate)}</strong></td>
           <td data-label="تحویل بانک">
             ${deliveredBadge}
-            <button class="btn btn-outline no-print" style="padding:2px 6px; font-size:11px; margin-right:4px;" title="تغییر وضعیت" onclick="toggleDelivery('${c.id}')">
+            <button class="btn btn-outline no-print" style="padding:2px 6px; font-size:11px; margin-right:4px;" title="تغییر وضعیت" onclick="toggleDelivery(${c.id})">
               <i class="fa-solid fa-arrows-rotate"></i>
             </button>
           </td>
           <td data-label="وضعیت"><span class="badge ${badgeClass}">${statusText}</span></td>
           <td class="action-btns no-print">
-            <button class="btn btn-outline" style="padding:5px 9px;" title="ویرایش" onclick="editCheck('${c.id}')"><i class="fa-solid fa-pen" style="color:var(--primary)"></i></button>
-            <button class="btn btn-outline" style="padding:5px 9px;" title="حذف" onclick="deleteCheck('${c.id}')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>
+            <button class="btn btn-outline" style="padding:5px 9px;" title="ویرایش" onclick="editCheck(${c.id})"><i class="fa-solid fa-pen" style="color:var(--primary)"></i></button>
+            <button class="btn btn-outline" style="padding:5px 9px;" title="حذف" onclick="deleteCheck(${c.id})"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>
           </td>
         `;
         tbody.appendChild(tr);
@@ -477,27 +1362,56 @@
     function openModal(id) {
       const c = checks.find(item => item.id === id);
       if (!c) return;
+
       let sayadiText = c.sayadi ? toPersianDigits(c.sayadi) : (c.type === 'حواله' ? '— (حواله)' : '-');
       const isDue = c.status === 'در انتظار' && isDueOrPast(c.dueDate);
       let statusText = c.status;
       if (isDue) statusText = '⚠️ سررسید شده';
 
-      document.getElementById('modalDetailsBody').innerHTML = `
+      const modalBody = document.getElementById('modalDetailsBody');
+      modalBody.innerHTML = `
         <div class="modal-item"><span class="label">طرف حساب:</span><span class="value">${c.issuer}</span></div>
         <div class="modal-item"><span class="label">بانک:</span><span class="value">${c.bank}</span></div>
         <div class="modal-item"><span class="label">نوع سند:</span><span class="value">${c.type || 'چک'}</span></div>
         <div class="modal-item"><span class="label">شماره سریال:</span><span class="value">${toPersianDigits(c.serial)}</span></div>
         <div class="modal-item"><span class="label">شناسه صیادی:</span><span class="value" dir="ltr">${sayadiText}</span></div>
-        <div class="modal-item"><span class="label">مبلغ:</span><span class="value" style="color:var(--primary)">${toPersianDigits(Number(c.amount).toLocaleString('fa-IR'))} ریال</span></div>
+        <div class="modal-item"><span class="label">مبلغ:</span><span class="value" style="color:var(--primary)">${toPersianDigits(c.amount.toLocaleString('fa-IR'))} ریال</span></div>
         <div class="modal-item"><span class="label">تاریخ سررسید:</span><span class="value">${toPersianDigits(c.dueDate)}</span></div>
         <div class="modal-item"><span class="label">تحویل به بانک:</span><span class="value">${c.isDelivered || 'خیر'}</span></div>
         <div class="modal-item"><span class="label">وضعیت:</span><span class="value">${statusText}</span></div>
       `;
-      document.getElementById('modalEditBtn').onclick = () => { closeModal(); editCheck(c.id); };
+
+      document.getElementById('modalEditBtn').onclick = () => {
+        closeModal();
+        editCheck(c.id);
+      };
+
       document.getElementById('detailModal').classList.add('show');
     }
 
-    function closeModal() { document.getElementById('detailModal').classList.remove('show'); }
+    function closeModal() {
+      document.getElementById('detailModal').classList.remove('show');
+    }
+
+    function toggleDelivery(id) {
+      checks = checks.map(c => {
+        if (c.id === id) {
+          c.isDelivered = (c.isDelivered === 'بله') ? 'خیر' : 'بله';
+        }
+        return c;
+      });
+      localStorage.setItem('my_checks', JSON.stringify(checks));
+      renderTable();
+    }
+
+    function deleteCheck(id) {
+      if (confirm('آیا از حذف این ردیف مطمئن هستید؟')) {
+        checks = checks.filter(c => c.id !== id);
+        localStorage.setItem('my_checks', JSON.stringify(checks));
+        renderTable();
+        checkAlerts();
+      }
+    }
 
     function editCheck(id) {
       const c = checks.find(item => item.id === id);
@@ -524,100 +1438,212 @@
       document.getElementById('dueDate').value = getTodayJalaliNormalized();
     }
 
-    function toggleTheme() { document.body.classList.toggle('dark-mode'); }
-
-    // 📥 خروجی JSON (برای پشتیبان‌گیری)
-    function exportBackup() {
-      if (checks.length === 0) { alert('اطلاعاتی برای بک‌اپ گیری وجود ندارد.'); return; }
-      const backupData = { checks, exportDate: new Date().toISOString() };
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
-      const a = document.createElement('a');
-      const todayStr = getTodayJalaliNormalized().replace(/\//g, '-');
-      a.setAttribute("href", dataStr);
-      a.setAttribute("download", `پشتیبان_چک_و_حواله_${todayStr}.json`);
-      document.body.appendChild(a); a.click(); a.remove();
+    function toggleTheme() {
+      document.body.classList.toggle('dark-mode');
     }
 
-    // 📤 بازیابی از JSON و آپلود به Firestore
-    async function importBackup(event) {
+    function exportBackup() {
+      if (checks.length === 0 && !localStorage.getItem('my_custom_logo')) {
+        alert('اطلاعاتی برای بک‌اپ گیری وجود ندارد.');
+        return;
+      }
+
+      const backupData = {
+        checks: checks,
+        logo: localStorage.getItem('my_custom_logo') || null,
+        exportDate: new Date().toISOString()
+      };
+
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData, null, 2));
+      const downloadAnchor = document.createElement('a');
+      const todayStr = getTodayJalaliNormalized().replace(/\//g, '-');
+      
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `پشتیبان_چک_و_حواله_${todayStr}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+    }
+
+    function importBackup(event) {
       const file = event.target.files[0];
       if (!file) return;
+
       const reader = new FileReader();
-      reader.onload = async function(e) {
+      reader.onload = function(e) {
         try {
           const importedData = JSON.parse(e.target.result);
-          const importedChecks = importedData.checks || importedData;
-          if (!Array.isArray(importedChecks)) { alert('فرمت فایل معتبر نیست.'); return; }
-          if (!confirm('اطلاعات فعلی با اطلاعات فایل جایگزین می‌شود. مطمئنید؟')) return;
+          
+          if (Array.isArray(importedData.checks) || Array.isArray(importedData)) {
+            if (confirm('آیا مطمئن هستید؟ با بازیابی اطلاعات جدید، اطلاعات سیستم جایگزین خواهد شد.')) {
+              checks = importedData.checks || importedData;
+              localStorage.setItem('my_checks', JSON.stringify(checks));
 
-          const { db, collection, addDoc } = window.__firebase;
-          for (const c of importedChecks) {
-            const data = { ...c };
-            delete data.id;
-            await addDoc(collection(db, "checks"), data);
+              if (importedData.logo) {
+                localStorage.setItem('my_custom_logo', importedData.logo);
+                displayLogo(importedData.logo);
+              }
+
+              renderTable();
+              checkAlerts();
+              alert('اطلاعات با موفقیت بازیابی شد.');
+            }
+          } else {
+            alert('فرمت فایل پشتیبان معتبر نیست.');
           }
-          alert('بازیابی با موفقیت انجام شد.');
         } catch (err) {
-          console.error(err);
-          alert('خطا در خواندن فایل!');
+          alert('خطا در خواندن فایل پشتیبان!');
         }
       };
       reader.readAsText(file);
       event.target.value = '';
     }
 
-    // 📊 خروجی اکسل (دقیقاً مثل قبل)
     function exportExcel() {
-      if (checks.length === 0) { alert('اطلاعاتی برای خروجی اکسل وجود ندارد.'); return; }
+      if (checks.length === 0) {
+        alert('اطلاعاتی برای خروجی اکسل وجود ندارد.');
+        return;
+      }
+
       const workbook = XLSX.utils.book_new();
+
       const categories = [
         { name: "اسناد در انتظار", status: "در انتظار" },
         { name: "اسناد پاس شده", status: "پاس شده" },
         { name: "اسناد برگشتی", status: "برگشتی" }
       ];
-      const borderThin = { top:{style:"thin",color:{rgb:"000000"}}, bottom:{style:"thin",color:{rgb:"000000"}}, left:{style:"thin",color:{rgb:"000000"}}, right:{style:"thin",color:{rgb:"000000"}} };
-      const headerStyle = { font:{name:"Tahoma",sz:11,bold:true,color:{rgb:"FFFFFF"}}, fill:{fgColor:{rgb:"4F46E5"}}, alignment:{horizontal:"center",vertical:"center"}, border:borderThin };
-      const cellStyleCenter = { font:{name:"Tahoma",sz:10}, alignment:{horizontal:"center",vertical:"center"}, border:borderThin };
-      const cellStyleRight = { font:{name:"Tahoma",sz:10}, alignment:{horizontal:"right",vertical:"center"}, border:borderThin };
-      const totalRowStyle = { font:{name:"Tahoma",sz:11,bold:true,color:{rgb:"000000"}}, fill:{fgColor:{rgb:"E2E8F0"}}, alignment:{horizontal:"center",vertical:"center"}, border:borderThin };
+
+      const borderThin = {
+        top: { style: "thin", color: { rgb: "000000" } },
+        bottom: { style: "thin", color: { rgb: "000000" } },
+        left: { style: "thin", color: { rgb: "000000" } },
+        right: { style: "thin", color: { rgb: "000000" } }
+      };
+
+      const headerStyle = {
+        font: { name: "Tahoma", sz: 11, bold: true, color: { rgb: "FFFFFF" } },
+        fill: { fgColor: { rgb: "4F46E5" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: borderThin
+      };
+
+      const cellStyleCenter = {
+        font: { name: "Tahoma", sz: 10 },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: borderThin
+      };
+
+      const cellStyleRight = {
+        font: { name: "Tahoma", sz: 10 },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: borderThin
+      };
+
+      const totalRowStyle = {
+        font: { name: "Tahoma", sz: 11, bold: true, color: { rgb: "000000" } },
+        fill: { fgColor: { rgb: "E2E8F0" } },
+        alignment: { horizontal: "center", vertical: "center" },
+        border: borderThin
+      };
 
       categories.forEach(cat => {
         const catChecks = checks.filter(c => c.status === cat.status);
-        const excelData = [["ردیف","نام طرف حساب","بانک","نوع سند","شماره سریال","شناسه صیادی","مبلغ (ریال)","تاریخ سررسید","تحویل به بانک","وضعیت"]];
+        const excelData = [];
+
+        excelData.push([
+          "ردیف",
+          "نام طرف حساب",
+          "بانک",
+          "نوع سند",
+          "شماره سریال",
+          "شناسه صیادی",
+          "مبلغ (ریال)",
+          "تاریخ سررسید",
+          "تحویل به بانک",
+          "وضعیت"
+        ]);
+
         let totalAmount = 0;
+
         catChecks.forEach((c, index) => {
           const amountVal = Number(c.amount) || 0;
           totalAmount += amountVal;
+
           excelData.push([
-            toPersianDigits(index + 1), c.issuer || '', c.bank || '', c.type || 'چک',
+            toPersianDigits(index + 1),
+            c.issuer || '',
+            c.bank || '',
+            c.type || 'چک',
             toPersianDigits(c.serial || ''),
             c.sayadi ? toPersianDigits(c.sayadi) : (c.type === 'حواله' ? '— (حواله)' : '-'),
-            amountVal, toPersianDigits(c.dueDate || ''), c.isDelivered || 'خیر', c.status || ''
+            amountVal,
+            toPersianDigits(c.dueDate || ''),
+            c.isDelivered || 'خیر',
+            c.status || ''
           ]);
         });
-        excelData.push(["جمع کل","","","","","",totalAmount,"","",""]);
+
+        excelData.push([
+          "جمع کل",
+          "",
+          "",
+          "",
+          "",
+          "",
+          totalAmount,
+          "",
+          "",
+          ""
+        ]);
 
         const worksheet = XLSX.utils.aoa_to_sheet(excelData);
         const range = XLSX.utils.decode_range(worksheet['!ref']);
+
         for (let R = range.s.r; R <= range.e.r; ++R) {
           for (let C = range.s.c; C <= range.e.c; ++C) {
             const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
             if (!worksheet[cellAddress]) continue;
-            if (R === 0) worksheet[cellAddress].s = headerStyle;
-            else if (R === range.e.r) {
+
+            if (R === 0) {
+              worksheet[cellAddress].s = headerStyle;
+            } else if (R === range.e.r) {
               worksheet[cellAddress].s = totalRowStyle;
               if (C === 6) worksheet[cellAddress].z = '#,##0';
             } else {
-              worksheet[cellAddress].s = (C === 1) ? cellStyleRight : cellStyleCenter;
-              if (C === 6 && typeof worksheet[cellAddress].v === 'number') worksheet[cellAddress].z = '#,##0';
+              if (C === 1) {
+                worksheet[cellAddress].s = cellStyleRight;
+              } else {
+                worksheet[cellAddress].s = cellStyleCenter;
+              }
+
+              if (C === 6 && typeof worksheet[cellAddress].v === 'number') {
+                worksheet[cellAddress].z = '#,##0';
+              }
             }
           }
         }
-        worksheet['!merges'] = [{ s:{r:range.e.r,c:0}, e:{r:range.e.r,c:5} }];
+
+        worksheet['!merges'] = [
+          { s: { r: range.e.r, c: 0 }, e: { r: range.e.r, c: 5 } }
+        ];
+
         worksheet['!views'] = [{ RTL: true }];
-        worksheet['!cols'] = [{wch:8},{wch:22},{wch:16},{wch:12},{wch:16},{wch:22},{wch:18},{wch:15},{wch:15},{wch:15}];
+        worksheet['!cols'] = [
+          { wch: 8 },
+          { wch: 22 },
+          { wch: 16 },
+          { wch: 12 },
+          { wch: 16 },
+          { wch: 22 },
+          { wch: 18 },
+          { wch: 15 },
+          { wch: 15 },
+          { wch: 15 }
+        ];
+
         XLSX.utils.book_append_sheet(workbook, worksheet, cat.name);
       });
+
       const todayStr = getTodayJalaliNormalized().replace(/\//g, '-');
       XLSX.writeFile(workbook, `مدیریت_چک_و_حواله_${todayStr}.xlsx`);
     }
@@ -632,7 +1658,9 @@
       }
     }
 
-    function filterToday() { switchTab('در انتظار'); }
+    function filterToday() {
+      switchTab('در انتظار');
+    }
   </script>
 </body>
 </html>
