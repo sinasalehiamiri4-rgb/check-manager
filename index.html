@@ -1025,6 +1025,52 @@
     let checks = [];
     let currentTab = 'در انتظار';
 
+    // اسکریپت تزریق خودکار نشانگر اتصال به فضای ابری بالای هدر صفحه
+    document.addEventListener("DOMContentLoaded", function() {
+      const headerActions = document.querySelector('header .header-actions');
+      if (!headerActions) return;
+
+      const cloudBadge = document.createElement('div');
+      cloudBadge.id = 'cloudStatusBadge';
+      cloudBadge.innerHTML = `
+        <span style="
+          display: inline-block;
+          width: 8px;
+          height: 8px;
+          background-color: #10b981;
+          border-radius: 50%;
+          box-shadow: 0 0 8px #10b981;
+          margin-left: 5px;
+          animation: pulseCloud 2s infinite;
+        "></span>
+        <span>متصل به فضای ابری</span>
+      `;
+      
+      cloudBadge.style.cssText = `
+        display: flex;
+        align-items: center;
+        background: var(--primary-light, #eef2ff);
+        border: 1px solid var(--border-color, #e2e8f0);
+        padding: 6px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--primary, #4f46e5);
+        gap: 4px;
+      `;
+
+      const styleSheet = document.createElement("style");
+      styleSheet.innerText = `
+        @keyframes pulseCloud {
+          0% { transform: scale(0.95); opacity: 0.8; }
+          50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px #10b981; }
+          100% { transform: scale(0.95); opacity: 0.8; }
+        }
+      `;
+      document.head.appendChild(styleSheet);
+      headerActions.insertBefore(cloudBadge, headerActions.firstChild);
+    });
+
     async function fetchChecksFromFirebase() {
       if (!window.db) {
         setTimeout(fetchChecksFromFirebase, 300);
@@ -1260,7 +1306,6 @@
       };
 
       try {
-        // اگر سریال تغییر کرده یا رکورد جدید است، بررسی می‌کنیم که آیا تکراری است یا خیر
         if (!originalSerial || originalSerial !== serial) {
           const docRef = window.doc(window.db, "checks", serial);
           const docSnap = await window.getDoc(docRef);
@@ -1268,13 +1313,11 @@
             alert("خطا: شماره سریال وارد شده تکراری است و قبلاً ثبت شده است!");
             return;
           }
-          // اگر سریال تغییر کرده بود، رکورد قبلی را پاک می‌کنیم
           if (originalSerial) {
             await window.deleteDoc(window.doc(window.db, "checks", originalSerial));
           }
         }
 
-        // ذخیره اطلاعات با کلید اصلی شماره سریال در فایربیس
         await window.setDoc(window.doc(window.db, "checks", serial), checkData);
         
         await fetchChecksFromFirebase();
@@ -1508,7 +1551,7 @@
 
     function exportBackup() {
       if (checks.length === 0 && !localStorage.getItem('my_custom_logo')) {
-        alert('اطلاعاتی برای بک‌اپ گیری وجود ندارد.');
+        alert('اطلاعاتی برای بک‌‌اپ گیری وجود ندارد.');
         return;
       }
 
