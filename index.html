@@ -1031,6 +1031,7 @@
       </div>
       <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
         <button class="btn btn-outline" id="modalEditBtn"><i class="fa-solid fa-pen" style="color:var(--primary)"></i> ویرایش</button>
+        <button class="btn btn-outline" id="modalDeleteBtn" style="border-color:var(--danger); color:var(--danger);"><i class="fa-solid fa-trash" style="color:var(--danger)"></i> حذف</button>
         <button class="btn btn-primary" onclick="closeModal()">بستن</button>
       </div>
     </div>
@@ -1564,6 +1565,19 @@
       document.getElementById('modalEditBtn').onclick = () => {
         closeModal();
         editCheck(c.serial);
+      };
+
+      document.getElementById('modalDeleteBtn').onclick = async () => {
+        if (confirm('آیا از حذف این ردیف مطمئن هستید؟')) {
+          try {
+            await window.deleteDoc(window.doc(window.db, "checks", c.serial));
+            closeModal();
+            await fetchChecksFromFirebase();
+            checkAlerts();
+          } catch (error) {
+            console.error("خطا در حذف سند: ", error);
+          }
+        }
       };
 
       document.getElementById('detailModal').classList.add('show');
