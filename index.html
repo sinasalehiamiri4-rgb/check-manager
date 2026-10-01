@@ -341,6 +341,73 @@
       color: var(--primary);
     }
 
+    /* منوی سیستم (تب جمع‌شونده‌ی دکمه‌های هدر) */
+    .sys-menu {
+      position: relative;
+    }
+
+    .sys-menu-btn .sys-chevron {
+      font-size: 10px;
+      transition: transform 0.2s;
+    }
+
+    .sys-menu.open .sys-chevron {
+      transform: rotate(180deg);
+    }
+
+    .sys-menu.open .sys-menu-btn {
+      background: var(--primary-light);
+      color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .sys-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 0;
+      min-width: 210px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      padding: 6px;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 1000;
+    }
+
+    .sys-menu.open .sys-dropdown {
+      display: flex;
+    }
+
+    .sys-dropdown .btn {
+      width: 100%;
+      justify-content: flex-start;
+      padding: 10px 12px;
+      font-size: 12.5px;
+      border: none;
+      background: transparent;
+      color: var(--text-main);
+      box-shadow: none;
+    }
+
+    .sys-dropdown .btn:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .sys-dropdown .btn i {
+      width: 16px;
+      text-align: center;
+    }
+
+    .sys-dropdown .sys-sep {
+      height: 1px;
+      background: var(--border-color);
+      margin: 4px 6px;
+    }
+
     .tabs-navigation {
       display: flex;
       gap: 6px;
@@ -815,13 +882,20 @@
       </div>
 
       <div class="header-actions">
-        <button class="btn btn-outline" onclick="toggleFontSize()" title="تغییر سایز فونت"><i class="fa-solid fa-font"></i> <span id="fontSizeBtnText">فونت بزرگ</span></button>
-        <button class="btn btn-outline" onclick="window.print()"><i class="fa-solid fa-print"></i> <span>چاپ</span></button>
-        <button class="btn btn-outline" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span>تم</span></button>
-        <button class="btn btn-outline" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>بک‌اپ</span></button>
-        <button class="btn btn-outline" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> <span>بازیابی</span></button>
-        <button class="btn btn-outline notif-btn" onclick="enableNotifications()" title="اعلان سررسید"><i class="fa-solid fa-bell"></i> <span class="notif-btn-text">اعلان</span></button>
-        <button class="btn btn-success" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> <span>اکسل</span></button>
+        <div class="sys-menu" id="sysMenu">
+          <button class="btn btn-outline sys-menu-btn" onclick="toggleSysMenu(event)" title="تنظیمات و ابزارهای سیستم"><i class="fa-solid fa-gear"></i> <span>سیستم</span> <i class="fa-solid fa-chevron-down sys-chevron"></i></button>
+          <div class="sys-dropdown" id="sysDropdown">
+            <button class="btn" onclick="toggleFontSize()" title="تغییر سایز فونت"><i class="fa-solid fa-font"></i> <span id="fontSizeBtnText">فونت بزرگ</span></button>
+            <button class="btn" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span>تغییر تم</span></button>
+            <button class="btn notif-btn" onclick="enableNotifications()" title="اعلان سررسید"><i class="fa-solid fa-bell"></i> <span class="notif-btn-text">اعلان</span></button>
+            <div class="sys-sep"></div>
+            <button class="btn" onclick="window.print()"><i class="fa-solid fa-print"></i> <span>چاپ</span></button>
+            <button class="btn" onclick="exportExcel()"><i class="fa-solid fa-file-excel" style="color:var(--success)"></i> <span>خروجی اکسل</span></button>
+            <div class="sys-sep"></div>
+            <button class="btn" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>دانلود بک‌اپ</span></button>
+            <button class="btn" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> <span>بازیابی بک‌اپ</span></button>
+          </div>
+        </div>
       </div>
 
       <div class="mobile-menu-wrapper">
@@ -1181,6 +1255,19 @@
         dropdown.classList.remove('show');
       }
     });
+
+    function toggleSysMenu(e) {
+      e.stopPropagation();
+      document.getElementById('sysMenu').classList.toggle('open');
+    }
+
+    function closeSysMenu() {
+      const m = document.getElementById('sysMenu');
+      if (m) m.classList.remove('open');
+    }
+
+    document.addEventListener('click', closeSysMenu);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSysMenu(); });
 
     function toPersianDigits(str) {
       if (str === null || str === undefined) return '';
@@ -1877,7 +1964,7 @@
       }
       document.querySelectorAll('.notif-btn').forEach(btn => {
         const t = btn.querySelector('.notif-btn-text');
-        if (t) t.innerText = btn.closest('.mobile-dropdown') ? mobileLabel : label;
+        if (t) t.innerText = btn.closest('.mobile-dropdown, .sys-dropdown') ? mobileLabel : label;
       });
     }
 
