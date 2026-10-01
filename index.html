@@ -4,27 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="manifest" id="appManifest">
+  <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAADnElEQVR4nO3dMXITMRQG4JVnaypXHAhKOABMOIJNSA5BAUeIk1yANgeCBhp8AoowzNCB/420kr9v3Gezennv6UnjlFcvvk5wqk3rB6BvAojIPJXWj0DPZvFDQgkjooQRkYGI6IGIKGFElDAi81SkIE6nByKihBHRRBORgYjogYgoYUSUMCICiMhsjkhinjRBBDTRRPRARMyBiChhRJQwIkoYESWMiBJGRAARmYuzDAIyEBFNNBEZiIg5EBEljIgSRkQAEXGllYgMRMSdaCJ2YUTMgYjIQEQ00UQEEBFzICIyEBEBREQJI2ISTUQJI2KQSMRRBhEZiIgeiIgAImIOREQGIiKAiKzrPxbe3m9bP0IfLt7+aP0Iv5WLN99bP8N0EDcnebeCMGofQKIn1DaMNlOZGn5ET+5wv224gi2b6MOd6FlGwze5KWVq8hE9yzrcbZusY5sMdHMrepbX5K2aAxFxGj+W6qu5qd+53xzUr6dyc9hWXk13osdTdUGVsOHUXVBXWkdTeUHtwogoYcOpXMKq/rT/8frlt9aPUMmXh+etH+F0rrSOpvKC6oGICCAimujhVJ8DiaChVF5QJYzIektY15vbluzC6IizsNFUXtD1ljBOpITRERloOO4DkXAfiJ6s69s5WEDdBXUf6EmczxRUDzQacyAy5kB0xJXW0bjSSk/Wuws7n41M1zTRw3GUQcJRBj1xlDGcugsqAxHRA43GUQYZg0Q6st4MtKrrHD1NNc2BSJgD0ZP1ljBOpImmI77eZTSVF1QJG45vaX3U0875jOmBiLgTPRp3oumJJno4MhAdcRY2GveByFSfA4mgwdS9E135f7SWadpdHmv+hmdld3msvJpK2Fiqr2abXdjugyS0vCZv1TaeyKaUqclnfyUJLWl/dWyyji0zkBhaSsM3uam9B/v7s78WQ6n99bHhCpbd1c/Wb2D6/PFZ60fo0hr+/Mp+BQH0xyeR9G/eryB0HpU1RDH9so0nIoCIuNJKRAYiIoCIOI0n4korERmIiB6IiDvRRMyBiChhRAQQESWMiAxERAARMUgk4iiDiAxExCSaiCaaiDkQERmIiAAiYhdGxByIiBJGRAkjIgMRmYtBEAEZiIgAIqKJJmIOREQJI6KEEVHCiChhRJQwIu5EE3GllYgeiIgAIqKJJmIOREQJI6KEEZGBiOiBiMyTSSIBJYyIJpqIHoiIEkZECSMiAxHRAxFRwogoYUR+AUk/S/iQjc/dAAAAAElFTkSuQmCC">
   <script>
     // مانیفست و آیکون داخل همین فایل ساخته می‌شود (بدون نیاز به فایل جدا)
     (function () {
-      var iconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#4f46e5'/><stop offset='1' stop-color='#818cf8'/></linearGradient></defs><rect width='512' height='512' rx='96' fill='url(#g)'/><text x='50%' y='54%' font-size='280' text-anchor='middle' dominant-baseline='middle'>💰</text></svg>";
-      var iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
       var manifest = {
-        name: 'سیستم مدیریت چک و حواله',
-        short_name: 'مدیریت چک',
+        name: 'سیستم مدیریت چک و حواله', short_name: 'مدیریت چک',
         start_url: location.origin + location.pathname,
         scope: location.origin + location.pathname.replace(/[^\/]*$/, ''),
-        display: 'standalone',
-        dir: 'rtl',
-        lang: 'fa',
-        background_color: '#f4f6f9',
-        theme_color: '#4f46e5',
-        icons: [{ src: iconUrl, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+        display: 'standalone', dir: 'rtl', lang: 'fa',
+        background_color: '#f4f6f9', theme_color: '#4f46e5',
+        icons: [
+          { src: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAADnElEQVR4nO3dMXITMRQG4JVnaypXHAhKOABMOIJNSA5BAUeIk1yANgeCBhp8AoowzNCB/420kr9v3Gezennv6UnjlFcvvk5wqk3rB6BvAojIPJXWj0DPZvFDQgkjooQRkYGI6IGIKGFElDAi81SkIE6nByKihBHRRBORgYjogYgoYUSUMCICiMhsjkhinjRBBDTRRPRARMyBiChhRJQwIkoYESWMiBJGRAARmYuzDAIyEBFNNBEZiIg5EBEljIgSRkQAEXGllYgMRMSdaCJ2YUTMgYjIQEQ00UQEEBFzICIyEBEBREQJI2ISTUQJI2KQSMRRBhEZiIgeiIgAImIOREQGIiKAiKzrPxbe3m9bP0IfLt7+aP0Iv5WLN99bP8N0EDcnebeCMGofQKIn1DaMNlOZGn5ET+5wv224gi2b6MOd6FlGwze5KWVq8hE9yzrcbZusY5sMdHMrepbX5K2aAxFxGj+W6qu5qd+53xzUr6dyc9hWXk13osdTdUGVsOHUXVBXWkdTeUHtwogoYcOpXMKq/rT/8frlt9aPUMmXh+etH+F0rrSOpvKC6oGICCAimujhVJ8DiaChVF5QJYzIektY15vbluzC6IizsNFUXtD1ljBOpITRERloOO4DkXAfiJ6s69s5WEDdBXUf6EmczxRUDzQacyAy5kB0xJXW0bjSSk/Wuws7n41M1zTRw3GUQcJRBj1xlDGcugsqAxHRA43GUQYZg0Q6st4MtKrrHD1NNc2BSJgD0ZP1ljBOpImmI77eZTSVF1QJG45vaX3U0875jOmBiLgTPRp3oumJJno4MhAdcRY2GveByFSfA4mgwdS9E135f7SWadpdHmv+hmdld3msvJpK2Fiqr2abXdjugyS0vCZv1TaeyKaUqclnfyUJLWl/dWyyji0zkBhaSsM3uam9B/v7s78WQ6n99bHhCpbd1c/Wb2D6/PFZ60fo0hr+/Mp+BQH0xyeR9G/eryB0HpU1RDH9so0nIoCIuNJKRAYiIoCIOI0n4korERmIiB6IiDvRRMyBiChhRAQQESWMiAxERAARMUgk4iiDiAxExCSaiCaaiDkQERmIiAAiYhdGxByIiBJGRAkjIgMRmYtBEAEZiIgAIqKJJmIOREQJI6KEEVHCiChhRJQwIu5EE3GllYgeiIgAIqKJJmIOREQJI6KEEZGBiOiBiMyTSSIBJYyIJpqIHoiIEkZECSMiAxHRAxFRwogoYUR+AUk/S/iQjc/dAAAAAElFTkSuQmCC', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: 'data:image/png;base64,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', sizes: '512x512', type: 'image/png', purpose: 'any' }
+        ]
       };
       var blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
       document.getElementById('appManifest').href = URL.createObjectURL(blob);
     })();
   </script>
+  <meta name="apple-mobile-web-app-title" content="مدیریت چک">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#4f46e5">
   <title>سیستم مدیریت چک و حواله</title>
@@ -847,9 +847,40 @@
     }
 
     .print-header { display: none; }
+  
+    .lk-ov{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;background:var(--bg-main);padding:20px}
+    .lk-box{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;text-align:center}
+    .lk-logo{width:64px;height:64px;margin:0 auto;border-radius:18px;background:linear-gradient(135deg,var(--primary),#818cf8);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center}
+    .lk-err{color:var(--danger);font-size:12px;min-height:16px}
+    .pnl-ov{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:12px}
+    .pnl{background:var(--card-bg);color:var(--text-main);border:1px solid var(--border-color);border-radius:18px;max-width:560px;width:100%;max-height:85vh;overflow:auto;padding:16px}
+    .pnl-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .fc-row{border-bottom:1px solid var(--border-color)}
+    .fc-row summary,.fc-it{display:flex;align-items:center;gap:8px;padding:9px 2px;font-size:12.5px}
+    .fc-row summary{cursor:pointer;list-style:none}
+    .fc-it{justify-content:space-between;border-bottom:1px dashed var(--border-color)}
+    .fc-l{width:90px;font-weight:700}
+    .fc-bar{flex:1;height:10px;background:var(--primary-light);border-radius:6px;overflow:hidden}
+    .fc-bar i{display:block;height:100%;background:var(--primary);border-radius:6px}
+    .fc-s{font-weight:700;min-width:90px;text-align:left}
+    .fc-c{color:var(--text-muted);min-width:20px}
+    .x-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:6000;background:#1e293b;color:#fff;padding:10px 16px;border-radius:12px;display:flex;gap:14px;align-items:center;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    .x-toast button{background:none;border:none;color:#a5b4fc;font-weight:700;cursor:pointer;font-family:inherit}
+    @media print{.lk-ov,.pnl-ov,.x-toast{display:none!important}}
   </style>
 </head>
 <body>
+  <div id="lockScreen" class="lk-ov"><div class="lk-box">
+    <div class="lk-logo"><i class="fa-solid fa-lock"></i></div>
+    <h2 id="lkTitle">قفل برنامه</h2><p id="lkSub" style="color:var(--text-muted);font-size:13px"></p>
+    <input type="password" id="lkPass" class="form-control" placeholder="رمز عبور" autocomplete="off" onkeydown="if(event.key==='Enter')lkSubmit()">
+    <input type="password" id="lkPass2" class="form-control" placeholder="تکرار رمز عبور" autocomplete="off" style="display:none" onkeydown="if(event.key==='Enter')lkSubmit()">
+    <div id="lkErr" class="lk-err"></div>
+    <button class="btn btn-primary" id="lkBtn" onclick="lkSubmit()" style="width:100%">ورود</button>
+    <button class="btn btn-outline" id="lkBio" onclick="lkBioUnlock()" style="width:100%;display:none"><i class="fa-solid fa-fingerprint"></i> ورود با Face ID / اثر انگشت</button>
+    <button class="btn btn-outline" id="lkCancel" onclick="lkHideOv()" style="width:100%;display:none">انصراف</button>
+  </div></div>
+
 
   <div class="container">
     <div class="print-header">
@@ -894,6 +925,9 @@
             <div class="sys-sep"></div>
             <button class="btn" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>دانلود بک‌اپ</span></button>
             <button class="btn" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> <span>بازیابی بک‌اپ</span></button>
+            <button class="btn" onclick="showBackups()"><i class="fa-solid fa-cloud-arrow-down"></i> <span>بک‌اپ‌های خودکار</span></button>
+            <div class="sys-sep"></div>
+            <button class="btn" onclick="showLockPanel()"><i class="fa-solid fa-lock"></i> <span>قفل برنامه و Face ID</span></button>
           </div>
         </div>
       </div>
@@ -909,6 +943,8 @@
           <button class="btn" onclick="exportBackup(); closeMobileMenu();"><i class="fa-solid fa-download"></i> دانلود بک‌اپ</button>
           <button class="btn" onclick="document.getElementById('backupFileInput').click(); closeMobileMenu();"><i class="fa-solid fa-upload"></i> بازیابی بک‌اپ</button>
           <button class="btn notif-btn" onclick="enableNotifications(); closeMobileMenu();"><i class="fa-solid fa-bell"></i> <span class="notif-btn-text">فعال‌سازی اعلان سررسید</span></button>
+          <button class="btn" onclick="showBackups(); closeMobileMenu();"><i class="fa-solid fa-cloud-arrow-down"></i> بک‌اپ‌های خودکار</button>
+          <button class="btn" onclick="showLockPanel(); closeMobileMenu();"><i class="fa-solid fa-lock"></i> قفل برنامه و Face ID</button>
           <button class="btn" onclick="toggleTheme(); closeMobileMenu();"><i class="fa-solid fa-moon"></i> تغییر تم</button>
         </div>
       </div>
@@ -1053,6 +1089,7 @@
         <i class="fa-solid fa-circle-xmark" style="color: var(--danger);"></i> برگشتی
         <span class="badge-count" id="countBounced">۰</span>
       </button>
+      <button class="tab-btn" onclick="showForecast()"><i class="fa-solid fa-chart-column" style="color: var(--primary);"></i> پیش‌بینی سررسید</button>
     </div>
 
     <div class="card">
@@ -1213,6 +1250,7 @@
         
         // در صورت موفقیت در ارتباط با دیتابیس
         updateCloudStatus(true, 'متصل به فضای ابری');
+        if (!window._ab && typeof autoBackup === 'function') { window._ab = 1; autoBackup(); }
       } catch (error) {
         console.error("خطا در دریافت اطلاعات از فایربیس: ", error);
         // در صورت بروز خطا در ارتباط با دیتابیس
@@ -1688,14 +1726,20 @@
     }
 
     async function deleteCheck(serial) {
-      if (confirm('آیا از حذف این ردیف مطمئن هستید؟')) {
-        try {
-          await window.deleteDoc(window.doc(window.db, "checks", serial));
+      if (!confirm('آیا از حذف این ردیف مطمئن هستید؟')) return;
+      const old = checks.find(c => c.serial === serial);
+      try {
+        await window.deleteDoc(window.doc(window.db, "checks", serial));
+        await fetchChecksFromFirebase();
+        checkAlerts();
+        if (old) xToast('ردیف حذف شد', 'بازگردانی', async () => {
+          const { serial: sr, ...rest } = old;
+          await window.setDoc(window.doc(window.db, "checks", sr), rest);
           await fetchChecksFromFirebase();
           checkAlerts();
-        } catch (error) {
-          console.error("خطا در حذف سند: ", error);
-        }
+        });
+      } catch (error) {
+        console.error("خطا در حذف سند: ", error);
       }
     }
 
@@ -2062,6 +2106,162 @@
     function filterToday() {
       switchTab('در انتظار');
     }
+  </script>
+
+  <script>
+    const xEl = id => document.getElementById(id);
+    const xEsc = v => String(v == null ? '' : v).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+    const xFa = n => toPersianDigits(Math.round(+n || 0).toLocaleString('en-US'));
+
+    function xPanel(title, html) {
+      closePanel();
+      const o = document.createElement('div');
+      o.className = 'pnl-ov'; o.id = 'pnlOv';
+      o.innerHTML = '<div class="pnl"><div class="pnl-h"><b>' + title + '</b><button class="btn btn-outline" style="padding:4px 10px" onclick="closePanel()">✕</button></div><div id="pnlBody">' + html + '</div></div>';
+      o.addEventListener('click', e => { if (e.target === o) closePanel(); });
+      document.body.appendChild(o);
+    }
+    function closePanel() { const o = xEl('pnlOv'); if (o) o.remove(); }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePanel(); });
+
+    function xToast(msg, label, fn) {
+      const old = xEl('xToast'); if (old) old.remove();
+      const t = document.createElement('div');
+      t.id = 'xToast'; t.className = 'x-toast';
+      t.innerHTML = '<span>' + msg + '</span>';
+      if (fn) { const b = document.createElement('button'); b.textContent = label; b.onclick = () => { t.remove(); fn(); }; t.appendChild(b); }
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 8000);
+    }
+
+    /* ===== پیش‌بینی سررسیدها ===== */
+    function showForecast() {
+      const MN = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+      const pend = checks.filter(c => c.status === 'در انتظار' && c.dueDate).map(c => ({ ...c, dueDate: toEnglishDigits(c.dueDate) }));
+      if (!pend.length) return xPanel('پیش‌بینی سررسیدها', '<p>سندی در انتظار پاس وجود ندارد.</p>');
+      const g = {};
+      pend.forEach(c => { const k = isDueOrPast(c.dueDate) ? '0' : c.dueDate.slice(0, 7); (g[k] = g[k] || []).push(c); });
+      const keys = Object.keys(g).sort();
+      const sum = k => g[k].reduce((a, c) => a + (+c.amount || 0), 0);
+      const max = Math.max(...keys.map(sum)) || 1;
+      let h = '<p style="margin-bottom:10px;color:var(--text-muted)">جمع کل در انتظار: <b style="color:var(--text-main)">' + xFa(keys.reduce((a, k) => a + sum(k), 0)) + '</b></p>';
+      keys.forEach(k => {
+        const lbl = k === '0' ? '⚠️ سررسید شده' : MN[+k.slice(5, 7) - 1] + ' ' + toPersianDigits(k.slice(0, 4));
+        h += '<details class="fc-row"><summary><span class="fc-l">' + lbl + '</span><span class="fc-bar"><i style="width:' + Math.max(4, sum(k) / max * 100) + '%' + (k === '0' ? ';background:var(--danger)' : '') + '"></i></span><span class="fc-s">' + xFa(sum(k)) + '</span><span class="fc-c">' + toPersianDigits(g[k].length) + '</span></summary>'
+          + g[k].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map(c => '<div class="fc-it"><span>' + toPersianDigits(c.dueDate) + '</span><span>' + xEsc(c.issuer) + ' · ' + xEsc(c.bank) + '</span><b>' + xFa(c.amount) + '</b></div>').join('')
+          + '</details>';
+      });
+      xPanel('پیش‌بینی سررسیدها', h);
+    }
+
+    /* ===== بک‌اپ خودکار (روزانه، در فضای ابری) ===== */
+    async function autoBackup() {
+      try {
+        const d = new Date().toISOString().slice(0, 10);
+        if (!checks.length || localStorage.last_auto_backup === d) return;
+        await window.setDoc(window.doc(window.db, 'backups', 'b_' + d), { date: d, count: checks.length, data: JSON.stringify(checks) });
+        localStorage.last_auto_backup = d;
+        const all = await window.getDocs(window.collection(window.db, 'backups'));
+        const ids = []; all.forEach(sn => ids.push(sn.id)); ids.sort();
+        for (const id of ids.slice(0, -10)) await window.deleteDoc(window.doc(window.db, 'backups', id));
+      } catch (e) { console.warn('بک‌اپ خودکار ناموفق:', e); }
+    }
+    async function showBackups() {
+      xPanel('بک‌اپ‌های خودکار', '<p>در حال دریافت...</p>');
+      try {
+        const all = await window.getDocs(window.collection(window.db, 'backups'));
+        const rows = []; all.forEach(sn => rows.push({ id: sn.id, ...sn.data() }));
+        rows.sort((a, b) => b.id.localeCompare(a.id));
+        window._bk = rows;
+        const b = xEl('pnlBody'); if (!b) return;
+        b.innerHTML = (rows.length ? '<p style="color:var(--text-muted);margin-bottom:8px">هر روز یک نسخه در فضای ابری ذخیره می‌شود (۱۰ نسخه‌ی آخر).</p>' : '<p>هنوز بک‌اپی ثبت نشده است.</p>')
+          + rows.map(r => '<div class="fc-it"><span>' + toPersianDigits(r.date) + '</span><span>' + toPersianDigits(r.count) + ' سند</span><button class="btn btn-outline" onclick="restoreBackup(\'' + r.id + '\')">بازیابی</button></div>').join('');
+      } catch (e) { const b = xEl('pnlBody'); if (b) b.innerHTML = '<p>خطا در دریافت بک‌اپ‌ها (دسترسی collection «backups» را در Firestore Rules باز کنید).</p>'; }
+    }
+    async function restoreBackup(id) {
+      const r = (window._bk || []).find(x => x.id === id);
+      if (!r || !confirm('اسناد این نسخه بازیابی شوند؟ اسناد فعلی حذف نمی‌شوند و فقط موارد هم‌سریال بازنویسی می‌شوند.')) return;
+      try {
+        for (const c of JSON.parse(r.data)) { const { serial, ...rest } = c; await window.setDoc(window.doc(window.db, 'checks', serial), rest); }
+        closePanel(); await fetchChecksFromFirebase(); xToast('بازیابی انجام شد');
+      } catch (e) { xToast('خطا در بازیابی'); }
+    }
+
+    /* ===== قفل برنامه (رمز + Face ID / اثر انگشت) ===== */
+    const LK = { h: 'lock_hash', s: 'lock_salt', b: 'lock_bio' };
+    let lkMode = 'unlock', lkHidAt = 0;
+    const lkB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
+    const lkFrom = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
+    async function lkHash(p) { return lkB64(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(localStorage[LK.s] + p))); }
+
+    function lkShow(mode) {
+      lkMode = mode;
+      const setup = mode === 'setup';
+      xEl('lockScreen').style.display = 'flex';
+      xEl('lkTitle').textContent = setup ? 'تعیین رمز عبور' : 'قفل برنامه';
+      xEl('lkSub').textContent = setup ? 'حداقل ۴ کاراکتر' : 'برای ورود رمز را وارد کنید';
+      xEl('lkBtn').textContent = setup ? 'ذخیره رمز' : 'ورود';
+      xEl('lkPass2').style.display = setup ? '' : 'none';
+      xEl('lkPass').value = xEl('lkPass2').value = ''; xEl('lkErr').textContent = '';
+      xEl('lkCancel').style.display = setup && localStorage[LK.h] ? '' : 'none';
+      xEl('lkBio').style.display = !setup && localStorage[LK.b] ? '' : 'none';
+      document.body.style.overflow = 'hidden';
+      if (!setup && localStorage[LK.b]) lkBioUnlock(); else setTimeout(() => xEl('lkPass').focus(), 50);
+    }
+    function lkHideOv() { xEl('lockScreen').style.display = 'none'; document.body.style.overflow = ''; }
+
+    async function lkSubmit() {
+      const p = xEl('lkPass').value;
+      if (lkMode === 'setup') {
+        if (p.length < 4) { xEl('lkErr').textContent = 'رمز باید حداقل ۴ کاراکتر باشد'; return; }
+        if (p !== xEl('lkPass2').value) { xEl('lkErr').textContent = 'تکرار رمز مطابقت ندارد'; return; }
+        localStorage[LK.s] = lkB64(crypto.getRandomValues(new Uint8Array(16)));
+        localStorage[LK.h] = await lkHash(p);
+        lkHideOv();
+        if (!localStorage[LK.b] && window.PublicKeyCredential && confirm('Face ID / اثر انگشت هم برای ورود فعال شود؟')) lkEnableBio();
+      } else if (await lkHash(p) === localStorage[LK.h]) {
+        lkHideOv();
+      } else {
+        xEl('lkErr').textContent = 'رمز اشتباه است'; xEl('lkPass').value = '';
+      }
+    }
+
+    async function lkEnableBio() {
+      try {
+        const c = await navigator.credentials.create({ publicKey: {
+          challenge: crypto.getRandomValues(new Uint8Array(32)),
+          rp: { name: 'مدیریت چک' },
+          user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'user', displayName: 'کاربر' },
+          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          timeout: 60000 } });
+        localStorage[LK.b] = lkB64(c.rawId); xToast('Face ID / اثر انگشت فعال شد');
+      } catch (e) { xToast('فعال‌سازی ناموفق بود (نیاز به HTTPS و پشتیبانی دستگاه)'); }
+    }
+    async function lkBioUnlock() {
+      try {
+        await navigator.credentials.get({ publicKey: {
+          challenge: crypto.getRandomValues(new Uint8Array(32)),
+          allowCredentials: [{ type: 'public-key', id: lkFrom(localStorage[LK.b]), transports: ['internal'] }],
+          userVerification: 'required', timeout: 60000 } });
+        lkHideOv();
+      } catch (e) { xEl('lkPass').focus(); }
+    }
+
+    function showLockPanel() {
+      const bio = !!localStorage[LK.b];
+      xPanel('قفل برنامه', '<div style="display:flex;flex-direction:column;gap:8px">'
+        + '<button class="btn btn-outline" onclick="closePanel();lkShow(\'setup\')">تغییر رمز عبور</button>'
+        + '<button class="btn btn-outline" onclick="closePanel();' + (bio ? 'localStorage.removeItem(LK.b);xToast(\'Face ID غیرفعال شد\')' : 'lkEnableBio()') + '">' + (bio ? 'غیرفعال‌سازی Face ID' : 'فعال‌سازی Face ID / اثر انگشت') + '</button>'
+        + '<button class="btn btn-primary" onclick="closePanel();lkShow(\'unlock\')">قفل کن</button></div>');
+    }
+
+    // قفل خودکار بعد از ۳۰ ثانیه خروج از برنامه
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) lkHidAt = Date.now();
+      else if (localStorage[LK.h] && lkHidAt && Date.now() - lkHidAt > 30000 && xEl('lockScreen').style.display === 'none') lkShow('unlock');
+    });
+    lkShow(localStorage[LK.h] ? 'unlock' : 'setup');
   </script>
 </body>
 </html>
