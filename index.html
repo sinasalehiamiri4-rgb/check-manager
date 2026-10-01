@@ -848,10 +848,6 @@
 
     .print-header { display: none; }
   
-    .lk-ov{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;background:var(--bg-main);padding:20px}
-    .lk-box{width:100%;max-width:320px;display:flex;flex-direction:column;gap:10px;text-align:center}
-    .lk-logo{width:64px;height:64px;margin:0 auto;border-radius:18px;background:linear-gradient(135deg,var(--primary),#818cf8);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center}
-    .lk-err{color:var(--danger);font-size:12px;min-height:16px}
     .pnl-ov{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:12px}
     .pnl{background:var(--card-bg);color:var(--text-main);border:1px solid var(--border-color);border-radius:18px;max-width:560px;width:100%;max-height:85vh;overflow:auto;padding:16px}
     .pnl-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
@@ -866,20 +862,10 @@
     .fc-c{color:var(--text-muted);min-width:20px}
     .x-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:6000;background:#1e293b;color:#fff;padding:10px 16px;border-radius:12px;display:flex;gap:14px;align-items:center;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .x-toast button{background:none;border:none;color:#a5b4fc;font-weight:700;cursor:pointer;font-family:inherit}
-    @media print{.lk-ov,.pnl-ov,.x-toast{display:none!important}}
+    @media print{.pnl-ov,.x-toast{display:none!important}}
   </style>
 </head>
 <body>
-  <div id="lockScreen" class="lk-ov"><div class="lk-box">
-    <div class="lk-logo"><i class="fa-solid fa-lock"></i></div>
-    <h2 id="lkTitle">قفل برنامه</h2><p id="lkSub" style="color:var(--text-muted);font-size:13px"></p>
-    <input type="password" id="lkPass" class="form-control" placeholder="رمز عبور" autocomplete="off" onkeydown="if(event.key==='Enter')lkSubmit()">
-    <input type="password" id="lkPass2" class="form-control" placeholder="تکرار رمز عبور" autocomplete="off" style="display:none" onkeydown="if(event.key==='Enter')lkSubmit()">
-    <div id="lkErr" class="lk-err"></div>
-    <button class="btn btn-primary" id="lkBtn" onclick="lkSubmit()" style="width:100%">ورود</button>
-    <button class="btn btn-outline" id="lkBio" onclick="lkBioUnlock()" style="width:100%;display:none"><i class="fa-solid fa-fingerprint"></i> ورود با Face ID / اثر انگشت</button>
-    <button class="btn btn-outline" id="lkCancel" onclick="lkHideOv()" style="width:100%;display:none">انصراف</button>
-  </div></div>
 
 
   <div class="container">
@@ -926,8 +912,6 @@
             <button class="btn" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>دانلود بک‌اپ</span></button>
             <button class="btn" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> <span>بازیابی بک‌اپ</span></button>
             <button class="btn" onclick="showBackups()"><i class="fa-solid fa-cloud-arrow-down"></i> <span>بک‌اپ‌های خودکار</span></button>
-            <div class="sys-sep"></div>
-            <button class="btn" onclick="showLockPanel()"><i class="fa-solid fa-lock"></i> <span>قفل برنامه و Face ID</span></button>
           </div>
         </div>
       </div>
@@ -944,7 +928,6 @@
           <button class="btn" onclick="document.getElementById('backupFileInput').click(); closeMobileMenu();"><i class="fa-solid fa-upload"></i> بازیابی بک‌اپ</button>
           <button class="btn notif-btn" onclick="enableNotifications(); closeMobileMenu();"><i class="fa-solid fa-bell"></i> <span class="notif-btn-text">فعال‌سازی اعلان سررسید</span></button>
           <button class="btn" onclick="showBackups(); closeMobileMenu();"><i class="fa-solid fa-cloud-arrow-down"></i> بک‌اپ‌های خودکار</button>
-          <button class="btn" onclick="showLockPanel(); closeMobileMenu();"><i class="fa-solid fa-lock"></i> قفل برنامه و Face ID</button>
           <button class="btn" onclick="toggleTheme(); closeMobileMenu();"><i class="fa-solid fa-moon"></i> تغییر تم</button>
         </div>
       </div>
@@ -2187,81 +2170,6 @@
       } catch (e) { xToast('خطا در بازیابی'); }
     }
 
-    /* ===== قفل برنامه (رمز + Face ID / اثر انگشت) ===== */
-    const LK = { h: 'lock_hash', s: 'lock_salt', b: 'lock_bio' };
-    let lkMode = 'unlock', lkHidAt = 0;
-    const lkB64 = b => btoa(String.fromCharCode(...new Uint8Array(b)));
-    const lkFrom = t => Uint8Array.from(atob(t), c => c.charCodeAt(0));
-    async function lkHash(p) { return lkB64(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(localStorage[LK.s] + p))); }
-
-    function lkShow(mode) {
-      lkMode = mode;
-      const setup = mode === 'setup';
-      xEl('lockScreen').style.display = 'flex';
-      xEl('lkTitle').textContent = setup ? 'تعیین رمز عبور' : 'قفل برنامه';
-      xEl('lkSub').textContent = setup ? 'حداقل ۴ کاراکتر' : 'برای ورود رمز را وارد کنید';
-      xEl('lkBtn').textContent = setup ? 'ذخیره رمز' : 'ورود';
-      xEl('lkPass2').style.display = setup ? '' : 'none';
-      xEl('lkPass').value = xEl('lkPass2').value = ''; xEl('lkErr').textContent = '';
-      xEl('lkCancel').style.display = setup && localStorage[LK.h] ? '' : 'none';
-      xEl('lkBio').style.display = !setup && localStorage[LK.b] ? '' : 'none';
-      document.body.style.overflow = 'hidden';
-      if (!setup && localStorage[LK.b]) lkBioUnlock(); else setTimeout(() => xEl('lkPass').focus(), 50);
-    }
-    function lkHideOv() { xEl('lockScreen').style.display = 'none'; document.body.style.overflow = ''; }
-
-    async function lkSubmit() {
-      const p = xEl('lkPass').value;
-      if (lkMode === 'setup') {
-        if (p.length < 4) { xEl('lkErr').textContent = 'رمز باید حداقل ۴ کاراکتر باشد'; return; }
-        if (p !== xEl('lkPass2').value) { xEl('lkErr').textContent = 'تکرار رمز مطابقت ندارد'; return; }
-        localStorage[LK.s] = lkB64(crypto.getRandomValues(new Uint8Array(16)));
-        localStorage[LK.h] = await lkHash(p);
-        lkHideOv();
-        if (!localStorage[LK.b] && window.PublicKeyCredential && confirm('Face ID / اثر انگشت هم برای ورود فعال شود؟')) lkEnableBio();
-      } else if (await lkHash(p) === localStorage[LK.h]) {
-        lkHideOv();
-      } else {
-        xEl('lkErr').textContent = 'رمز اشتباه است'; xEl('lkPass').value = '';
-      }
-    }
-
-    async function lkEnableBio() {
-      try {
-        const c = await navigator.credentials.create({ publicKey: {
-          challenge: crypto.getRandomValues(new Uint8Array(32)),
-          rp: { name: 'مدیریت چک' },
-          user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'user', displayName: 'کاربر' },
-          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
-          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
-          timeout: 60000 } });
-        localStorage[LK.b] = lkB64(c.rawId); xToast('Face ID / اثر انگشت فعال شد');
-      } catch (e) { xToast('فعال‌سازی ناموفق بود (نیاز به HTTPS و پشتیبانی دستگاه)'); }
-    }
-    async function lkBioUnlock() {
-      try {
-        await navigator.credentials.get({ publicKey: {
-          challenge: crypto.getRandomValues(new Uint8Array(32)),
-          allowCredentials: [{ type: 'public-key', id: lkFrom(localStorage[LK.b]), transports: ['internal'] }],
-          userVerification: 'required', timeout: 60000 } });
-        lkHideOv();
-      } catch (e) { xEl('lkPass').focus(); }
-    }
-
-    function showLockPanel() {
-      const bio = !!localStorage[LK.b];
-      xPanel('قفل برنامه', '<div style="display:flex;flex-direction:column;gap:8px">'
-        + '<button class="btn btn-outline" onclick="closePanel();lkShow(\'setup\')">تغییر رمز عبور</button>'
-        + '<button class="btn btn-outline" onclick="closePanel();' + (bio ? 'localStorage.removeItem(LK.b);xToast(\'Face ID غیرفعال شد\')' : 'lkEnableBio()') + '">' + (bio ? 'غیرفعال‌سازی Face ID' : 'فعال‌سازی Face ID / اثر انگشت') + '</button>'
-        + '<button class="btn btn-primary" onclick="closePanel();lkShow(\'unlock\')">قفل کن</button></div>');
-    }
-
-    // قفل خودکار بعد از ۳۰ ثانیه خروج از برنامه
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) lkHidAt = Date.now();
-      else if (localStorage[LK.h] && lkHidAt && Date.now() - lkHidAt > 30000 && xEl('lockScreen').style.display === 'none') lkShow('unlock');
-    });
-    lkShow(localStorage[LK.h] ? 'unlock' : 'setup');
   </script>
 </body>
 </html>
