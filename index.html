@@ -3,6 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" id="appManifest">
+  <script>
+    // مانیفست و آیکون داخل همین فایل ساخته می‌شود (بدون نیاز به فایل جدا)
+    (function () {
+      var iconSvg = "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#4f46e5'/><stop offset='1' stop-color='#818cf8'/></linearGradient></defs><rect width='512' height='512' rx='96' fill='url(#g)'/><text x='50%' y='54%' font-size='280' text-anchor='middle' dominant-baseline='middle'>💰</text></svg>";
+      var iconUrl = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(iconSvg);
+      var manifest = {
+        name: 'سیستم مدیریت چک و حواله',
+        short_name: 'مدیریت چک',
+        start_url: location.origin + location.pathname,
+        scope: location.origin + location.pathname.replace(/[^\/]*$/, ''),
+        display: 'standalone',
+        dir: 'rtl',
+        lang: 'fa',
+        background_color: '#f4f6f9',
+        theme_color: '#4f46e5',
+        icons: [{ src: iconUrl, sizes: 'any', type: 'image/svg+xml', purpose: 'any' }]
+      };
+      var blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+      document.getElementById('appManifest').href = URL.createObjectURL(blob);
+    })();
+  </script>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#4f46e5">
   <title>سیستم مدیریت چک و حواله</title>
 
   <!-- آیکون اختصاصی برای صفحه اصلی آیفون (iOS) -->
@@ -796,6 +820,7 @@
         <button class="btn btn-outline" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span>تم</span></button>
         <button class="btn btn-outline" onclick="exportBackup()"><i class="fa-solid fa-download"></i> <span>بک‌اپ</span></button>
         <button class="btn btn-outline" onclick="document.getElementById('backupFileInput').click()"><i class="fa-solid fa-upload"></i> <span>بازیابی</span></button>
+        <button class="btn btn-outline notif-btn" onclick="enableNotifications()" title="اعلان سررسید"><i class="fa-solid fa-bell"></i> <span class="notif-btn-text">اعلان</span></button>
         <button class="btn btn-success" onclick="exportExcel()"><i class="fa-solid fa-file-excel"></i> <span>اکسل</span></button>
       </div>
 
@@ -809,6 +834,7 @@
           <button class="btn" onclick="exportExcel(); closeMobileMenu();"><i class="fa-solid fa-file-excel" style="color:var(--success)"></i> خروجی اکسل</button>
           <button class="btn" onclick="exportBackup(); closeMobileMenu();"><i class="fa-solid fa-download"></i> دانلود بک‌اپ</button>
           <button class="btn" onclick="document.getElementById('backupFileInput').click(); closeMobileMenu();"><i class="fa-solid fa-upload"></i> بازیابی بک‌اپ</button>
+          <button class="btn notif-btn" onclick="enableNotifications(); closeMobileMenu();"><i class="fa-solid fa-bell"></i> <span class="notif-btn-text">فعال‌سازی اعلان سررسید</span></button>
           <button class="btn" onclick="toggleTheme(); closeMobileMenu();"><i class="fa-solid fa-moon"></i> تغییر تم</button>
         </div>
       </div>
@@ -920,7 +946,7 @@
       </div>
     </div>
 
-    <!-- کارت محاسبه‌‌گر بر اساس بازه دو تاریخ -->
+    <!-- کارت محاسبه‌گر بر اساس بازه دو تاریخ -->
     <div class="card no-print" style="background: var(--primary-light); border-color: var(--primary); padding: 14px 18px; margin-bottom: 16px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
@@ -1003,10 +1029,8 @@
       </div>
       <div class="modal-body" id="modalDetailsBody">
       </div>
-      <!-- اضافه شدن دکمه حذف در کنار دکمه ویرایش در پایین پنجره جزئیات -->
       <div style="margin-top: 16px; display: flex; justify-content: flex-end; gap: 8px;">
         <button class="btn btn-outline" id="modalEditBtn"><i class="fa-solid fa-pen" style="color:var(--primary)"></i> ویرایش</button>
-        <button class="btn btn-outline" id="modalDeleteBtn"><i class="fa-solid fa-trash" style="color:var(--danger)"></i> حذف</button>
         <button class="btn btn-primary" onclick="closeModal()">بستن</button>
       </div>
     </div>
@@ -1542,12 +1566,6 @@
         editCheck(c.serial);
       };
 
-      // تنظیم عملکرد دکمه حذف جدید داخل پنجره جزئیات موبایل
-      document.getElementById('modalDeleteBtn').onclick = () => {
-        closeModal();
-        deleteCheck(c.serial);
-      };
-
       document.getElementById('detailModal').classList.add('show');
     }
 
@@ -1819,6 +1837,7 @@
     }
 
     function checkAlerts() {
+      sendDueNotifications();
       const dueChecks = checks.filter(c => c.status === 'در انتظار' && isDueOrPast(c.dueDate));
       if (dueChecks.length > 0) {
         document.getElementById('todayAlert').style.display = 'flex';
@@ -1827,6 +1846,117 @@
         document.getElementById('todayAlert').style.display = 'none';
       }
     }
+
+    // ================= اعلان سررسید چک (نوتیفیکیشن گوشی) =================
+    const NOTIF_SENT_KEY = 'due_notified_v1';
+
+    function notifSupported() {
+      return 'Notification' in window;
+    }
+
+    function updateNotifButtons() {
+      let label = 'اعلان';
+      let mobileLabel = 'فعال‌سازی اعلان سررسید';
+      if (notifSupported()) {
+        if (Notification.permission === 'granted') { label = 'اعلان ✓'; mobileLabel = 'اعلان سررسید فعال است'; }
+        else if (Notification.permission === 'denied') { label = 'اعلان ✗'; mobileLabel = 'اعلان در مرورگر مسدود است'; }
+      }
+      document.querySelectorAll('.notif-btn').forEach(btn => {
+        const t = btn.querySelector('.notif-btn-text');
+        if (t) t.innerText = btn.closest('.mobile-dropdown') ? mobileLabel : label;
+      });
+    }
+
+    async function registerNotifSW() {
+      if (!('serviceWorker' in navigator)) return;
+      try { await navigator.serviceWorker.register('sw.js'); } catch (e) { /* sw.js موجود نیست */ }
+    }
+
+    // نمایش اعلان: اول از طریق Service Worker (لازم برای اندروید و آیفون)، در غیر این صورت روش ساده مرورگر
+    async function showNotif(title, options) {
+      try {
+        if ('serviceWorker' in navigator) {
+          const reg = await Promise.race([
+            navigator.serviceWorker.ready,
+            new Promise(r => setTimeout(() => r(null), 3000))
+          ]);
+          if (reg) { await reg.showNotification(title, options); return true; }
+        }
+      } catch (e) {}
+      try { new Notification(title, options); return true; } catch (e) { return false; }
+    }
+
+    async function enableNotifications() {
+      if (!notifSupported()) {
+        alert('این مرورگر از اعلان پشتیبانی نمی‌کند.\n\nدر آیفون: ابتدا در Safari دکمه Share را بزنید و «Add to Home Screen» را انتخاب کنید، سپس برنامه را از روی صفحه اصلی باز کنید و دوباره دکمه اعلان را بزنید.');
+        return;
+      }
+      if (Notification.permission === 'denied') {
+        alert('اعلان‌ها برای این سایت مسدود شده‌اند. از تنظیمات مرورگر/گوشی اجازه اعلان را فعال کنید.');
+        return;
+      }
+      await registerNotifSW();
+      const result = await Notification.requestPermission();
+      updateNotifButtons();
+      if (result === 'granted') {
+        await showNotif('اعلان سررسید فعال شد ✅', {
+          body: 'از این پس در روز سررسید چک‌ها به شما اطلاع داده می‌شود.',
+          dir: 'rtl', lang: 'fa', tag: 'notif-enabled'
+        });
+        sendDueNotifications();
+      }
+    }
+
+    async function sendDueNotifications() {
+      if (!notifSupported() || Notification.permission !== 'granted') return;
+      if (!checks || checks.length === 0) return;
+
+      const today = getTodayJalaliNormalized();
+      const due = checks.filter(c => c.status === 'در انتظار' && isDueOrPast(c.dueDate));
+
+      let sent = {};
+      try { sent = JSON.parse(localStorage.getItem(NOTIF_SENT_KEY) || '{}'); } catch (e) {}
+
+      // هر مورد در هر روز فقط یک‌بار اعلان می‌گیرد
+      const fresh = due.filter(c => sent[c.serial] !== today);
+      if (fresh.length === 0) return;
+
+      let title, body;
+      if (fresh.length === 1) {
+        const c = fresh[0];
+        const amt = Number(c.amount);
+        const amtText = isNaN(amt) ? '' : ' | مبلغ: ' + amt.toLocaleString('fa-IR') + ' ریال';
+        const overdue = normalizeDateStr(c.dueDate) < today ? ' (گذشته)' : '';
+        title = `⏰ سررسید ${c.type || 'چک'}${overdue}`;
+        body = `${c.issuer || ''} - ${c.bank || ''}${amtText}`;
+      } else {
+        title = `⏰ ${toPersianDigits(fresh.length)} سند سررسید شده دارید`;
+        body = fresh.slice(0, 3).map(c => `${c.issuer || ''} (${c.type || 'چک'})`).join('، ') + (fresh.length > 3 ? ' و ...' : '');
+      }
+
+      const ok = await showNotif(title, {
+        body, dir: 'rtl', lang: 'fa',
+        tag: 'check-due', renotify: true,
+        requireInteraction: true,
+        data: { url: location.href }
+      });
+      if (ok) {
+        fresh.forEach(c => { sent[c.serial] = today; });
+        localStorage.setItem(NOTIF_SENT_KEY, JSON.stringify(sent));
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      registerNotifSW();
+      updateNotifButtons();
+      // بررسی هر یک دقیقه (برای زمانی که برنامه باز می‌ماند و روز عوض می‌شود)
+      setInterval(sendDueNotifications, 60 * 1000);
+    });
+
+    // وقتی برنامه از پس‌زمینه به جلو برمی‌گردد، اطلاعات تازه‌سازی شود
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible' && window.db) fetchChecksFromFirebase();
+    });
 
     function filterToday() {
       switchTab('در انتظار');
