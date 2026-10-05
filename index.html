@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>try{var f=parseFloat(localStorage.getItem('font_scale'));if(f>0.5&&f<2)document.documentElement.style.setProperty('--fs',f)}catch(e){}</script>
   <link rel="manifest" id="appManifest">
   <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAADnElEQVR4nO3dMXITMRQG4JVnaypXHAhKOABMOIJNSA5BAUeIk1yANgeCBhp8AoowzNCB/420kr9v3Gezennv6UnjlFcvvk5wqk3rB6BvAojIPJXWj0DPZvFDQgkjooQRkYGI6IGIKGFElDAi81SkIE6nByKihBHRRBORgYjogYgoYUSUMCICiMhsjkhinjRBBDTRRPRARMyBiChhRJQwIkoYESWMiBJGRAARmYuzDAIyEBFNNBEZiIg5EBEljIgSRkQAEXGllYgMRMSdaCJ2YUTMgYjIQEQ00UQEEBFzICIyEBEBREQJI2ISTUQJI2KQSMRRBhEZiIgeiIgAImIOREQGIiKAiKzrPxbe3m9bP0IfLt7+aP0Iv5WLN99bP8N0EDcnebeCMGofQKIn1DaMNlOZGn5ET+5wv224gi2b6MOd6FlGwze5KWVq8hE9yzrcbZusY5sMdHMrepbX5K2aAxFxGj+W6qu5qd+53xzUr6dyc9hWXk13osdTdUGVsOHUXVBXWkdTeUHtwogoYcOpXMKq/rT/8frlt9aPUMmXh+etH+F0rrSOpvKC6oGICCAimujhVJ8DiaChVF5QJYzIektY15vbluzC6IizsNFUXtD1ljBOpITRERloOO4DkXAfiJ6s69s5WEDdBXUf6EmczxRUDzQacyAy5kB0xJXW0bjSSk/Wuws7n41M1zTRw3GUQcJRBj1xlDGcugsqAxHRA43GUQYZg0Q6st4MtKrrHD1NNc2BSJgD0ZP1ljBOpImmI77eZTSVF1QJG45vaX3U0875jOmBiLgTPRp3oumJJno4MhAdcRY2GveByFSfA4mgwdS9E135f7SWadpdHmv+hmdld3msvJpK2Fiqr2abXdjugyS0vCZv1TaeyKaUqclnfyUJLWl/dWyyji0zkBhaSsM3uam9B/v7s78WQ6n99bHhCpbd1c/Wb2D6/PFZ60fo0hr+/Mp+BQH0xyeR9G/eryB0HpU1RDH9so0nIoCIuNJKRAYiIoCIOI0n4korERmIiB6IiDvRRMyBiChhRAQQESWMiAxERAARMUgk4iiDiAxExCSaiCaaiDkQERmIiAAiYhdGxByIiBJGRAkjIgMRmYtBEAEZiIgAIqKJJmIOREQJI6KEEVHCiChhRJQwIu5EE3GllYgeiIgAIqKJJmIOREQJI6KEEZGBiOiBiMyTSSIBJYyIJpqIHoiIEkZECSMiAxHRAxFRwogoYUR+AUk/S/iQjc/dAAAAAElFTkSuQmCC">
   <script>
@@ -117,44 +118,72 @@
       min-height: 100vh;
     }
 
-    body.large-font {
-      font-weight: 700;
+    /* ضریب اندازه‌ی فونت کل سایت (با دکمه‌های +/- در منو عوض می‌شود) */
+    :root { --fs: 1; }
+    body { font-size: calc(16px * var(--fs, 1)); }
+    /* خود منو ثابت می‌ماند تا موقع تنظیم، دکمه‌ها از زیر انگشت فرار نکنند */
+    .mobile-dropdown, .sys-dropdown { --fs: 1; }
+    @media print { :root { --fs: 1 !important; } }
+
+    /* حالت بولد (جدا از اندازه) */
+    body.bold-font,
+    body.bold-font * { font-weight: 800 !important; }
+
+    /* کنترل اندازه‌ی فونت و بولد داخل منوها */
+    .fs-box {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      margin-bottom: 4px;
+      border-radius: 12px;
+      background: var(--primary-light);
     }
-
-    body.large-font *,
-    body.large-font input,
-    body.large-font select,
-    body.large-font button,
-    body.large-font table,
-    body.large-font td,
-    body.large-font th {
-      font-weight: 800 !important;
-    }
-
-    body.large-font .header-title h1 { font-size: 21px; }
-    body.large-font .header-title p { font-size: 14px; }
-    body.large-font .btn { font-size: 15px; padding: 11px 16px; }
-    body.large-font .form-control { font-size: 15px; padding: 11px; }
-    body.large-font .form-group label { font-size: 14px; }
-    body.large-font th { font-size: 14.5px; }
-    body.large-font td { font-size: 15px; }
-    body.large-font .stat-card h4 { font-size: 13px; }
-    body.large-font .stat-card .amount { font-size: 19px; }
-    body.large-font .tab-btn { font-size: 15px; }
-    body.large-font .modal-item { font-size: 15px; }
-
-    body.large-font .badge {
-      font-size: 13px;
-      padding: 6px 12px;
-      border-radius: 20px;
-    }
-
-    body.large-font input[type="checkbox"] {
-      width: 1.3em;
-      height: 1.3em;
-      transform: scale(1.25);
+    .fs-title { font-size: 11.5px; font-weight: 700; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+    .fs-ctrl { display: flex; align-items: center; gap: 6px; direction: ltr; }
+    .fs-btn {
+      flex: 1;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-main);
       cursor: pointer;
+      font-weight: 800;
+      font-family: inherit;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
+    .fs-btn:active { background: var(--primary); color: #fff; }
+    .fs-btn:disabled { opacity: .35; cursor: default; }
+    .fs-val {
+      flex: 1.2;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--primary);
+      cursor: pointer;
+      padding: 10px 0;
+      direction: rtl;
+    }
+    .fs-bold-btn {
+      width: 100%;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-main);
+      cursor: pointer;
+      font-size: 12.5px;
+      font-weight: 700;
+      font-family: inherit;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      touch-action: manipulation;
+    }
+    .fs-bold-btn.on { background: var(--primary); border-color: var(--primary); color: #fff; }
 
     .container {
       max-width: 1320px;
@@ -193,7 +222,7 @@
       justify-content: center;
       background: linear-gradient(135deg, var(--primary), #818cf8);
       color: white;
-      font-size: 20px;
+      font-size: calc(20px * var(--fs, 1));
       box-shadow: 0 6px 14px -3px rgba(79, 70, 229, 0.4);
       cursor: pointer;
       flex-shrink: 0;
@@ -206,12 +235,12 @@
     }
 
     .header-title h1 {
-      font-size: 17px;
+      font-size: calc(17px * var(--fs, 1));
       font-weight: 800;
     }
 
     .header-title p {
-      font-size: 11.5px;
+      font-size: calc(11.5px * var(--fs, 1));
       color: var(--text-muted);
       margin-top: 1px;
     }
@@ -234,7 +263,7 @@
       color: var(--primary);
     }
 
-    .clock-widget i { font-size: 16px; }
+    .clock-widget i { font-size: calc(16px * var(--fs, 1)); }
 
     .clock-details {
       display: flex;
@@ -243,7 +272,7 @@
     }
 
     .clock-time {
-      font-size: 15px;
+      font-size: calc(15px * var(--fs, 1));
       font-weight: 800;
       letter-spacing: 0.5px;
       font-family: 'Vazirmatn', monospace;
@@ -251,7 +280,7 @@
     }
 
     .clock-date {
-      font-size: 11px;
+      font-size: calc(11px * var(--fs, 1));
       font-weight: 600;
       color: var(--text-muted);
     }
@@ -266,7 +295,7 @@
       align-items: center;
       justify-content: center;
       gap: 6px;
-      font-size: 12.5px;
+      font-size: calc(12.5px * var(--fs, 1));
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
       white-space: nowrap;
     }
@@ -299,7 +328,7 @@
       width: 40px;
       height: 40px;
       border-radius: 10px;
-      font-size: 18px;
+      font-size: calc(18px * var(--fs, 1));
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -315,7 +344,7 @@
       border: 1px solid var(--border-color);
       border-radius: 14px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-      width: 180px;
+      width: 210px;
       z-index: 1000;
       padding: 6px;
       flex-direction: column;
@@ -330,7 +359,7 @@
       width: 100%;
       justify-content: flex-start;
       padding: 10px 12px;
-      font-size: 12px;
+      font-size: calc(12px * var(--fs, 1));
       border: none;
       background: transparent;
       color: var(--text-main);
@@ -347,7 +376,7 @@
     }
 
     .sys-menu-btn .sys-chevron {
-      font-size: 10px;
+      font-size: calc(10px * var(--fs, 1));
       transition: transform 0.2s;
     }
 
@@ -385,7 +414,7 @@
       width: 100%;
       justify-content: flex-start;
       padding: 10px 12px;
-      font-size: 12.5px;
+      font-size: calc(12.5px * var(--fs, 1));
       border: none;
       background: transparent;
       color: var(--text-main);
@@ -426,7 +455,7 @@
       background: transparent;
       color: var(--text-muted);
       font-weight: 700;
-      font-size: 13px;
+      font-size: calc(13px * var(--fs, 1));
       cursor: pointer;
       border-radius: 10px 10px 0 0;
       display: flex;
@@ -445,7 +474,7 @@
     .tab-btn .badge-count {
       padding: 2px 7px;
       border-radius: 20px;
-      font-size: 10.5px;
+      font-size: calc(10.5px * var(--fs, 1));
       background: var(--border-color);
       color: var(--text-main);
     }
@@ -485,8 +514,8 @@
     .stat-card.passed::before { background: var(--success); }
     .stat-card.bounced::before { background: var(--danger); }
 
-    .stat-card h4 { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
-    .stat-card .amount { font-size: 16px; font-weight: 800; word-break: break-all; }
+    .stat-card h4 { font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); font-weight: 600; margin-bottom: 4px; }
+    .stat-card .amount { font-size: calc(16px * var(--fs, 1)); font-weight: 800; word-break: break-all; }
 
     .card {
       background: var(--card-bg);
@@ -498,7 +527,7 @@
     }
 
     .card-title {
-      font-size: 14px;
+      font-size: calc(14px * var(--fs, 1));
       font-weight: 700;
       margin-bottom: 14px;
       display: flex;
@@ -521,7 +550,7 @@
     }
 
     .form-group label {
-      font-size: 11.5px;
+      font-size: calc(11.5px * var(--fs, 1));
       font-weight: 600;
       color: var(--text-main);
     }
@@ -532,7 +561,7 @@
       border-radius: 10px;
       background: var(--bg-main);
       color: var(--text-main);
-      font-size: 12.5px;
+      font-size: calc(12.5px * var(--fs, 1));
       outline: none;
       width: 100%;
     }
@@ -577,7 +606,7 @@
       background: var(--primary-light);
       color: var(--primary);
       font-weight: 700;
-      font-size: 12px;
+      font-size: calc(12px * var(--fs, 1));
       padding: 10px 12px;
       white-space: nowrap;
     }
@@ -585,7 +614,7 @@
     td {
       padding: 10px 12px;
       border-bottom: 1px solid var(--border-color);
-      font-size: 12.5px;
+      font-size: calc(12.5px * var(--fs, 1));
       white-space: nowrap;
       background: var(--card-bg);
       color: var(--text-main);
@@ -605,7 +634,7 @@
     .badge {
       padding: 3px 8px;
       border-radius: 20px;
-      font-size: 10.5px;
+      font-size: calc(10.5px * var(--fs, 1));
       font-weight: 700;
       display: inline-flex;
       align-items: center;
@@ -644,7 +673,7 @@
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 12.5px;
+      font-size: calc(12.5px * var(--fs, 1));
     }
 
     .modal-overlay {
@@ -685,14 +714,14 @@
       margin-bottom: 14px;
     }
     .modal-header h3 {
-      font-size: 15px;
+      font-size: calc(15px * var(--fs, 1));
       font-weight: 800;
       color: var(--primary);
     }
     .modal-close {
       background: transparent;
       border: none;
-      font-size: 18px;
+      font-size: calc(18px * var(--fs, 1));
       color: var(--text-muted);
       cursor: pointer;
     }
@@ -707,7 +736,7 @@
       align-items: center;
       padding: 6px 0;
       border-bottom: 1px solid var(--border-color);
-      font-size: 13px;
+      font-size: calc(13px * var(--fs, 1));
     }
     .modal-item:last-child {
       border-bottom: none;
@@ -731,7 +760,7 @@
         align-items: center;
       }
       .header-title h1 {
-        font-size: 15px;
+        font-size: calc(15px * var(--fs, 1));
       }
       .header-title p {
         display: none;
@@ -739,7 +768,7 @@
       .logo-container {
         width: 38px;
         height: 38px;
-        font-size: 16px;
+        font-size: calc(16px * var(--fs, 1));
       }
 
       .header-actions {
@@ -770,7 +799,7 @@
         padding: 10px;
       }
       .stat-card .amount {
-        font-size: 14px;
+        font-size: calc(14px * var(--fs, 1));
       }
 
       .form-grid {
@@ -807,7 +836,7 @@
         padding: 6px 0;
         border-bottom: 1px dashed var(--border-color);
         white-space: normal;
-        font-size: 12px;
+        font-size: calc(12px * var(--fs, 1));
       }
       
       td[data-label="سریال"],
@@ -824,7 +853,7 @@
         content: attr(data-label);
         font-weight: 700;
         color: var(--text-muted);
-        font-size: 11.5px;
+        font-size: calc(11.5px * var(--fs, 1));
       }
       td.action-btns::before {
         display: none;
@@ -852,7 +881,7 @@
     .pnl{background:var(--card-bg);color:var(--text-main);border:1px solid var(--border-color);border-radius:18px;max-width:560px;width:100%;max-height:85vh;overflow:auto;padding:16px}
     .pnl-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
     .fc-row{border-bottom:1px solid var(--border-color)}
-    .fc-row summary,.fc-it{display:flex;align-items:center;gap:8px;padding:9px 2px;font-size:12.5px}
+    .fc-row summary,.fc-it{display:flex;align-items:center;gap:8px;padding:9px 2px;font-size: calc(12.5px * var(--fs, 1))}
     .fc-row summary{cursor:pointer;list-style:none}
     .fc-it{justify-content:space-between;border-bottom:1px dashed var(--border-color)}
     .fc-l{width:90px;font-weight:700}
@@ -860,7 +889,7 @@
     .fc-bar i{display:block;height:100%;background:var(--primary);border-radius:6px}
     .fc-s{font-weight:700;min-width:90px;text-align:left}
     .fc-c{color:var(--text-muted);min-width:20px}
-    .x-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:6000;background:#1e293b;color:#fff;padding:10px 16px;border-radius:12px;display:flex;gap:14px;align-items:center;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    .x-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:6000;background:#1e293b;color:#fff;padding:10px 16px;border-radius:12px;display:flex;gap:14px;align-items:center;font-size: calc(13px * var(--fs, 1));box-shadow:0 8px 24px rgba(0,0,0,.3)}
     .x-toast button{background:none;border:none;color:#a5b4fc;font-weight:700;cursor:pointer;font-family:inherit}
     @media print{.pnl-ov,.x-toast{display:none!important}}
   </style>
@@ -902,7 +931,15 @@
         <div class="sys-menu" id="sysMenu">
           <button class="btn btn-outline sys-menu-btn" onclick="toggleSysMenu(event)" title="تنظیمات و ابزارهای سیستم"><i class="fa-solid fa-gear"></i> <span>سیستم</span> <i class="fa-solid fa-chevron-down sys-chevron"></i></button>
           <div class="sys-dropdown" id="sysDropdown">
-            <button class="btn" onclick="toggleFontSize()" title="تغییر سایز فونت"><i class="fa-solid fa-font"></i> <span id="fontSizeBtnText">فونت بزرگ</span></button>
+            <div class="fs-box" onclick="event.stopPropagation()">
+              <div class="fs-title"><i class="fa-solid fa-font"></i> اندازه‌ی فونت کل سایت</div>
+              <div class="fs-ctrl">
+                <button type="button" class="fs-btn fs-minus" onclick="changeFontScale(-1)" aria-label="کوچک‌تر"><span style="font-size:13px">A</span> −</button>
+                <span class="fs-val" onclick="resetFontScale()" title="بازگشت به ۱۰۰٪">۱۰۰٪</span>
+                <button type="button" class="fs-btn fs-plus" onclick="changeFontScale(1)" aria-label="بزرگ‌تر">+ <span style="font-size:19px">A</span></button>
+              </div>
+              <button type="button" class="fs-bold-btn" onclick="toggleBold()"><i class="fa-solid fa-bold"></i> <span>بولد کردن فونت</span></button>
+            </div>
             <button class="btn" onclick="toggleTheme()" title="تم"><i class="fa-solid fa-moon"></i> <span>تغییر تم</span></button>
             <button class="btn notif-btn" onclick="enableNotifications()" title="اعلان سررسید"><i class="fa-solid fa-bell"></i> <span class="notif-btn-text">اعلان</span></button>
             <div class="sys-sep"></div>
@@ -921,7 +958,15 @@
           <i class="fa-solid fa-bars"></i>
         </button>
         <div class="mobile-dropdown" id="mobileDropdown">
-          <button class="btn" onclick="toggleFontSize(); closeMobileMenu();"><i class="fa-solid fa-font"></i> تغییر سایز/بولد</button>
+          <div class="fs-box" onclick="event.stopPropagation()">
+              <div class="fs-title"><i class="fa-solid fa-font"></i> اندازه‌ی فونت کل سایت</div>
+              <div class="fs-ctrl">
+                <button type="button" class="fs-btn fs-minus" onclick="changeFontScale(-1)" aria-label="کوچک‌تر"><span style="font-size:13px">A</span> −</button>
+                <span class="fs-val" onclick="resetFontScale()" title="بازگشت به ۱۰۰٪">۱۰۰٪</span>
+                <button type="button" class="fs-btn fs-plus" onclick="changeFontScale(1)" aria-label="بزرگ‌تر">+ <span style="font-size:19px">A</span></button>
+              </div>
+              <button type="button" class="fs-bold-btn" onclick="toggleBold()"><i class="fa-solid fa-bold"></i> <span>بولد کردن فونت</span></button>
+            </div>
           <button class="btn" onclick="window.print(); closeMobileMenu();"><i class="fa-solid fa-print"></i> چاپ صفحه</button>
           <button class="btn" onclick="exportExcel(); closeMobileMenu();"><i class="fa-solid fa-file-excel" style="color:var(--success)"></i> خروجی اکسل</button>
           <button class="btn" onclick="exportBackup(); closeMobileMenu();"><i class="fa-solid fa-download"></i> دانلود بک‌اپ</button>
@@ -940,7 +985,7 @@
         <i class="fa-solid fa-bell fa-bounce fa-lg"></i>
         <span><strong id="alertCount">۰</strong> مورد سررسید شده بلاتکلیف دارید!</span>
       </div>
-      <button class="btn btn-outline" style="padding: 4px 10px; font-size: 11.5px;" onclick="filterToday()">مشاهده</button>
+      <button class="btn btn-outline" style="padding: 4px 10px; font-size: calc(11.5px * var(--fs, 1));" onclick="filterToday()">مشاهده</button>
     </div>
 
     <div class="stats-grid no-print">
@@ -1028,11 +1073,11 @@
     <div class="card no-print" style="padding: 12px 16px; margin-bottom: 12px;">
       <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
         <div style="display: flex; align-items: center; gap: 6px; flex: 1 1 200px;">
-          <label style="font-size: 12px; font-weight: 700; white-space: nowrap;">از تاریخ:</label>
+          <label style="font-size: calc(12px * var(--fs, 1)); font-weight: 700; white-space: nowrap;">از تاریخ:</label>
           <input type="text" id="fromDateFilter" class="form-control" placeholder="1405/01/01" autocomplete="off" oninput="formatDigitsInput(this)" onchange="renderTable()">
         </div>
         <div style="display: flex; align-items: center; gap: 6px; flex: 1 1 200px;">
-          <label style="font-size: 12px; font-weight: 700; white-space: nowrap;">تا تاریخ:</label>
+          <label style="font-size: calc(12px * var(--fs, 1)); font-weight: 700; white-space: nowrap;">تا تاریخ:</label>
           <input type="text" id="toDateFilter" class="form-control" placeholder="1405/12/29" autocomplete="off" oninput="formatDigitsInput(this)" onchange="renderTable()">
         </div>
         <button class="btn btn-outline" style="padding: 9px 12px;" onclick="clearDateFilters()"><i class="fa-solid fa-rotate-left"></i> حذف فیلتر تاریخ</button>
@@ -1043,17 +1088,17 @@
     <div class="card no-print" style="background: var(--primary-light); border-color: var(--primary); padding: 14px 18px; margin-bottom: 16px;">
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-calculator" style="color: var(--primary); font-size: 18px;"></i>
-          <span style="font-weight: 800; font-size: 13.5px; color: var(--primary);">محاسبه‌گر اسناد در بازه تاریخی انتخاب‌شده:</span>
+          <i class="fa-solid fa-calculator" style="color: var(--primary); font-size: calc(18px * var(--fs, 1));"></i>
+          <span style="font-weight: 800; font-size: calc(13.5px * var(--fs, 1)); color: var(--primary);">محاسبه‌گر اسناد در بازه تاریخی انتخاب‌شده:</span>
         </div>
         <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
           <div>
-            <span style="font-size: 12px; color: var(--text-muted);">تعداد اسناد:</span>
-            <strong id="calcCount" style="font-size: 15px; margin-right: 4px;">۰ عدد</strong>
+            <span style="font-size: calc(12px * var(--fs, 1)); color: var(--text-muted);">تعداد اسناد:</span>
+            <strong id="calcCount" style="font-size: calc(15px * var(--fs, 1)); margin-right: 4px;">۰ عدد</strong>
           </div>
           <div>
-            <span style="font-size: 12px; color: var(--text-muted);">مجمع مبلغ (ریال):</span>
-            <strong id="calcAmount" style="font-size: 16px; color: var(--primary); margin-right: 4px;">۰</strong>
+            <span style="font-size: calc(12px * var(--fs, 1)); color: var(--text-muted);">مجمع مبلغ (ریال):</span>
+            <strong id="calcAmount" style="font-size: calc(16px * var(--fs, 1)); color: var(--primary); margin-right: 4px;">۰</strong>
           </div>
         </div>
       </div>
@@ -1191,7 +1236,7 @@
         border: 1px solid var(--border-color, #e2e8f0);
         padding: 6px 12px;
         border-radius: 12px;
-        font-size: 12px;
+        font-size: calc(12px * var(--fs, 1));
         font-weight: 700;
         color: var(--primary, #4f46e5);
         gap: 4px;
@@ -1241,24 +1286,50 @@
       }
     }
 
-    function toggleFontSize() {
-      document.body.classList.toggle('large-font');
-      const isLarge = document.body.classList.contains('large-font');
-      localStorage.setItem('is_large_font', isLarge);
-      
-      const btnText = document.getElementById('fontSizeBtnText');
-      if (btnText) {
-        btnText.innerText = isLarge ? 'فونت معمولی' : 'فونت بزرگ';
-      }
+    const FS_STEPS = [0.85, 0.92, 1, 1.1, 1.2, 1.3, 1.45];
+
+    function getFontScale() {
+      const v = parseFloat(localStorage.getItem('font_scale'));
+      return FS_STEPS.includes(v) ? v : 1;
+    }
+
+    function applyFontPrefs() {
+      const fs = getFontScale();
+      const bold = localStorage.getItem('is_bold_font') === 'true';
+      const idx = FS_STEPS.indexOf(fs);
+      document.documentElement.style.setProperty('--fs', fs);
+      document.body.classList.toggle('bold-font', bold);
+      document.querySelectorAll('.fs-val').forEach(el => el.textContent = toPersianDigits(Math.round(fs * 100)) + '٪');
+      document.querySelectorAll('.fs-minus').forEach(el => el.disabled = idx <= 0);
+      document.querySelectorAll('.fs-plus').forEach(el => el.disabled = idx >= FS_STEPS.length - 1);
+      document.querySelectorAll('.fs-bold-btn').forEach(el => el.classList.toggle('on', bold));
+    }
+
+    function changeFontScale(dir) {
+      const idx = Math.min(FS_STEPS.length - 1, Math.max(0, FS_STEPS.indexOf(getFontScale()) + dir));
+      localStorage.setItem('font_scale', FS_STEPS[idx]);
+      applyFontPrefs();
+    }
+
+    function resetFontScale() {
+      localStorage.setItem('font_scale', 1);
+      applyFontPrefs();
+    }
+
+    function toggleBold() {
+      const on = localStorage.getItem('is_bold_font') !== 'true';
+      localStorage.setItem('is_bold_font', on);
+      applyFontPrefs();
     }
 
     function loadFontSizeState() {
-      const isLarge = localStorage.getItem('is_large_font') === 'true';
-      if (isLarge) {
-        document.body.classList.add('large-font');
-        const btnText = document.getElementById('fontSizeBtnText');
-        if (btnText) btnText.innerText = 'فونت معمولی';
+      // مهاجرت از حالت قدیمی «فونت بزرگ» (بولد + بزرگ‌تر)
+      if (localStorage.getItem('is_large_font') === 'true' && localStorage.getItem('font_scale') === null) {
+        localStorage.setItem('is_bold_font', 'true');
+        localStorage.setItem('font_scale', 1.2);
       }
+      localStorage.removeItem('is_large_font');
+      applyFontPrefs();
     }
 
     function toggleMobileMenu(e) {
@@ -1610,7 +1681,7 @@
         if (c.sayadi) {
           sayadiDisplay = toPersianDigits(c.sayadi);
         } else if (c.type === 'حواله') {
-          sayadiDisplay = '<span style="color:var(--text-muted); font-size:11px;">— (حواله)</span>';
+          sayadiDisplay = '<span style="color:var(--text-muted); font-size: calc(11px * var(--fs, 1));">— (حواله)</span>';
         }
 
         const tr = document.createElement('tr');
@@ -1634,7 +1705,7 @@
           <td data-label="سررسید"><strong>${toPersianDigits(c.dueDate)}</strong></td>
           <td data-label="تحویل بانک">
             ${deliveredBadge}
-            <button class="btn btn-outline no-print" style="padding:2px 6px; font-size:11px; margin-right:4px;" title="تغییر وضعیت" onclick="toggleDelivery('${c.serial}')">
+            <button class="btn btn-outline no-print" style="padding:2px 6px; font-size: calc(11px * var(--fs, 1)); margin-right:4px;" title="تغییر وضعیت" onclick="toggleDelivery('${c.serial}')">
               <i class="fa-solid fa-arrows-rotate"></i>
             </button>
           </td>
