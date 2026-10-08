@@ -1223,7 +1223,7 @@
         <div class="amount" id="statPending" style="color: var(--warning);">۰</div>
       </div>
       <div class="stat-card delivered">
-        <h4>تحویل بانک</h4>
+        <h4>تحویل بانک (در انتظار)</h4>
         <div class="amount" id="statDelivered" style="color: var(--info);">۰ عدد</div>
       </div>
       <div class="stat-card passed">
@@ -1304,7 +1304,7 @@
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
         <div style="display: flex; align-items: center; gap: 8px;">
           <i class="fa-solid fa-calculator" style="color: var(--primary); font-size: calc(18px * var(--fs, 1));"></i>
-          <span style="font-weight: 800; font-size: calc(13.5px * var(--fs, 1)); color: var(--primary);">محاسبه‌گر اسناد در بازه تاریخی انتخاب‌شده:</span>
+          <span style="font-weight: 800; font-size: calc(13.5px * var(--fs, 1)); color: var(--primary);">محاسبه‌گر اسناد در انتظار، در بازه تاریخی انتخاب‌شده:</span>
         </div>
         <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: center;">
           <div>
@@ -1933,7 +1933,7 @@
         if(c.status === 'در انتظار') { pendingTotal += c.amount; countP++; }
         if(c.status === 'پاس شده') { passedTotal += c.amount; countPass++; }
         if(c.status === 'برگشتی') { bouncedTotal += c.amount; countB++; }
-        if(c.isDelivered === 'بله') deliveredCount++;
+        if(c.status === 'در انتظار' && c.isDelivered === 'بله') deliveredCount++;
       });
 
       document.getElementById('statPending').innerText = toPersianDigits(pendingTotal.toLocaleString('fa-IR'));
@@ -1972,6 +1972,7 @@
       let rangeCount = 0;
       let rangeSumAmount = 0;
       checks.forEach(c => {
+        if (c.status !== 'در انتظار') return;
         const normDue = normalizeDateStr(c.dueDate);
         let inRange = true;
         if (normFromDate && normDue < normFromDate) inRange = false;
@@ -2141,20 +2142,24 @@
     async function setCheckStatus(serial, newStatus) {
       const c = checks.find(item => item.serial === serial);
       if (!c || c.status === newStatus) return;
-      const oldStatus = c.status;
-      const { serial: sr, ...rest } = c;
+      // اگر به‌خاطر ثبت‌های قدیمی چند سند با «همین سریال» وجود داشته باشد، همه با هم عوض می‌شوند تا کپی در انتظار نماند
+      const key = toEnglishDigits(serial).trim();
+      const group = checks.filter(x => toEnglishDigits(x.serial).trim() === key).map(x => {
+        const { serial: sr, ...rest } = x;
+        return { sr, rest, oldStatus: x.status };
+      });
       try {
-        await window.setDoc(window.doc(window.db, "checks", sr), { ...rest, status: newStatus });
+        await Promise.all(group.map(g => window.setDoc(window.doc(window.db, "checks", g.sr), { ...g.rest, status: newStatus })));
         await fetchChecksFromFirebase();
         checkAlerts();
         closeModal();
-        goToMovedCheck(sr, newStatus);
         if (navigator.vibrate) navigator.vibrate(18);
+        goToMovedCheck(serial, newStatus);
         xToast('وضعیت به «' + newStatus + '» تغییر کرد', 'بازگردانی', async () => {
-          await window.setDoc(window.doc(window.db, "checks", sr), { ...rest, status: oldStatus });
+          await Promise.all(group.map(g => window.setDoc(window.doc(window.db, "checks", g.sr), { ...g.rest, status: g.oldStatus })));
           await fetchChecksFromFirebase();
           checkAlerts();
-          goToMovedCheck(sr, oldStatus);
+          goToMovedCheck(serial, c.status);
         });
       } catch (error) {
         console.error("خطا در تغییر وضعیت: ", error);
