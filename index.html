@@ -1708,6 +1708,7 @@
           </td>
           <td data-label="وضعیت"><span class="badge ${badgeClass}">${statusText}</span></td>
           <td class="action-btns no-print">
+            ${c.status === 'در انتظار' ? `<button class="btn btn-outline" style="padding:5px 9px;" title="پاس شد" onclick="setCheckStatus('${c.serial}', 'پاس شده')"><i class="fa-solid fa-circle-check" style="color:var(--success)"></i></button><button class="btn btn-outline" style="padding:5px 9px;" title="برگشتی" onclick="setCheckStatus('${c.serial}', 'برگشتی')"><i class="fa-solid fa-circle-xmark" style="color:var(--danger)"></i></button>` : `<button class="btn btn-outline" style="padding:5px 9px;" title="بازگشت به در انتظار" onclick="setCheckStatus('${c.serial}', 'در انتظار')"><i class="fa-solid fa-rotate-left" style="color:var(--text-muted)"></i></button>`}
             <button class="btn btn-outline" style="padding:5px 9px;" title="ویرایش" onclick="editCheck('${c.serial}')"><i class="fa-solid fa-pen" style="color:var(--primary)"></i></button>
             <button class="btn btn-outline" style="padding:5px 9px;" title="حذف" onclick="deleteCheck('${c.serial}')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>
           </td>
@@ -1738,6 +1739,13 @@
         <div class="modal-item"><span class="label">وضعیت:</span><span class="value">${statusText}</span></div>
       `;
 
+      modalBody.innerHTML += (c.status === 'در انتظار'
+        ? `<div style="display:flex; gap:8px; margin-top:12px;">
+             <button class="btn" style="flex:1; background:var(--success); color:#fff;" onclick="setCheckStatus('${c.serial}', 'پاس شده')"><i class="fa-solid fa-circle-check"></i> پاس شد</button>
+             <button class="btn" style="flex:1; background:var(--danger); color:#fff;" onclick="setCheckStatus('${c.serial}', 'برگشتی')"><i class="fa-solid fa-circle-xmark"></i> برگشتی</button>
+           </div>`
+        : `<div style="margin-top:12px;"><button class="btn btn-outline" style="width:100%;" onclick="setCheckStatus('${c.serial}', 'در انتظار')"><i class="fa-solid fa-rotate-left"></i> بازگشت به در انتظار</button></div>`);
+
       document.getElementById('modalEditBtn').onclick = () => {
         closeModal();
         editCheck(c.serial);
@@ -1761,6 +1769,27 @@
 
     function closeModal() {
       document.getElementById('detailModal').classList.remove('show');
+    }
+
+    async function setCheckStatus(serial, newStatus) {
+      const c = checks.find(item => item.serial === serial);
+      if (!c || c.status === newStatus) return;
+      const oldStatus = c.status;
+      const { serial: sr, ...rest } = c;
+      try {
+        await window.setDoc(window.doc(window.db, "checks", sr), { ...rest, status: newStatus });
+        await fetchChecksFromFirebase();
+        checkAlerts();
+        closeModal();
+        xToast('وضعیت به «' + newStatus + '» تغییر کرد', 'بازگردانی', async () => {
+          await window.setDoc(window.doc(window.db, "checks", sr), { ...rest, status: oldStatus });
+          await fetchChecksFromFirebase();
+          checkAlerts();
+        });
+      } catch (error) {
+        console.error("خطا در تغییر وضعیت: ", error);
+        alert("خطا در ارتباط با پایگاه داده!");
+      }
     }
 
     async function toggleDelivery(serial) {
