@@ -1509,7 +1509,7 @@
         const querySnapshot = await window.getDocs(window.collection(window.db, "checks"));
         checks = [];
         querySnapshot.forEach((docSnap) => {
-          checks.push({ serial: docSnap.id, ...docSnap.data() });
+          checks.push({ ...docSnap.data(), serial: docSnap.id });
         });
         renderTable();
         checkAlerts();
@@ -2111,8 +2111,10 @@
             closeModal();
             await fetchChecksFromFirebase();
             checkAlerts();
+            if (checks.some(x => x.serial === c.serial)) alert('حذف انجام نشد. احتمالاً قوانین (Rules) فایرستور اجازه حذف نمی‌دهد.');
           } catch (error) {
             console.error("خطا در حذف سند: ", error);
+            alert('خطا در حذف: ' + (error && (error.code || error.message) || 'نامشخص'));
           }
         }
       };
@@ -2153,6 +2155,10 @@
         await fetchChecksFromFirebase();
         checkAlerts();
         closeModal();
+        if (checks.some(x => x.serial === serial && x.status !== newStatus)) {
+          alert('تغییر وضعیت در دیتابیس ذخیره نشد. اتصال اینترنت و قوانین (Rules) فایرستور را بررسی کنید.');
+          return;
+        }
         if (navigator.vibrate) navigator.vibrate(18);
         goToMovedCheck(serial, newStatus);
         xToast('وضعیت به «' + newStatus + '» تغییر کرد', 'بازگردانی', async () => {
@@ -2163,7 +2169,7 @@
         });
       } catch (error) {
         console.error("خطا در تغییر وضعیت: ", error);
-        alert("خطا در ارتباط با پایگاه داده!");
+        alert('خطا در تغییر وضعیت: ' + (error && (error.code || error.message) || 'نامشخص'));
       }
     }
 
@@ -2187,6 +2193,10 @@
         await window.deleteDoc(window.doc(window.db, "checks", serial));
         await fetchChecksFromFirebase();
         checkAlerts();
+        if (checks.some(c => c.serial === serial)) {
+          alert('حذف انجام نشد. احتمالاً قوانین (Rules) فایرستور اجازه حذف نمی‌دهد.');
+          return;
+        }
         if (old) xToast('ردیف حذف شد', 'بازگردانی', async () => {
           const { serial: sr, ...rest } = old;
           await window.setDoc(window.doc(window.db, "checks", sr), rest);
@@ -2195,6 +2205,7 @@
         });
       } catch (error) {
         console.error("خطا در حذف سند: ", error);
+        alert('خطا در حذف: ' + (error && (error.code || error.message) || 'نامشخص'));
       }
     }
 
