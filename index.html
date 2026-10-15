@@ -1173,6 +1173,7 @@
       </div>
 
       <div class="header-actions">
+        <button type="button" class="btn btn-outline hdr-inst-btn" onclick="showInstallments()" title="اقساط"><i class="fa-solid fa-money-bill-transfer" style="color: var(--warning);"></i> <span>اقساط</span> <span class="badge-count" id="countInst">۰</span></button>
         <div class="sys-menu" id="sysMenu">
           <button class="btn btn-outline sys-menu-btn" onclick="toggleSysMenu(event)" title="تنظیمات و ابزارهای سیستم"><i class="fa-solid fa-gear"></i> <span>سیستم</span> <i class="fa-solid fa-chevron-down sys-chevron"></i></button>
           <div class="sys-dropdown" id="sysDropdown">
@@ -1203,6 +1204,7 @@
           <i class="fa-solid fa-bars"></i>
         </button>
         <div class="mobile-dropdown" id="mobileDropdown">
+          <button class="btn hdr-inst-btn" onclick="showInstallments(); closeMobileMenu();"><i class="fa-solid fa-money-bill-transfer" style="color: var(--warning);"></i> اقساط</button>
           <div class="fs-box" onclick="event.stopPropagation()">
               <div class="fs-title"><i class="fa-solid fa-font"></i> اندازه‌ی فونت کل سایت</div>
               <div class="fs-ctrl">
@@ -1351,7 +1353,7 @@
       <button class="tab-btn" onclick="showForecast()"><i class="fa-solid fa-chart-column" style="color: var(--primary);"></i> پیش‌بینی سررسید</button>
     </div>
 
-    <div class="card">
+    <div class="card" id="checksCard">
       <div class="filter-bar no-print">
         <input type="text" id="searchInput" class="form-control" placeholder="🔍 جستجو (نام، بانک، سریال)..." style="flex: 2 1 180px;" oninput="renderTable()">
         <button type="button" class="btn btn-outline filter-toggle" onclick="toggleFilters()" aria-label="فیلترها"><i class="fa-solid fa-sliders"></i><span>فیلتر</span><span class="fbadge"></span></button>
@@ -1407,6 +1409,42 @@
           <tbody id="checkTableBody">
           </tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- ===== تب اقساط (جدا از بخش چک‌ها) ===== -->
+    <div id="installmentsView" style="display:none">
+      <div class="no-print" style="margin-bottom: 12px;"><button type="button" class="btn btn-outline" onclick="exitInstallments()"><i class="fa-solid fa-arrow-right"></i> بازگشت به اسناد</button></div>
+      <div class="stats-grid no-print">
+        <div class="stat-card pending"><h4>مانده اقساط</h4><div class="amount" id="instTotal" style="color: var(--warning);">۰</div></div>
+        <div class="stat-card bounced"><h4>سررسید گذشته</h4><div class="amount" id="instOverdue" style="color: var(--danger);">۰</div></div>
+        <div class="stat-card delivered"><h4>قسط بعدی</h4><div class="amount" id="instNext" style="color: var(--info); font-size: calc(15px * var(--fs, 1));">—</div></div>
+      </div>
+
+      <div class="card no-print">
+        <div class="card-title"><i class="fa-solid fa-plus" style="color: var(--primary);"></i> <span id="instFormTitle">ثبت قسط جدید</span></div>
+        <form onsubmit="saveInstallment(event)">
+          <input type="hidden" id="instEditId">
+          <div class="form-grid">
+            <div class="form-group"><label>بانک *</label><input type="text" id="instBank" class="form-control" required placeholder="مثلا: ملت"></div>
+            <div class="form-group"><label>مبلغ قسط (ریال) *</label><input type="text" id="instAmount" class="form-control" required inputmode="numeric" autocomplete="off" placeholder="مثلا: 25000000" oninput="formatDigitsInput(this)"></div>
+            <div class="form-group"><label>تاریخ پرداخت *</label><input type="text" id="instDate" class="form-control" required autocomplete="off" placeholder="1405/07/10" oninput="formatDigitsInput(this)"></div>
+            <div class="form-group" id="instCountWrap"><label>تعداد اقساط (ماهانه)</label><input type="text" id="instCount" class="form-control" inputmode="numeric" autocomplete="off" value="1" oninput="formatDigitsInput(this)"></div>
+          </div>
+          <div style="margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end;">
+            <button type="button" class="btn btn-outline" onclick="resetInstForm()">انصراف</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> ذخیره</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card">
+        <div class="table-container">
+          <table>
+            <thead><tr><th>بانک</th><th>مبلغ قسط (ریال)</th><th>تاریخ پرداخت</th><th>وضعیت</th><th class="action-btns no-print">عملیات</th></tr></thead>
+            <tbody id="instBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
@@ -1624,7 +1662,7 @@
 
     function toEnglishDigits(str) {
       if (!str) return '';
-      return str.toString().replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
+      return str.toString().replace(/[۰-۹٠-٩]/g, d => '۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩'.indexOf(d) % 10);
     }
 
     function formatDigitsInput(input) {
@@ -1939,9 +1977,17 @@
       update();
     })();
 
+    // نرمال‌سازی متن برای جستجو: ارقام فارسی/عربی/انگلیسی، ی/ک عربی، نیم‌فاصله و حروف بزرگ/کوچک
+    function normSearch(v) {
+      return toEnglishDigits(v == null ? '' : v).toLowerCase()
+        .replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/ى/g, 'ی')
+        .replace(/[\u200c\u200f\u200e\u064B-\u0652\u0640]/g, '')
+        .replace(/\s+/g, ' ').trim();
+    }
+
     function renderTable() {
       const tbody = document.getElementById('checkTableBody');
-      const search = document.getElementById('searchInput').value.toLowerCase();
+      const search = normSearch(document.getElementById('searchInput').value);
       const filterType = document.getElementById('filterType').value;
       const filterDelivered = document.getElementById('filterDelivered').value;
       
@@ -1976,10 +2022,14 @@
 
       let filtered = checks.filter(c => {
         const matchesTab = (c.status === currentTab);
-        const matchesSearch = c.issuer.toLowerCase().includes(search) || 
-                              c.bank.toLowerCase().includes(search) || 
-                              c.serial.includes(search) ||
-                              (c.sayadi && c.sayadi.includes(search));
+        const searchPlain = search.replace(/[-\s]/g, '');
+        const matchesSearch = !search ||
+                              normSearch(c.issuer).includes(search) ||
+                              normSearch(c.bank).includes(search) ||
+                              normSearch(c.serial).includes(search) ||
+                              (c.sayadi && (normSearch(c.sayadi).includes(search) || (searchPlain && normSearch(c.sayadi).replace(/-/g, '').includes(searchPlain)))) ||
+                              normSearch(c.amount).includes(search) ||
+                              normSearch(c.dueDate).includes(search);
         const matchesType = filterType === 'همه' || c.type === filterType;
         const matchesDelivered = filterDelivered === 'همه' || (c.isDelivered || 'خیر') === filterDelivered;
 
@@ -2683,6 +2733,220 @@
       } catch (e) { xToast('خطا در بازیابی'); }
     }
 
+  </script>
+
+  <style>
+    body.inst-mode #todayAlert,
+    body.inst-mode .stats-grid,
+    body.inst-mode #formCard,
+    body.inst-mode .calc-card,
+    body.inst-mode #checksCard,
+    body.inst-mode .fab,
+    body.inst-mode .sheet-backdrop { display: none !important; }
+    body.inst-mode #installmentsView { display: block !important; }
+    #installmentsView .stats-grid { display: grid !important; }
+    body.inst-mode .hdr-inst-btn { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .hdr-inst-btn .badge-count { background: var(--warning); color: #000; border-radius: 10px; padding: 0 7px; font-size: calc(11px * var(--fs, 1)); }
+    #installmentsView tr.inst-paid td { opacity: .55; }
+    #installmentsView .inst-sub { font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); display: block; margin-top: 2px; }
+  </style>
+
+  <script>
+    /* ===== تب اقساط: کاملاً مستقل از چک‌ها ===== */
+    let installments = [];
+    const INST_LS = 'installments_cache';
+
+    function instCache() { try { localStorage.setItem(INST_LS, JSON.stringify(installments)); } catch (e) {} }
+
+    async function loadInstallments() {
+      try { installments = JSON.parse(localStorage.getItem(INST_LS) || '[]'); } catch (e) { installments = []; }
+      renderInstallments();
+      if (!window.db) { setTimeout(loadInstallments, 400); return; }
+      try {
+        const snap = await window.getDocs(window.collection(window.db, 'installments'));
+        const list = []; snap.forEach(d => list.push({ ...d.data(), id: d.id }));
+        installments = list; instCache(); renderInstallments();
+      } catch (e) { console.warn('دریافت اقساط ناموفق:', e); }
+    }
+
+    async function instSaveDoc(it) {
+      const { id, ...rest } = it;
+      try { await window.setDoc(window.doc(window.db, 'installments', id), rest); return true; }
+      catch (e) { console.warn(e); return false; }
+    }
+
+    function instAddMonths(dateStr, n) {
+      const [y0, m0, d0] = normalizeDateStr(dateStr).split('/').map(Number);
+      let m = m0 + n, y = y0 + Math.floor((m - 1) / 12);
+      m = ((m - 1) % 12 + 12) % 12 + 1;
+      const maxD = m <= 6 ? 31 : (m <= 11 ? 30 : 29);
+      const d = Math.min(d0, maxD);
+      return y + '/' + String(m).padStart(2, '0') + '/' + String(d).padStart(2, '0');
+    }
+
+    function showInstallments() {
+      if (document.body.classList.contains('inst-mode')) { exitInstallments(); return; }
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.body.classList.add('inst-mode');
+      renderInstallments();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function exitInstallments() {
+      document.body.classList.remove('inst-mode');
+      switchTab(currentTab);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    // کلیک روی تب‌های چک (به‌جز پیش‌بینی) یعنی خروج از اقساط
+    document.addEventListener('click', function (e) {
+      if (!document.body.classList.contains('inst-mode')) return;
+      const b = e.target.closest && e.target.closest('.tabs-navigation .tab-btn');
+      if (b && /switchTab/.test(b.getAttribute('onclick') || '')) document.body.classList.remove('inst-mode');
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && document.body.classList.contains('inst-mode') && !document.getElementById('pnlOv')) exitInstallments();
+    });
+
+    function renderInstallments() {
+      const body = xEl('instBody'); if (!body) return;
+      const list = installments.map(i => ({ ...i, date: normalizeDateStr(i.date) })).sort((a, b) => a.date.localeCompare(b.date));
+      const open = list.filter(i => !i.paid);
+      const overdue = open.filter(i => isDueOrPast(i.date) && i.date < getTodayJalaliNormalized());
+      const sum = arr => arr.reduce((a, i) => a + (+i.amount || 0), 0);
+      xEl('instTotal').textContent = xFa(sum(open));
+      xEl('instOverdue').textContent = xFa(sum(overdue));
+      document.querySelectorAll('#countInst').forEach(e => e.textContent = toPersianDigits(open.length));
+      const nxt = open.find(i => i.date >= getTodayJalaliNormalized());
+      xEl('instNext').innerHTML = nxt ? toPersianDigits(nxt.date) + '<span class="inst-sub">' + xEsc(nxt.bank) + ' · ' + xFa(nxt.amount) + '</span>' : '—';
+
+      if (!list.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">هنوز قسطی ثبت نشده است.</td></tr>'; return; }
+      body.innerHTML = list.map(i => {
+        const d = daysUntil(i.date);
+        let st, cls;
+        if (i.paid) { st = 'پرداخت شد'; cls = 'badge-passed'; }
+        else if (d !== null && d < 0) { st = toPersianDigits(-d) + ' روز گذشته'; cls = 'badge-bounced'; }
+        else if (d === 0) { st = 'امروز'; cls = 'badge-due-alert'; }
+        else { st = (d !== null ? toPersianDigits(d) + ' روز مانده' : 'در انتظار'); cls = 'badge-pending'; }
+        return '<tr class="' + (i.paid ? 'inst-paid' : '') + '">'
+          + '<td><b>' + xEsc(i.bank) + '</b></td>'
+          + '<td style="color:var(--primary);font-weight:700">' + xFa(i.amount) + '</td>'
+          + '<td>' + toPersianDigits(i.date) + '</td>'
+          + '<td><span class="badge ' + cls + '">' + st + '</span></td>'
+          + '<td class="action-btns no-print">'
+          + '<button class="btn btn-outline" title="' + (i.paid ? 'برگشت به پرداخت‌نشده' : 'پرداخت شد') + '" onclick="toggleInstPaid(\'' + i.id + '\')"><i class="fa-solid ' + (i.paid ? 'fa-rotate-left' : 'fa-circle-check') + '" style="color:' + (i.paid ? 'var(--text-muted)' : 'var(--success)') + '"></i></button> '
+          + '<button class="btn btn-outline" title="ویرایش" onclick="editInstallment(\'' + i.id + '\')"><i class="fa-solid fa-pen" style="color:var(--primary)"></i></button> '
+          + '<button class="btn btn-outline" title="حذف" onclick="deleteInstallment(\'' + i.id + '\')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>'
+          + '</td></tr>';
+      }).join('');
+    }
+
+    async function saveInstallment(e) {
+      e.preventDefault();
+      const bank = xEl('instBank').value.trim();
+      const amount = parseInt(toEnglishDigits(xEl('instAmount').value).replace(/[^\d]/g, ''), 10);
+      const date = normalizeDateStr(xEl('instDate').value);
+      const editId = xEl('instEditId').value;
+      if (!bank || !amount || !/^\d{4}\/\d{2}\/\d{2}$/.test(date)) { xToast('بانک، مبلغ و تاریخ (مثل 1405/07/10) را درست وارد کنید'); return; }
+      let ok = true;
+      if (editId) {
+        const it = installments.find(x => x.id === editId);
+        if (it) { Object.assign(it, { bank, amount, date }); ok = await instSaveDoc(it); }
+      } else {
+        const count = Math.min(Math.max(parseInt(toEnglishDigits(xEl('instCount').value), 10) || 1, 1), 120);
+        const base = Date.now();
+        for (let k = 0; k < count; k++) {
+          const it = { id: 'i' + (base + k), bank, amount, date: instAddMonths(date, k), paid: false };
+          installments.push(it);
+          if (!(await instSaveDoc(it))) ok = false;
+        }
+      }
+      instCache(); renderInstallments(); resetInstForm();
+      xToast(ok ? 'قسط ذخیره شد' : 'فقط روی همین دستگاه ذخیره شد (دسترسی collection «installments» را در Firestore Rules باز کنید)');
+    }
+
+    async function toggleInstPaid(id) {
+      const it = installments.find(x => x.id === id); if (!it) return;
+      it.paid = !it.paid; instCache(); renderInstallments(); await instSaveDoc(it);
+    }
+
+    function editInstallment(id) {
+      const it = installments.find(x => x.id === id); if (!it) return;
+      xEl('instEditId').value = id;
+      xEl('instBank').value = it.bank;
+      xEl('instAmount').value = it.amount;
+      xEl('instDate').value = normalizeDateStr(it.date);
+      xEl('instCountWrap').style.display = 'none';
+      xEl('instFormTitle').textContent = 'ویرایش قسط';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetInstForm() {
+      xEl('instEditId').value = '';
+      ['instBank', 'instAmount', 'instDate'].forEach(i => xEl(i).value = '');
+      xEl('instCount').value = '1';
+      xEl('instCountWrap').style.display = '';
+      xEl('instFormTitle').textContent = 'ثبت قسط جدید';
+    }
+
+    async function deleteInstallment(id) {
+      if (!confirm('این قسط حذف شود؟')) return;
+      installments = installments.filter(x => x.id !== id); instCache(); renderInstallments();
+      try { await window.deleteDoc(window.doc(window.db, 'installments', id)); } catch (e) { console.warn(e); }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadInstallments);
+    if (document.readyState !== 'loading') loadInstallments();
+
+    /* ===== درج خودکار «/» هنگام تایپ تاریخ (۱۴۰۵/۰۷/۱۰) ===== */
+    function formatJalaliTyping(value, inputType) {
+      const raw = toEnglishDigits(value);
+      const adding = !/^delete/.test(inputType || '');
+      let y, m = '', d = '';
+      if (inputType === 'insertFromPaste' || inputType === 'insertFromDrop') {
+        const parts = raw.split(/[^0-9]+/).filter(Boolean);
+        if (parts.length >= 3) {
+          return parts[0].slice(0, 4) + '/' + parts[1].padStart(2, '0').slice(0, 2) + '/' + parts[2].padStart(2, '0').slice(0, 2);
+        }
+      }
+      const dg = raw.replace(/[^0-9]/g, '').slice(0, 12);
+      y = dg.slice(0, 4);
+      let rest = dg.slice(4);
+      if (rest) {
+        if (rest[0] > '1') { m = '0' + rest[0]; rest = rest.slice(1); }
+        else { m = rest.slice(0, 2); rest = rest.slice(2); }
+      }
+      if (rest) {
+        if (rest[0] > '3') { d = '0' + rest[0]; }
+        else { d = rest.slice(0, 2); }
+      }
+      let out = y;
+      if (m) out += '/' + m;
+      if (d) out += '/' + d;
+      if (adding) {
+        if (y.length === 4 && !m) out += '/';
+        else if (m.length === 2 && !d) out += '/';
+      }
+      return out;
+    }
+    (function () {
+      const ids = ['dueDate', 'fromDateFilter', 'toDateFilter', 'instDate'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) { el.setAttribute('inputmode', 'numeric'); el.setAttribute('maxlength', '10'); }
+      });
+      document.addEventListener('input', function (e) {
+        const el = e.target;
+        if (!el || !ids.includes(el.id)) return;
+        const atEnd = el.selectionStart === null || el.selectionStart >= el.value.length;
+        if (!atEnd && !/^insertFromPaste/.test(e.inputType || '')) return;
+        const nv = formatJalaliTyping(el.value, e.inputType);
+        if (nv !== el.value) {
+          el.value = nv;
+          try { el.setSelectionRange(nv.length, nv.length); } catch (err) {}
+        }
+        if ((el.id === 'fromDateFilter' || el.id === 'toDateFilter') && (el.value.length === 10 || el.value.length === 0)) renderTable();
+      }, true);
+    })();
   </script>
 </body>
 </html>
