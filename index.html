@@ -1475,6 +1475,10 @@
           <button type="button" class="inst-tool" onclick="document.getElementById('instBackupFile').click()"><span class="inst-tool-ico" style="--c: var(--warning); --cl: var(--warning-light);"><i class="fa-solid fa-upload"></i></span><span>بازیابی بک‌اپ</span></button>
           <button type="button" class="inst-tool" onclick="showInstBackups()"><span class="inst-tool-ico" style="--c: var(--info); --cl: var(--info-light);"><i class="fa-solid fa-cloud-arrow-down"></i></span><span>بک‌اپ‌های خودکار</span></button>
         </div>
+        <div class="inst-tools-sec"><i class="fa-solid fa-triangle-exclamation"></i> پاک‌سازی</div>
+        <div class="inst-tools-grid c1">
+          <button type="button" class="inst-tool danger" onclick="instWipeAll()"><span class="inst-tool-ico" style="--c: var(--danger); --cl: var(--danger-light);"><i class="fa-solid fa-trash-can"></i></span><span>پاک کردن همه اطلاعات اقساط</span></button>
+        </div>
         <input type="file" id="instBackupFile" accept=".json" style="display: none;" onchange="importInstBackup(event)">
       </div>
 
@@ -1598,6 +1602,7 @@
         const querySnapshot = await window.getDocs(window.collection(window.db, "checks"));
         checks = [];
         querySnapshot.forEach((docSnap) => {
+          if (docSnap.id.startsWith('inst_')) return;   // مستندات بخش اقساط (در همین collection ذخیره می‌شوند)
           checks.push({ ...docSnap.data(), serial: docSnap.id });
         });
         renderTable();
@@ -2901,6 +2906,9 @@
       .inst-grid { grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); }
       .inst-tools-grid.c2, .inst-tools-grid.c3 { grid-template-columns: repeat(auto-fit, minmax(130px, 170px)); justify-content: start; }
     }
+    .inst-tools-grid.c1 { grid-template-columns: minmax(0, 1fr); }
+    .inst-tool.danger { border-color: var(--danger); color: var(--danger); }
+    @media (min-width: 769px) { .inst-tools-grid.c1 { grid-template-columns: minmax(130px, 220px); justify-content: start; } }
     @media print { .inst-fab { display: none !important; } .inst-grid { grid-template-columns: repeat(2, 1fr); } }
   </style>
 
@@ -2912,6 +2920,9 @@
     let instQuery = '';
     let instFetching = false;
     const INST_LS = 'installments_cache';
+    /* اقساط در همان collection چک‌ها ذخیره می‌شوند (با پیشوند inst_) تا بدون تغییر در Firestore Rules روی همه دستگاه‌ها بالا بیایند */
+    const INST_COL = 'checks', INST_PREFIX = 'inst_p_', INST_BK_PREFIX = 'inst_bk_';
+    const instRef = id => window.doc(window.db, INST_COL, INST_PREFIX + id);
     const INST_NOTIF_KEY = 'inst_notified_v2';
     const INST_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
 
@@ -2973,7 +2984,7 @@
       const { id, _local, ...rest } = it;
       try {
         if (!(window.db && window.setDoc)) throw new Error('db not ready');
-        await window.setDoc(window.doc(window.db, 'installments', id), rest);
+        await window.setDoc(instRef(id), rest);
         delete it._local; instSetSync('ok'); return true;
       } catch (e) {
         it._local = true; console.warn('ذخیره قسط:', e);
@@ -2986,13 +2997,21 @@
       try {
         for (let i = 0; i < 25 && !(window.db && window.getDocs); i++) await new Promise(r => setTimeout(r, 400));
         if (!(window.db && window.getDocs)) { instSetSync('fail', 'اتصال به سرور برقرار نشد'); return; }
-        const snap = await window.getDocs(window.collection(window.db, 'installments'));
-        const remote = []; snap.forEach(d => remote.push(instNormalize({ ...d.data(), id: d.id })));
-        const pending = installments.filter(x => x._local);
+        const snap = await window.getDocs(window.collection(window.db, INST_COL));
+        const remote = [];
+        snap.forEach(d => { if (d.id.startsWith(INST_PREFIX)) remote.push(instNormalize({ ...d.data(), id: d.id.slice(INST_PREFIX.length) })); });
+        // انتقال اقساطی که قبلاً در collection قدیمی «installments» ذخیره شده بودند (اگر وجود داشته باشد)
+        const migrated = [], rid = new Set(remote.map(x => x.id));
+        try {
+          const old = await window.getDocs(window.collection(window.db, 'installments'));
+          old.forEach(d => { if (!rid.has(d.id)) migrated.push(instNormalize({ ...d.data(), id: d.id, _local: true })); });
+        } catch (e) { /* collection قدیمی در دسترس نیست؛ مشکلی نیست */ }
+        const pending = installments.filter(x => x._local && !migrated.some(m => m.id === x.id)).concat(migrated);
         const pend = new Set(pending.map(x => x.id));
         installments = remote.filter(x => !pend.has(x.id)).concat(pending);
         instCache(); renderInstallments(); instSetSync('ok');
-        for (const it of pending) await instSaveDoc(it);   // تلاش مجدد برای موارد ذخیره‌نشده
+        for (const it of pending) await instSaveDoc(it);   // آپلود موارد ذخیره‌نشده / منتقل‌شده
+        for (const m of migrated) { try { await window.deleteDoc(window.doc(window.db, 'installments', m.id)); } catch (e) {} }
         instCache(); sendInstNotifications(); autoInstBackup();
       } catch (e) {
         console.warn('دریافت اقساط ناموفق:', e);
@@ -3225,7 +3244,7 @@
       }
       const ok = it ? await instSaveDoc(it) : true;
       instCache(); renderInstallments(); closeInstForm();
-      xToast(ok ? 'ذخیره شد' : 'فقط روی همین دستگاه ذخیره شد (دسترسی Firestore را فعال کنید)');
+      xToast(ok ? 'ذخیره شد' : 'فقط روی همین دستگاه ذخیره شد؛ اتصال اینترنت را بررسی کنید و صفحه را دوباره باز کنید');
       sendInstNotifications();
     }
 
@@ -3246,7 +3265,7 @@
     async function deleteInstallment(id) {
       const it = installments.find(x => x.id === id); if (!it) return;
       installments = installments.filter(x => x.id !== id); instCache(); renderInstallments();
-      try { await window.deleteDoc(window.doc(window.db, 'installments', id)); } catch (e) { console.warn(e); }
+      try { await window.deleteDoc(instRef(id)); } catch (e) { console.warn(e); }
       xToast('قسط حذف شد', 'بازگردانی', async () => {
         installments.push(it); renderInstallments(); await instSaveDoc(it); instCache();
       });
@@ -3256,7 +3275,7 @@
       const done = installments.filter(instDone);
       if (!done.length || !confirm(toPersianDigits(done.length) + ' مورد تسویه‌شده حذف شود؟')) return;
       installments = installments.filter(x => !instDone(x)); instCache(); renderInstallments();
-      for (const it of done) { try { await window.deleteDoc(window.doc(window.db, 'installments', it.id)); } catch (e) { console.warn(e); } }
+      for (const it of done) { try { await window.deleteDoc(instRef(it.id)); } catch (e) { console.warn(e); } }
     }
 
     /* ---------- اعلان سررسید اقساط (همان مجوز اعلان چک‌ها) ---------- */
@@ -3411,29 +3430,58 @@
         let h = 5381; for (let k = 0; k < sig.length; k++) h = ((h << 5) + h + sig.charCodeAt(k)) | 0;
         const mark = d + '|' + h;
         if (localStorage.last_inst_backup === mark) return;
-        await window.setDoc(window.doc(window.db, 'installment_backups', 'b_' + d), { date: d, count: installments.length, data: JSON.stringify(instPlain()) });
+        await window.setDoc(window.doc(window.db, INST_COL, INST_BK_PREFIX + d), { date: d, count: installments.length, data: JSON.stringify(instPlain()) });
         localStorage.last_inst_backup = mark;
-        const all = await window.getDocs(window.collection(window.db, 'installment_backups'));
-        const ids = []; all.forEach(sn => ids.push(sn.id)); ids.sort();
-        for (const id of ids.slice(0, -10)) await window.deleteDoc(window.doc(window.db, 'installment_backups', id));
+        const all = await window.getDocs(window.collection(window.db, INST_COL));
+        const ids = []; all.forEach(sn => { if (sn.id.startsWith(INST_BK_PREFIX)) ids.push(sn.id); }); ids.sort();
+        for (const id of ids.slice(0, -10)) await window.deleteDoc(window.doc(window.db, INST_COL, id));
       } catch (e) { console.warn('بک‌اپ خودکار اقساط ناموفق:', e); }
     }
     async function showInstBackups() {
       xPanel('بک‌اپ‌های خودکار اقساط', '<p>در حال دریافت...</p>');
       try {
-        const all = await window.getDocs(window.collection(window.db, 'installment_backups'));
-        const rows = []; all.forEach(sn => rows.push({ id: sn.id, ...sn.data() }));
+        const all = await window.getDocs(window.collection(window.db, INST_COL));
+        const rows = []; all.forEach(sn => { if (sn.id.startsWith(INST_BK_PREFIX)) rows.push({ id: sn.id, ...sn.data() }); });
         rows.sort((a, b) => b.id.localeCompare(a.id));
         window._instBkRows = rows;
         const b = xEl('pnlBody'); if (!b) return;
         b.innerHTML = (rows.length ? '<p style="color:var(--text-muted);margin-bottom:8px">هر روز یک نسخه در فضای ابری ذخیره می‌شود (۱۰ نسخه‌ی آخر).</p>' : '<p>هنوز بک‌اپی ثبت نشده است.</p>')
           + rows.map(r => '<div class="fc-it"><span>' + toPersianDigits(r.date) + '</span><span>' + toPersianDigits(r.count) + ' قسط</span><button class="btn btn-outline" onclick="restoreInstBackup(\'' + r.id + '\')">بازیابی</button></div>').join('');
-      } catch (e) { const b = xEl('pnlBody'); if (b) b.innerHTML = '<p>خطا در دریافت بک‌اپ‌ها (دسترسی collection «installment_backups» را در Firestore Rules باز کنید).</p>'; }
+      } catch (e) { const b = xEl('pnlBody'); if (b) b.innerHTML = '<p>خطا در دریافت بک‌اپ‌ها. اتصال اینترنت را بررسی کنید.</p>'; }
     }
     async function restoreInstBackup(id) {
       const r = (window._instBkRows || []).find(x => x.id === id);
       if (!r || !confirm('اقساط این نسخه بازیابی شوند؟ موارد فعلی حذف نمی‌شوند و فقط موارد هم‌شناسه بازنویسی می‌شوند.')) return;
       try { closePanel(); await instMerge(JSON.parse(r.data)); xToast('بازیابی انجام شد'); } catch (e) { xToast('خطا در بازیابی'); }
+    }
+
+    /* ---------- پاک کردن کامل اطلاعات اقساط ---------- */
+    async function instWipeAll() {
+      if (!confirm('همه اطلاعات اقساط (وام‌ها، تعداد پرداخت‌ها و تاریخچه) برای همیشه پاک شود؟\nاین کار بخش چک‌ها را تغییر نمی‌دهد و برگشت‌پذیر نیست.')) return;
+      const t = prompt('برای تأیید نهایی، کلمه «حذف» را بنویسید:');
+      if ((t || '').trim() !== 'حذف') { xToast('لغو شد؛ چیزی پاک نشد'); return; }
+      const wipeBk = confirm('بک‌اپ‌های خودکار اقساط هم پاک شوند؟\n\nOK = پاک شوند\nCancel = نگه داشته شوند (برای بازیابی بعدی)');
+      xToast('در حال پاک کردن...');
+      try {
+        if (!(window.db && window.getDocs && window.deleteDoc)) throw new Error('db not ready');
+        const snap = await window.getDocs(window.collection(window.db, INST_COL));
+        const ids = [];
+        snap.forEach(d => { if (d.id.startsWith(INST_PREFIX) || (wipeBk && d.id.startsWith(INST_BK_PREFIX))) ids.push(d.id); });
+        for (const id of ids) await window.deleteDoc(window.doc(window.db, INST_COL, id));
+        try {   // collection قدیمی (اگر وجود داشته باشد)
+          const old = await window.getDocs(window.collection(window.db, 'installments')); const oids = [];
+          old.forEach(d => oids.push(d.id));
+          for (const id of oids) await window.deleteDoc(window.doc(window.db, 'installments', id));
+        } catch (e) {}
+      } catch (e) {
+        console.warn('پاک‌سازی ناموفق:', e);
+        alert('اتصال به سرور برقرار نشد و چیزی پاک نشد. اینترنت را بررسی کنید و دوباره تلاش کنید.');
+        return;
+      }
+      installments = []; instCache();
+      try { localStorage.removeItem(INST_NOTIF_KEY); localStorage.removeItem('last_inst_backup'); } catch (e) {}
+      closeInstForm(); renderInstallments();
+      xToast('همه اطلاعات اقساط پاک شد');
     }
 
     function initInstallments() {
