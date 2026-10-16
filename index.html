@@ -1414,38 +1414,81 @@
 
     <!-- ===== تب اقساط (جدا از بخش چک‌ها) ===== -->
     <div id="installmentsView" style="display:none">
-      <div class="no-print" style="margin-bottom: 12px;"><button type="button" class="btn btn-outline" onclick="exitInstallments()"><i class="fa-solid fa-arrow-right"></i> بازگشت به اسناد</button></div>
-      <div class="stats-grid no-print">
-        <div class="stat-card pending"><h4>مانده اقساط</h4><div class="amount" id="instTotal" style="color: var(--warning);">۰</div></div>
-        <div class="stat-card bounced"><h4>سررسید گذشته</h4><div class="amount" id="instOverdue" style="color: var(--danger);">۰</div></div>
-        <div class="stat-card delivered"><h4>قسط بعدی</h4><div class="amount" id="instNext" style="color: var(--info); font-size: calc(15px * var(--fs, 1));">—</div></div>
+      <div class="inst-top no-print">
+        <button type="button" class="btn btn-outline" onclick="exitInstallments()"><i class="fa-solid fa-arrow-right"></i> <span>بازگشت به اسناد</span></button>
+        <button type="button" class="btn btn-primary" id="instAddBtn" onclick="openInstForm()"><i class="fa-solid fa-plus"></i> <span>قسط جدید</span></button>
       </div>
 
-      <div class="card no-print">
+      <div id="instSync" class="inst-sync no-print"></div>
+      <details id="instHelp" class="inst-help no-print" style="display:none">
+        <summary>چطور همگام‌سازی را فعال کنم؟</summary>
+        <div>
+          <p>در Firebase Console به <b>Firestore Database ← Rules</b> برو و داخل <code dir="ltr">match /databases/{database}/documents</code> این بخش را اضافه کن، بعد <b>Publish</b> بزن:</p>
+          <pre dir="ltr">match /installments/{doc} {
+  allow read, write: if true;
+}
+match /installment_backups/{doc} {
+  allow read, write: if true;
+}</pre>
+          <p>تا آن موقع اقساط فقط روی همین دستگاه ذخیره می‌شوند و بعد از فعال شدن، خودکار آپلود می‌شوند. (بخش دوم برای بک‌اپ خودکار اقساط است.)</p>
+        </div>
+      </details>
+
+      <div id="instAlert" class="inst-alert no-print" style="display:none"></div>
+
+      <div class="inst-stats">
+        <div class="stat-card pending"><h4>مانده کل اقساط</h4><div class="amount" id="instTotal" style="color: var(--warning);">۰</div><span class="inst-sub" id="instTotalCnt"></span></div>
+        <div class="stat-card bounced"><h4>سررسید گذشته</h4><div class="amount" id="instOverdue" style="color: var(--danger);">۰</div><span class="inst-sub" id="instOverdueCnt"></span></div>
+        <div class="stat-card passed"><h4>قسط این ماه</h4><div class="amount" id="instMonth" style="color: var(--success);">۰</div><span class="inst-sub" id="instMonthName"></span></div>
+        <div class="stat-card delivered"><h4>قسط بعدی</h4><div class="amount" id="instNext" style="color: var(--info);">—</div><span class="inst-sub" id="instNextSub"></span></div>
+      </div>
+
+      <div class="card no-print" id="instFormCard" style="display:none">
         <div class="card-title"><i class="fa-solid fa-plus" style="color: var(--primary);"></i> <span id="instFormTitle">ثبت قسط جدید</span></div>
-        <form onsubmit="saveInstallment(event)">
+        <form onsubmit="saveInstallment(event)" autocomplete="off">
           <input type="hidden" id="instEditId">
           <div class="form-grid">
-            <div class="form-group"><label>بانک *</label><input type="text" id="instBank" class="form-control" required placeholder="مثلا: ملت"></div>
-            <div class="form-group"><label>مبلغ قسط (ریال) *</label><input type="text" id="instAmount" class="form-control" required inputmode="numeric" autocomplete="off" placeholder="مثلا: 25000000" oninput="formatDigitsInput(this)"></div>
-            <div class="form-group"><label>تاریخ پرداخت *</label><input type="text" id="instDate" class="form-control" required autocomplete="off" placeholder="1405/07/10" oninput="formatDigitsInput(this)"></div>
-            <div class="form-group" id="instCountWrap"><label>تعداد اقساط (ماهانه)</label><input type="text" id="instCount" class="form-control" inputmode="numeric" autocomplete="off" value="1" oninput="formatDigitsInput(this)"></div>
+            <div class="form-group"><label>بانک *</label><input type="text" id="instBank" class="form-control" required list="instBankList" placeholder="مثلا: ملت"><datalist id="instBankList"></datalist></div>
+            <div class="form-group"><label>مبلغ هر قسط (ریال) *</label><input type="text" id="instAmount" class="form-control" required inputmode="numeric" placeholder="مثلا: 25,000,000" oninput="instAmountInput(this)"><span class="inst-hint" id="instAmountHint"></span></div>
+            <div class="form-group"><label>تعداد کل اقساط *</label><input type="text" id="instTotalN" class="form-control" required inputmode="numeric" placeholder="مثلا: 12" oninput="formatDigitsInput(this)"></div>
+            <div class="form-group"><label>تا الان چند قسط پرداخت شده؟</label><input type="text" id="instPaidN" class="form-control" inputmode="numeric" value="0" oninput="formatDigitsInput(this)"></div>
+            <div class="form-group"><label>تاریخ سررسید قسط بعدی *</label><input type="text" id="instDate" class="form-control" inputmode="numeric" placeholder="1405/07/10"></div>
+            <div class="form-group"><label>فاصله یادآوری بعد از هر پرداخت (روز)</label><input type="text" id="instGap" class="form-control" inputmode="numeric" value="30" oninput="formatDigitsInput(this)"></div>
+            <div class="form-group" style="grid-column: 1 / -1;"><label>توضیح (اختیاری)</label><input type="text" id="instNote" class="form-control" placeholder="مثلا: وام ماشین"></div>
           </div>
-          <div style="margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end;">
-            <button type="button" class="btn btn-outline" onclick="resetInstForm()">انصراف</button>
+          <div class="inst-hint" style="margin-top:10px;">هر بار «پرداخت شد» را بزنید، تعداد پرداخت‌شده‌ها یکی زیاد می‌شود و تاریخ قسط بعدی خودکار می‌شود (روز پرداخت + فاصله بالا). بعد از آخرین قسط، وام تسویه می‌شود.</div>
+          <div class="inst-form-actions">
+            <button type="button" class="btn btn-outline" onclick="closeInstForm()">انصراف</button>
             <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> ذخیره</button>
           </div>
         </form>
       </div>
 
-      <div class="card">
-        <div class="table-container">
-          <table>
-            <thead><tr><th>بانک</th><th>مبلغ قسط (ریال)</th><th>تاریخ پرداخت</th><th>وضعیت</th><th class="action-btns no-print">عملیات</th></tr></thead>
-            <tbody id="instBody"></tbody>
-          </table>
+      <div class="card inst-filters no-print">
+        <div class="inst-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="instSearch" class="form-control" placeholder="جستجو: بانک، مبلغ، تاریخ، توضیح" oninput="instQuery = this.value; renderInstallments()"></div>
+        <div class="inst-seg" id="instSeg">
+          <button type="button" class="active" data-f="open" onclick="setInstFilter('open')">در جریان</button>
+          <button type="button" data-f="done" onclick="setInstFilter('done')">تسویه‌شده</button>
+          <button type="button" data-f="all" onclick="setInstFilter('all')">همه</button>
         </div>
       </div>
+
+      <div id="instList"></div>
+      <div class="no-print" style="text-align:center; margin: 4px 0 16px;"><button type="button" class="btn btn-outline" id="instClearBtn" style="display:none" onclick="instClearPaid()"><i class="fa-solid fa-broom"></i> پاک‌سازی تسویه‌شده‌ها</button></div>
+
+      <div class="card inst-tools no-print">
+        <div class="card-title"><i class="fa-solid fa-toolbox" style="color: var(--primary);"></i> ابزارها و پشتیبان‌گیری</div>
+        <div class="inst-tools-grid">
+          <button type="button" class="btn btn-outline" onclick="exportInstExcel()"><i class="fa-solid fa-file-excel" style="color: var(--success);"></i> خروجی اکسل</button>
+          <button type="button" class="btn btn-outline" onclick="addAllInstToCalendar()"><i class="fa-solid fa-calendar-plus" style="color: var(--info);"></i> همه به تقویم</button>
+          <button type="button" class="btn btn-outline" onclick="exportInstBackup()"><i class="fa-solid fa-download"></i> دانلود بک‌اپ</button>
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('instBackupFile').click()"><i class="fa-solid fa-upload"></i> بازیابی بک‌اپ</button>
+          <button type="button" class="btn btn-outline" onclick="showInstBackups()"><i class="fa-solid fa-cloud-arrow-down"></i> بک‌اپ‌های خودکار</button>
+        </div>
+        <input type="file" id="instBackupFile" accept=".json" style="display: none;" onchange="importInstBackup(event)">
+      </div>
+
+      <button type="button" class="inst-fab no-print" onclick="openInstForm()" aria-label="قسط جدید"><i class="fa-solid fa-plus"></i></button>
     </div>
   </div>
 
@@ -2683,8 +2726,8 @@
     /* ===== پیش‌بینی سررسیدها ===== */
     function showForecast() {
       const MN = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
-      const pend = checks.filter(c => c.status === 'در انتظار' && c.dueDate).map(c => ({ ...c, dueDate: toEnglishDigits(c.dueDate) }));
-      if (!pend.length) return xPanel('پیش‌بینی سررسیدها', '<p>سندی در انتظار پاس وجود ندارد.</p>');
+      const pend = checks.filter(c => c.status === 'در انتظار' && c.dueDate).map(c => ({ ...c, dueDate: toEnglishDigits(c.dueDate) })).concat(typeof instForecastItems === 'function' ? instForecastItems() : []);
+      if (!pend.length) return xPanel('پیش‌بینی سررسیدها', '<p>سند یا قسطی در انتظار وجود ندارد.</p>');
       const g = {};
       pend.forEach(c => { const k = isDueOrPast(c.dueDate) ? '0' : c.dueDate.slice(0, 7); (g[k] = g[k] || []).push(c); });
       const keys = Object.keys(g).sort();
@@ -2697,7 +2740,7 @@
           + g[k].sort((a, b) => a.dueDate.localeCompare(b.dueDate)).map(c => '<div class="fc-it"><span>' + toPersianDigits(c.dueDate) + '</span><span>' + xEsc(c.issuer) + ' · ' + xEsc(c.bank) + '</span><b>' + xFa(c.amount) + '</b></div>').join('')
           + '</details>';
       });
-      xPanel('پیش‌بینی سررسیدها', h);
+      xPanel('پیش‌بینی سررسیدها', h + (window._instForecastCut ? '<p style="margin-top:10px;color:var(--text-muted);font-size:12px">اقساط تا ۲۴ ماه آینده نمایش داده می‌شوند.</p>' : ''));
     }
 
     /* ===== بک‌اپ خودکار (روزانه، در فضای ابری) ===== */
@@ -2744,158 +2787,628 @@
     body.inst-mode .fab,
     body.inst-mode .sheet-backdrop { display: none !important; }
     body.inst-mode #installmentsView { display: block !important; }
-    #installmentsView .stats-grid { display: grid !important; }
     body.inst-mode .hdr-inst-btn { background: var(--primary); color: #fff; border-color: var(--primary); }
     .hdr-inst-btn .badge-count { background: var(--warning); color: #000; border-radius: 10px; padding: 0 7px; font-size: calc(11px * var(--fs, 1)); }
-    #installmentsView tr.inst-paid td { opacity: .55; }
-    #installmentsView .inst-sub { font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); display: block; margin-top: 2px; }
+
+    #installmentsView { min-width: 0; max-width: 100%; }
+    #installmentsView * { min-width: 0; }
+    .inst-top { display: flex; gap: 8px; justify-content: space-between; align-items: center; flex-wrap: wrap; margin-bottom: 12px; }
+    .inst-alert { border-radius: 14px; padding: 12px 14px; margin-bottom: 12px; font-weight: 700; font-size: calc(13px * var(--fs, 1)); line-height: 1.8; border: 1px solid var(--due-today-border); background: var(--due-today-bg); color: var(--due-today-text); }
+    .inst-alert.danger { border-color: var(--danger); background: var(--danger-light); color: var(--danger); }
+
+    .inst-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+    .inst-stats .stat-card .amount { font-size: calc(16px * var(--fs, 1)); }
+    .inst-sub { display: block; font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); margin-top: 3px; font-weight: 600; }
+
+    .inst-hint { font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); min-height: 1em; }
+    .inst-form-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+    .inst-filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px; }
+    .inst-search { position: relative; flex: 1 1 220px; }
+    .inst-search i { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
+    .inst-search .form-control { width: 100%; padding-right: 36px; }
+    .inst-seg { display: flex; gap: 6px; flex-wrap: wrap; }
+    .inst-seg button { font-family: inherit; cursor: pointer; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-main); border-radius: 10px; padding: 8px 14px; font-weight: 700; font-size: calc(12px * var(--fs, 1)); }
+    .inst-seg button.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    .inst-month { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; margin: 14px 2px 8px; font-weight: 800; font-size: calc(14px * var(--fs, 1)); }
+    .inst-month span:last-child { font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); font-weight: 600; }
+    .inst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 10px; }
+    .inst-card { background: var(--card-bg); border: 1px solid var(--border-color); border-inline-start: 4px solid var(--warning); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; break-inside: avoid; }
+    .inst-card.is-overdue { border-inline-start-color: var(--danger); }
+    .inst-card.is-paid { border-inline-start-color: var(--success); }
+    .inst-card.is-paid .inst-amount, .inst-card.is-paid .inst-bank { opacity: .6; }
+    .inst-card-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .inst-bank { display: flex; align-items: center; gap: 7px; font-size: calc(14px * var(--fs, 1)); overflow-wrap: anywhere; }
+    .inst-bank i { color: var(--primary); }
+    .inst-amount { font-size: calc(20px * var(--fs, 1)); font-weight: 800; color: var(--primary); overflow-wrap: anywhere; }
+    .inst-amount small { font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); font-weight: 600; }
+    .inst-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); }
+    .inst-meta b { color: var(--text-main); }
+    .inst-actions { display: flex; gap: 8px; margin-top: 4px; }
+    .inst-actions .btn { justify-content: center; }
+    .inst-actions .inst-pay { flex: 1; }
+    .inst-empty { text-align: center; color: var(--text-muted); padding: 28px 10px; }
+
+    .inst-fab { display: none; position: fixed; left: calc(16px + env(safe-area-inset-left)); bottom: calc(20px + env(safe-area-inset-bottom)); width: 56px; height: 56px; border-radius: 50%; border: none; background: var(--primary); color: #fff; font-size: 22px; box-shadow: 0 8px 22px rgba(0,0,0,.3); z-index: 900; cursor: pointer; align-items: center; justify-content: center; }
+
+    @media (max-width: 768px) {
+      .inst-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+      .inst-stats .stat-card .amount { font-size: calc(14px * var(--fs, 1)); }
+      .inst-grid { grid-template-columns: 1fr; }
+      #instAddBtn { display: none; }
+      .inst-top .btn-outline { flex: 1; }
+      .inst-fab { display: flex; }
+      #installmentsView.inst-form-open .inst-fab { display: none; }
+      .inst-seg { width: 100%; }
+      .inst-seg button { flex: 1; padding: 11px 6px; }
+      .inst-actions .btn { min-height: 46px; }
+      .inst-form-actions .btn { flex: 1; }
+    }
+    @media (max-width: 380px) {
+      .inst-stats .stat-card { padding: 8px; }
+      .inst-stats .stat-card .amount { font-size: calc(13px * var(--fs, 1)); }
+      .inst-amount { font-size: calc(18px * var(--fs, 1)); }
+    }
+    .inst-sync { display: inline-flex; align-items: center; gap: 6px; font-size: calc(12px * var(--fs, 1)); font-weight: 700; padding: 5px 12px; border-radius: 20px; margin-bottom: 10px; background: var(--primary-light); color: var(--text-muted); }
+    .inst-sync.ok { background: var(--success-light); color: var(--success); }
+    .inst-sync.fail { background: var(--danger-light); color: var(--danger); }
+    .inst-help { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; font-size: calc(12px * var(--fs, 1)); line-height: 1.9; }
+    .inst-help summary { cursor: pointer; font-weight: 700; color: var(--primary); }
+    .inst-help pre { background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px 10px; overflow-x: auto; margin: 6px 0; text-align: left; }
+    .inst-progress { height: 8px; border-radius: 99px; background: var(--border-color); overflow: hidden; }
+    .inst-progress > span { display: block; height: 100%; background: var(--success); border-radius: 99px; }
+    .inst-prog-text { font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); line-height: 1.7; }
+    .inst-actions .inst-ico { flex: 0 0 auto; }
+    .inst-actions2 { margin-top: 0; }
+    .inst-actions2 .btn { flex: 1; font-size: calc(12px * var(--fs, 1)); padding: 8px 4px; gap: 5px; }
+    .inst-tools-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; }
+    .inst-tools-grid .btn { justify-content: center; }
+    @media (max-width: 768px) { .inst-tools-grid { grid-template-columns: 1fr 1fr; } }
+    @media print { .inst-fab { display: none !important; } .inst-grid { grid-template-columns: repeat(2, 1fr); } }
   </style>
 
   <script>
     /* ===== تب اقساط: کاملاً مستقل از چک‌ها ===== */
+    /* هر مورد یک «وام/قسط» است: مبلغ هر قسط، تعداد کل، تعداد پرداخت‌شده، تاریخ قسط بعدی */
     let installments = [];
+    let instFilter = 'open';
+    let instQuery = '';
+    let instFetching = false;
     const INST_LS = 'installments_cache';
+    const INST_NOTIF_KEY = 'inst_notified_v2';
+    const INST_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
 
-    function instCache() { try { localStorage.setItem(INST_LS, JSON.stringify(installments)); } catch (e) {} }
+    function instCache() {
+      try { localStorage.setItem(INST_LS, JSON.stringify(installments)); } catch (e) {}
+      clearTimeout(window._instBk); window._instBk = setTimeout(autoInstBackup, 4000);   // بک‌اپ خودکار (۴ ثانیه بعد از هر تغییر)
+    }
+    function instMonthLabel(key) {
+      if (key === 'done') return 'تسویه‌شده';
+      if (key === 'none') return 'بدون تاریخ';
+      const [y, m] = key.split('/').map(Number); return INST_MONTHS[m - 1] + ' ' + toPersianDigits(y);
+    }
+    function instValidDate(s) {
+      const m = /^(\d{4})\/(\d{2})\/(\d{2})$/.exec(s); if (!m) return false;
+      const y = +m[1], mo = +m[2], d = +m[3];
+      return y >= 1300 && y <= 1600 && mo >= 1 && mo <= 12 && d >= 1 && d <= (mo <= 6 ? 31 : 30);
+    }
+    // افزودن روز به تاریخ شمسی
+    function instAddDays(dateStr, n) {
+      const [y, m, d] = normalizeDateStr(dateStr).split('/').map(Number);
+      const p = _jParts(jalaliToUTC(y, m, d) + n * 864e5);
+      return p.year + '/' + String(p.month).padStart(2, '0') + '/' + String(p.day).padStart(2, '0');
+    }
+    function instNormHistory(h) {
+      return (Array.isArray(h) ? h : []).map((x, k) => {
+        if (typeof x === 'string') return { n: k + 1, date: normalizeDateStr(x) };
+        const e = { n: parseInt(x.n, 10) || k + 1, date: normalizeDateStr(x.date || '') };
+        if (x.prevNext != null) e.prevNext = normalizeDateStr(x.prevNext);
+        return e;
+      });
+    }
+    // یکسان‌سازی داده (سازگار با اقساط قدیمی که فقط date و paid داشتند)
+    function instNormalize(r) {
+      const total = Math.min(Math.max(parseInt(r.total, 10) || 1, 1), 600);
+      let pc = r.paidCount != null ? (parseInt(r.paidCount, 10) || 0) : (r.paid ? 1 : 0);
+      pc = Math.min(Math.max(pc, 0), total);
+      const it = {
+        id: r.id, bank: r.bank || '', amount: +r.amount || 0, total, paidCount: pc,
+        nextDate: normalizeDateStr(r.nextDate || r.date || ''),
+        gap: Math.min(Math.max(parseInt(r.gap, 10) || 30, 1), 365),
+        note: r.note || '', history: instNormHistory(r.history)
+      };
+      if (r._local) it._local = true;
+      return it;
+    }
+    const instDone = i => i.paidCount >= i.total;
 
-    async function loadInstallments() {
-      try { installments = JSON.parse(localStorage.getItem(INST_LS) || '[]'); } catch (e) { installments = []; }
-      renderInstallments();
-      if (!window.db) { setTimeout(loadInstallments, 400); return; }
-      try {
-        const snap = await window.getDocs(window.collection(window.db, 'installments'));
-        const list = []; snap.forEach(d => list.push({ ...d.data(), id: d.id }));
-        installments = list; instCache(); renderInstallments();
-      } catch (e) { console.warn('دریافت اقساط ناموفق:', e); }
+    /* ---------- وضعیت همگام‌سازی ---------- */
+    function instSetSync(state, detail) {
+      const el = xEl('instSync'), help = xEl('instHelp'); if (!el) return;
+      if (state === 'ok') { el.className = 'inst-sync ok no-print'; el.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> همگام با سرور'; help.style.display = 'none'; }
+      else if (state === 'fail') {
+        el.className = 'inst-sync fail no-print';
+        el.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> فقط روی این دستگاه ذخیره می‌شود' + (detail ? ' (' + xEsc(detail) + ')' : '');
+        help.style.display = '';
+      } else { el.className = 'inst-sync no-print'; el.innerHTML = '<i class="fa-solid fa-rotate"></i> در حال بررسی اتصال...'; }
     }
 
     async function instSaveDoc(it) {
-      const { id, ...rest } = it;
-      try { await window.setDoc(window.doc(window.db, 'installments', id), rest); return true; }
-      catch (e) { console.warn(e); return false; }
+      const { id, _local, ...rest } = it;
+      try {
+        if (!(window.db && window.setDoc)) throw new Error('db not ready');
+        await window.setDoc(window.doc(window.db, 'installments', id), rest);
+        delete it._local; instSetSync('ok'); return true;
+      } catch (e) {
+        it._local = true; console.warn('ذخیره قسط:', e);
+        instSetSync('fail', e && e.code === 'permission-denied' ? 'دسترسی Firestore بسته است' : ''); return false;
+      }
     }
 
-    function instAddMonths(dateStr, n) {
-      const [y0, m0, d0] = normalizeDateStr(dateStr).split('/').map(Number);
-      let m = m0 + n, y = y0 + Math.floor((m - 1) / 12);
-      m = ((m - 1) % 12 + 12) % 12 + 1;
-      const maxD = m <= 6 ? 31 : (m <= 11 ? 30 : 29);
-      const d = Math.min(d0, maxD);
-      return y + '/' + String(m).padStart(2, '0') + '/' + String(d).padStart(2, '0');
+    async function loadInstallments() {
+      if (instFetching) return; instFetching = true;
+      try {
+        for (let i = 0; i < 25 && !(window.db && window.getDocs); i++) await new Promise(r => setTimeout(r, 400));
+        if (!(window.db && window.getDocs)) { instSetSync('fail', 'اتصال به سرور برقرار نشد'); return; }
+        const snap = await window.getDocs(window.collection(window.db, 'installments'));
+        const remote = []; snap.forEach(d => remote.push(instNormalize({ ...d.data(), id: d.id })));
+        const pending = installments.filter(x => x._local);
+        const pend = new Set(pending.map(x => x.id));
+        installments = remote.filter(x => !pend.has(x.id)).concat(pending);
+        instCache(); renderInstallments(); instSetSync('ok');
+        for (const it of pending) await instSaveDoc(it);   // تلاش مجدد برای موارد ذخیره‌نشده
+        instCache(); sendInstNotifications(); autoInstBackup();
+      } catch (e) {
+        console.warn('دریافت اقساط ناموفق:', e);
+        instSetSync('fail', e && e.code === 'permission-denied' ? 'دسترسی Firestore بسته است' : '');
+      } finally { instFetching = false; }
     }
 
+    /* ---------- نمایش / خروج از تب ---------- */
     function showInstallments() {
       if (document.body.classList.contains('inst-mode')) { exitInstallments(); return; }
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.body.classList.add('inst-mode');
       renderInstallments();
       window.scrollTo({ top: 0, behavior: 'smooth' });
+      loadInstallments();
     }
-
     function exitInstallments() {
       document.body.classList.remove('inst-mode');
+      closeInstForm();
       switchTab(currentTab);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
-    // کلیک روی تب‌های چک (به‌جز پیش‌بینی) یعنی خروج از اقساط
     document.addEventListener('click', function (e) {
       if (!document.body.classList.contains('inst-mode')) return;
       const b = e.target.closest && e.target.closest('.tabs-navigation .tab-btn');
       if (b && /switchTab/.test(b.getAttribute('onclick') || '')) document.body.classList.remove('inst-mode');
     }, true);
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && document.body.classList.contains('inst-mode') && !document.getElementById('pnlOv')) exitInstallments();
+      if (e.key !== 'Escape' || !document.body.classList.contains('inst-mode')) return;
+      if (xEl('instFormCard').style.display !== 'none') closeInstForm(); else exitInstallments();
+    });
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && document.body.classList.contains('inst-mode')) loadInstallments();
     });
 
-    function renderInstallments() {
-      const body = xEl('instBody'); if (!body) return;
-      const list = installments.map(i => ({ ...i, date: normalizeDateStr(i.date) })).sort((a, b) => a.date.localeCompare(b.date));
-      const open = list.filter(i => !i.paid);
-      const overdue = open.filter(i => isDueOrPast(i.date) && i.date < getTodayJalaliNormalized());
-      const sum = arr => arr.reduce((a, i) => a + (+i.amount || 0), 0);
-      xEl('instTotal').textContent = xFa(sum(open));
-      xEl('instOverdue').textContent = xFa(sum(overdue));
-      document.querySelectorAll('#countInst').forEach(e => e.textContent = toPersianDigits(open.length));
-      const nxt = open.find(i => i.date >= getTodayJalaliNormalized());
-      xEl('instNext').innerHTML = nxt ? toPersianDigits(nxt.date) + '<span class="inst-sub">' + xEsc(nxt.bank) + ' · ' + xFa(nxt.amount) + '</span>' : '—';
+    /* ---------- رندر ---------- */
+    function setInstFilter(f) {
+      instFilter = f;
+      document.querySelectorAll('#instSeg button').forEach(b => b.classList.toggle('active', b.dataset.f === f));
+      renderInstallments();
+    }
 
-      if (!list.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px">هنوز قسطی ثبت نشده است.</td></tr>'; return; }
-      body.innerHTML = list.map(i => {
-        const d = daysUntil(i.date);
-        let st, cls;
-        if (i.paid) { st = 'پرداخت شد'; cls = 'badge-passed'; }
-        else if (d !== null && d < 0) { st = toPersianDigits(-d) + ' روز گذشته'; cls = 'badge-bounced'; }
-        else if (d === 0) { st = 'امروز'; cls = 'badge-due-alert'; }
-        else { st = (d !== null ? toPersianDigits(d) + ' روز مانده' : 'در انتظار'); cls = 'badge-pending'; }
-        return '<tr class="' + (i.paid ? 'inst-paid' : '') + '">'
-          + '<td><b>' + xEsc(i.bank) + '</b></td>'
-          + '<td style="color:var(--primary);font-weight:700">' + xFa(i.amount) + '</td>'
-          + '<td>' + toPersianDigits(i.date) + '</td>'
-          + '<td><span class="badge ' + cls + '">' + st + '</span></td>'
-          + '<td class="action-btns no-print">'
-          + '<button class="btn btn-outline" title="' + (i.paid ? 'برگشت به پرداخت‌نشده' : 'پرداخت شد') + '" onclick="toggleInstPaid(\'' + i.id + '\')"><i class="fa-solid ' + (i.paid ? 'fa-rotate-left' : 'fa-circle-check') + '" style="color:' + (i.paid ? 'var(--text-muted)' : 'var(--success)') + '"></i></button> '
-          + '<button class="btn btn-outline" title="ویرایش" onclick="editInstallment(\'' + i.id + '\')"><i class="fa-solid fa-pen" style="color:var(--primary)"></i></button> '
-          + '<button class="btn btn-outline" title="حذف" onclick="deleteInstallment(\'' + i.id + '\')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i></button>'
-          + '</td></tr>';
+    function instStatus(i) {
+      if (instDone(i)) return { text: 'تسویه شد', badge: 'badge-passed', cls: 'is-paid' };
+      const d = daysUntil(i.nextDate);
+      if (d === null) return { text: 'در انتظار', badge: 'badge-pending', cls: '' };
+      if (d < 0) return { text: toPersianDigits(-d) + ' روز گذشته', badge: 'badge-bounced', cls: 'is-overdue' };
+      if (d === 0) return { text: 'امروز', badge: 'badge-due-alert', cls: '' };
+      if (d === 1) return { text: 'فردا', badge: 'badge-due-alert', cls: '' };
+      return { text: toPersianDigits(d) + ' روز مانده', badge: 'badge-pending', cls: '' };
+    }
+
+    function renderInstallments() {
+      const box = xEl('instList'); if (!box) return;
+      const today = getTodayJalaliNormalized();
+      const all = installments;
+      const active = all.filter(i => !instDone(i));
+      const sum = arr => arr.reduce((a, i) => a + (+i.amount || 0), 0);
+      const remaining = active.reduce((a, i) => a + (i.total - i.paidCount) * (+i.amount || 0), 0);
+      const remCount = active.reduce((a, i) => a + (i.total - i.paidCount), 0);
+      const overdue = active.filter(i => i.nextDate && i.nextDate < today);
+      const monthKey = today.slice(0, 7);
+      const monthOpen = active.filter(i => i.nextDate && i.nextDate.slice(0, 7) === monthKey);
+      const nxt = active.filter(i => i.nextDate && i.nextDate >= today).sort((a, b) => a.nextDate.localeCompare(b.nextDate))[0];
+
+      xEl('instTotal').textContent = xFa(remaining);
+      xEl('instTotalCnt').textContent = toPersianDigits(remCount) + ' قسط مانده · ریال';
+      xEl('instOverdue').textContent = xFa(sum(overdue));
+      xEl('instOverdueCnt').textContent = toPersianDigits(overdue.length) + ' قسط';
+      xEl('instMonth').textContent = xFa(sum(monthOpen));
+      xEl('instMonthName').textContent = instMonthLabel(monthKey);
+      xEl('instNext').textContent = nxt ? toPersianDigits(nxt.nextDate) : '—';
+      xEl('instNextSub').textContent = nxt ? nxt.bank + ' · ' + xFa(nxt.amount) : '';
+      document.querySelectorAll('#countInst').forEach(e => e.textContent = toPersianDigits(active.length));
+      xEl('instClearBtn').style.display = all.some(instDone) ? '' : 'none';
+
+      // هشدار سررسید
+      const late = overdue.length;
+      const soon = active.filter(i => { const d = daysUntil(i.nextDate); return d !== null && d >= 0 && d <= 3; });
+      const al = xEl('instAlert');
+      if (late || soon.length) {
+        const parts = [];
+        if (late) parts.push(toPersianDigits(late) + ' قسط سررسیدگذشته');
+        if (soon.length) parts.push(toPersianDigits(soon.length) + ' قسط تا ۳ روز آینده');
+        al.innerHTML = '<i class="fa-solid fa-bell"></i> ' + parts.join(' و ') + ' دارید';
+        al.className = 'inst-alert no-print' + (late ? ' danger' : ''); al.style.display = '';
+      } else al.style.display = 'none';
+
+      // پیشنهاد نام بانک‌ها
+      const banks = new Set(all.map(i => i.bank));
+      try { (checks || []).forEach(c => c.bank && banks.add(c.bank)); } catch (e) {}
+      xEl('instBankList').innerHTML = [...banks].map(b => '<option value="' + xEsc(b) + '">').join('');
+
+      // فیلتر و جستجو
+      const q = normSearch(instQuery).replace(/[,،]/g, '');
+      let list = all.filter(i => instFilter === 'all' ? true : (instFilter === 'done' ? instDone(i) : !instDone(i)));
+      const gkey = i => instDone(i) ? 'done' : (/^\d{4}\/\d{2}\/\d{2}$/.test(i.nextDate) ? i.nextDate.slice(0, 7) : 'none');
+      if (q) list = list.filter(i => normSearch(i.bank + ' ' + i.note + ' ' + i.amount + ' ' + i.nextDate + ' ' + instMonthLabel(gkey(i))).includes(q));
+      list.sort((a, b) => (instDone(a) - instDone(b)) || a.nextDate.localeCompare(b.nextDate));
+
+      if (!list.length) {
+        box.innerHTML = '<div class="card inst-empty">' + (all.length ? 'موردی پیدا نشد.' : 'هنوز قسطی ثبت نشده است. با دکمه «قسط جدید» شروع کنید.') + '</div>';
+        return;
+      }
+      const groups = {}, order = [];
+      list.forEach(i => { const k = gkey(i); if (!groups[k]) { groups[k] = []; order.push(k); } groups[k].push(i); });
+      box.innerHTML = order.map(k => {
+        const g = groups[k];
+        const note = k === 'done' ? toPersianDigits(g.length) + ' مورد' : 'جمع قسط‌های این ماه: ' + xFa(sum(g)) + ' ریال';
+        return '<div class="inst-month"><span>' + instMonthLabel(k) + '</span><span>' + note + '</span></div>'
+          + '<div class="inst-grid">' + g.map(instCardHtml).join('') + '</div>';
       }).join('');
     }
 
-    async function saveInstallment(e) {
-      e.preventDefault();
-      const bank = xEl('instBank').value.trim();
-      const amount = parseInt(toEnglishDigits(xEl('instAmount').value).replace(/[^\d]/g, ''), 10);
-      const date = normalizeDateStr(xEl('instDate').value);
-      const editId = xEl('instEditId').value;
-      if (!bank || !amount || !/^\d{4}\/\d{2}\/\d{2}$/.test(date)) { xToast('بانک، مبلغ و تاریخ (مثل 1405/07/10) را درست وارد کنید'); return; }
-      let ok = true;
-      if (editId) {
-        const it = installments.find(x => x.id === editId);
-        if (it) { Object.assign(it, { bank, amount, date }); ok = await instSaveDoc(it); }
-      } else {
-        const count = Math.min(Math.max(parseInt(toEnglishDigits(xEl('instCount').value), 10) || 1, 1), 120);
-        const base = Date.now();
-        for (let k = 0; k < count; k++) {
-          const it = { id: 'i' + (base + k), bank, amount, date: instAddMonths(date, k), paid: false };
-          installments.push(it);
-          if (!(await instSaveDoc(it))) ok = false;
-        }
-      }
-      instCache(); renderInstallments(); resetInstForm();
-      xToast(ok ? 'قسط ذخیره شد' : 'فقط روی همین دستگاه ذخیره شد (دسترسی collection «installments» را در Firestore Rules باز کنید)');
+    function instCardHtml(i) {
+      const st = instStatus(i), done = instDone(i), left = i.total - i.paidCount;
+      const pct = Math.round(i.paidCount / i.total * 100);
+      const q = "\\'" + i.id + "\\'";
+      return '<div class="inst-card ' + st.cls + '">'
+        + '<div class="inst-card-head"><div class="inst-bank"><i class="fa-solid fa-building-columns"></i><b>' + xEsc(i.bank) + '</b></div><span class="badge ' + st.badge + '">' + st.text + '</span></div>'
+        + '<div class="inst-amount">' + xFa(i.amount) + ' <small>ریال / هر قسط</small></div>'
+        + '<div class="inst-progress"><span style="width:' + pct + '%"></span></div>'
+        + '<div class="inst-prog-text">' + toPersianDigits(i.paidCount) + ' از ' + toPersianDigits(i.total) + ' قسط پرداخت شده'
+        + (done ? '' : ' · ' + toPersianDigits(left) + ' قسط مانده (' + xFa(left * i.amount) + ' ریال)') + '</div>'
+        + '<div class="inst-meta">' + (done ? '' : '<span><i class="fa-regular fa-calendar"></i> قسط بعدی: <b>' + toPersianDigits(i.nextDate || '—') + '</b></span>')
+        + (i.note ? '<span><i class="fa-regular fa-note-sticky"></i> ' + xEsc(i.note) + '</span>' : '') + '</div>'
+        + (done ? '' : '<div class="inst-actions no-print">'
+          + '<button class="btn btn-primary inst-pay" onclick="payInstallment(' + q + ')"><i class="fa-solid fa-circle-check"></i> پرداخت شد (قسط ' + toPersianDigits(i.paidCount + 1) + ')</button>'
+          + '<button class="btn btn-outline inst-ico" title="ثبت پرداخت با تاریخ دیگر" aria-label="ثبت پرداخت با تاریخ دیگر" onclick="openPayDate(' + q + ')"><i class="fa-solid fa-calendar-check" style="color:var(--success)"></i></button>'
+          + '</div>')
+        + '<div class="inst-actions inst-actions2 no-print">'
+        + (done ? '' : '<button class="btn btn-outline" onclick="addInstToCalendar(' + q + ')"><i class="fa-solid fa-calendar-plus" style="color:var(--info)"></i> تقویم</button>')
+        + '<button class="btn btn-outline" onclick="showInstHistory(' + q + ')"><i class="fa-solid fa-clock-rotate-left"></i> تاریخچه</button>'
+        + '<button class="btn btn-outline" onclick="editInstallment(' + q + ')"><i class="fa-solid fa-pen" style="color:var(--primary)"></i> ویرایش</button>'
+        + '<button class="btn btn-outline" onclick="deleteInstallment(' + q + ')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i> حذف</button>'
+        + '</div></div>';
     }
 
-    async function toggleInstPaid(id) {
+    /* ---------- پرداخت قسط: شمارنده +۱ و یادآوری بعدی = تاریخ پرداخت + فاصله (پیش‌فرض ۳۰ روز) ---------- */
+    async function payInstallment(id, payDate) {
+      const it = installments.find(x => x.id === id); if (!it || instDone(it)) return;
+      const date = payDate ? normalizeDateStr(payDate) : getTodayJalaliNormalized();
+      const prev = { paidCount: it.paidCount, nextDate: it.nextDate, history: it.history.slice() };
+      it.paidCount += 1; it.history = prev.history.concat({ n: it.paidCount, date, prevNext: prev.nextDate });
+      if (!instDone(it)) it.nextDate = instAddDays(date, it.gap);
+      renderInstallments();
+      const msg = instDone(it)
+        ? 'آخرین قسط پرداخت شد؛ تسویه کامل شد 🎉'
+        : 'قسط ' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' ثبت شد. یادآوری بعدی: ' + toPersianDigits(it.nextDate);
+      xToast(msg, 'بازگردانی', async () => { Object.assign(it, prev); renderInstallments(); await instSaveDoc(it); instCache(); });
+      await instSaveDoc(it); instCache();
+    }
+    function openPayDate(id) {
+      const it = installments.find(x => x.id === id); if (!it || instDone(it)) return;
+      xPanel('ثبت پرداخت قسط ' + toPersianDigits(it.paidCount + 1) + ' — ' + xEsc(it.bank),
+        '<p style="color:var(--text-muted);margin-bottom:8px">تاریخی که قسط را پرداخت کرده‌اید را بنویسید؛ یادآوری بعدی ' + toPersianDigits(it.gap) + ' روز بعد از همین تاریخ ثبت می‌شود.</p>'
+        + '<div class="form-group"><label>تاریخ پرداخت</label><input type="text" id="instPayDate" class="form-control" inputmode="numeric" maxlength="10" autocomplete="off" value="' + getTodayJalaliNormalized() + '"></div>'
+        + '<div class="inst-form-actions"><button type="button" class="btn btn-outline" onclick="closePanel()">انصراف</button><button type="button" class="btn btn-primary" onclick="confirmPayDate(\'' + id + '\')"><i class="fa-solid fa-check"></i> ثبت پرداخت</button></div>');
+    }
+    async function confirmPayDate(id) {
+      const v = normalizeDateStr(xEl('instPayDate').value);
+      if (!instValidDate(v)) { xToast('تاریخ را درست وارد کنید (مثل 1405/07/10)'); return; }
+      closePanel(); await payInstallment(id, v);
+    }
+    function showInstHistory(id) {
       const it = installments.find(x => x.id === id); if (!it) return;
-      it.paid = !it.paid; instCache(); renderInstallments(); await instSaveDoc(it);
+      const pre = Math.max(it.paidCount - it.history.length, 0);
+      let h = '<p style="color:var(--text-muted);margin-bottom:8px">' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' قسط پرداخت شده · هر قسط ' + xFa(it.amount) + ' ریال</p>';
+      if (pre) h += '<div class="fc-it"><span>قبل از ثبت در برنامه</span><span></span><b>' + toPersianDigits(pre) + ' قسط</b></div>';
+      if (it.history.length) h += it.history.slice().reverse().map(e => '<div class="fc-it"><span>قسط ' + toPersianDigits(e.n) + '</span><span>' + toPersianDigits(e.date) + '</span><b>' + xFa(it.amount) + '</b></div>').join('');
+      else if (!pre) h += '<p>هنوز پرداختی ثبت نشده است.</p>';
+      if (it.history.length) h += '<button type="button" class="btn btn-outline" style="margin-top:12px;color:var(--danger)" onclick="undoLastInstPay(\'' + id + '\')"><i class="fa-solid fa-rotate-left"></i> حذف آخرین پرداخت</button>';
+      xPanel('تاریخچه پرداخت — ' + xEsc(it.bank), h);
+    }
+    async function undoLastInstPay(id) {
+      const it = installments.find(x => x.id === id); if (!it || !it.history.length) return;
+      if (!confirm('آخرین پرداخت حذف شود؟')) return;
+      const last = it.history.pop();
+      it.paidCount = Math.max(it.paidCount - 1, 0);
+      if (last.prevNext) it.nextDate = last.prevNext;
+      else if (it.history.length) it.nextDate = instAddDays(it.history[it.history.length - 1].date, it.gap);
+      closePanel(); renderInstallments(); xToast('آخرین پرداخت حذف شد');
+      await instSaveDoc(it); instCache();
+    }
+
+    /* ---------- فرم ---------- */
+    function instAmountInput(el) {
+      const d = toEnglishDigits(el.value).replace(/[^\d]/g, '').slice(0, 15);
+      el.value = d ? Number(d).toLocaleString('en-US') : '';
+      xEl('instAmountHint').textContent = d ? toPersianDigits(Number(d).toLocaleString('en-US')) + ' ریال  =  ' + xFa(Number(d) / 10) + ' تومان' : '';
+    }
+    function openInstForm() {
+      xEl('instFormCard').style.display = '';
+      xEl('installmentsView').classList.add('inst-form-open');
+      xEl('instFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      setTimeout(() => { try { xEl('instBank').focus({ preventScroll: true }); } catch (e) {} }, 350);
+    }
+    function closeInstForm() {
+      xEl('instFormCard').style.display = 'none';
+      xEl('installmentsView').classList.remove('inst-form-open');
+      xEl('instEditId').value = '';
+      ['instBank', 'instAmount', 'instTotalN', 'instDate', 'instNote'].forEach(i => xEl(i).value = '');
+      xEl('instPaidN').value = '0'; xEl('instGap').value = '30';
+      xEl('instAmountHint').textContent = '';
+      xEl('instFormTitle').textContent = 'ثبت قسط جدید';
+    }
+    function resetInstForm() { closeInstForm(); }
+
+    async function saveInstallment(e) {
+      e.preventDefault();
+      const num = id => parseInt(toEnglishDigits(xEl(id).value).replace(/[^\d]/g, ''), 10);
+      const bank = xEl('instBank').value.trim(), note = xEl('instNote').value.trim();
+      const amount = num('instAmount'), total = num('instTotalN');
+      const paid = num('instPaidN') || 0, gap = num('instGap') || 30;
+      const date = normalizeDateStr(xEl('instDate').value);
+      const editId = xEl('instEditId').value;
+      if (!bank) { xToast('نام بانک را وارد کنید'); return; }
+      if (!amount || amount <= 0) { xToast('مبلغ هر قسط را درست وارد کنید'); return; }
+      if (!total || total < 1 || total > 600) { xToast('تعداد کل اقساط را درست وارد کنید'); return; }
+      if (paid > total) { xToast('تعداد پرداخت‌شده‌ها نمی‌تواند بیشتر از تعداد کل باشد'); return; }
+      if (gap < 1 || gap > 365) { xToast('فاصله یادآوری باید بین ۱ تا ۳۶۵ روز باشد'); return; }
+      if (paid < total && !instValidDate(date)) { xToast('تاریخ قسط بعدی را درست وارد کنید (مثل 1405/07/10)'); return; }
+      let it;
+      if (editId) {
+        it = installments.find(x => x.id === editId);
+        if (it) { Object.assign(it, { bank, amount, total, paidCount: paid, nextDate: date, gap, note }); if (it.history.length > paid) it.history = it.history.slice(0, paid); }
+      } else {
+        it = { id: 'i' + Date.now(), bank, amount, total, paidCount: paid, nextDate: date, gap, note, history: [] };
+        installments.push(it);
+      }
+      const ok = it ? await instSaveDoc(it) : true;
+      instCache(); renderInstallments(); closeInstForm();
+      xToast(ok ? 'ذخیره شد' : 'فقط روی همین دستگاه ذخیره شد (دسترسی Firestore را فعال کنید)');
+      sendInstNotifications();
     }
 
     function editInstallment(id) {
       const it = installments.find(x => x.id === id); if (!it) return;
+      openInstForm();
       xEl('instEditId').value = id;
       xEl('instBank').value = it.bank;
-      xEl('instAmount').value = it.amount;
-      xEl('instDate').value = normalizeDateStr(it.date);
-      xEl('instCountWrap').style.display = 'none';
+      xEl('instAmount').value = it.amount; instAmountInput(xEl('instAmount'));
+      xEl('instTotalN').value = it.total;
+      xEl('instPaidN').value = it.paidCount;
+      xEl('instDate').value = it.nextDate;
+      xEl('instGap').value = it.gap;
+      xEl('instNote').value = it.note || '';
       xEl('instFormTitle').textContent = 'ویرایش قسط';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function resetInstForm() {
-      xEl('instEditId').value = '';
-      ['instBank', 'instAmount', 'instDate'].forEach(i => xEl(i).value = '');
-      xEl('instCount').value = '1';
-      xEl('instCountWrap').style.display = '';
-      xEl('instFormTitle').textContent = 'ثبت قسط جدید';
     }
 
     async function deleteInstallment(id) {
-      if (!confirm('این قسط حذف شود؟')) return;
+      const it = installments.find(x => x.id === id); if (!it) return;
       installments = installments.filter(x => x.id !== id); instCache(); renderInstallments();
       try { await window.deleteDoc(window.doc(window.db, 'installments', id)); } catch (e) { console.warn(e); }
+      xToast('قسط حذف شد', 'بازگردانی', async () => {
+        installments.push(it); renderInstallments(); await instSaveDoc(it); instCache();
+      });
     }
 
-    document.addEventListener('DOMContentLoaded', loadInstallments);
-    if (document.readyState !== 'loading') loadInstallments();
+    async function instClearPaid() {
+      const done = installments.filter(instDone);
+      if (!done.length || !confirm(toPersianDigits(done.length) + ' مورد تسویه‌شده حذف شود؟')) return;
+      installments = installments.filter(x => !instDone(x)); instCache(); renderInstallments();
+      for (const it of done) { try { await window.deleteDoc(window.doc(window.db, 'installments', it.id)); } catch (e) { console.warn(e); } }
+    }
+
+    /* ---------- اعلان سررسید اقساط (همان مجوز اعلان چک‌ها) ---------- */
+    async function sendInstNotifications() {
+      if (!notifSupported() || Notification.permission !== 'granted') return;
+      const today = getTodayJalaliNormalized();
+      const due = installments.filter(i => { if (instDone(i)) return false; const d = daysUntil(i.nextDate); return d !== null && d <= 1; });
+      if (!due.length) return;
+      let sent = {}; try { sent = JSON.parse(localStorage.getItem(INST_NOTIF_KEY) || '{}'); } catch (e) {}
+      const key = i => i.id + '|' + i.nextDate;
+      const fresh = due.filter(i => sent[key(i)] !== today);
+      if (!fresh.length) return;
+      let title, body;
+      if (fresh.length === 1) {
+        const i = fresh[0], d = daysUntil(i.nextDate);
+        title = '💳 قسط ' + toPersianDigits(i.paidCount + 1) + ' از ' + toPersianDigits(i.total) + (d < 0 ? ' (سررسیدگذشته)' : (d === 0 ? ' امروز' : ' فردا'));
+        body = i.bank + ' | مبلغ: ' + Number(i.amount).toLocaleString('fa-IR') + ' ریال';
+      } else {
+        title = '💳 ' + toPersianDigits(fresh.length) + ' قسط نزدیک یا گذشته از سررسید';
+        body = fresh.slice(0, 3).map(i => i.bank).join('، ') + (fresh.length > 3 ? ' و ...' : '');
+      }
+      const ok = await showNotif(title, { body, dir: 'rtl', lang: 'fa', tag: 'inst-due', renotify: true, requireInteraction: true, data: { url: location.href } });
+      if (ok) { fresh.forEach(i => { sent[key(i)] = today; }); try { localStorage.setItem(INST_NOTIF_KEY, JSON.stringify(sent)); } catch (e) {} }
+    }
+
+    /* ---------- پیش‌بینی: اقساط باقی‌مانده تا ۲۴ ماه آینده (برای پنل «پیش‌بینی سررسید») ---------- */
+    function instForecastItems() {
+      const out = []; window._instForecastCut = false;
+      const limit = instAddDays(getTodayJalaliNormalized(), 730);
+      installments.forEach(i => {
+        if (instDone(i) || !instValidDate(i.nextDate)) return;
+        for (let k = 0; k < i.total - i.paidCount; k++) {
+          const d = instAddDays(i.nextDate, k * i.gap);
+          if (d > limit) { window._instForecastCut = true; break; }
+          out.push({ dueDate: d, issuer: '💳 قسط ' + toPersianDigits(i.paidCount + k + 1) + ' از ' + toPersianDigits(i.total), bank: i.bank, amount: i.amount, status: 'در انتظار' });
+        }
+      });
+      return out;
+    }
+
+    /* ---------- تقویم گوشی (.ics) با یادآوری ---------- */
+    function instDownload(blob, name) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+    function instGregorian(dateStr, plusDays) {
+      const [y, m, d] = normalizeDateStr(dateStr).split('/').map(Number);
+      return new Date(jalaliToUTC(y, m, d) + (plusDays || 0) * 864e5).toISOString().slice(0, 10).replace(/-/g, '');
+    }
+    function instIcsEsc(t) { return String(t).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+    function instIcsEvent(i) {
+      const stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+      const title = '💳 قسط ' + toPersianDigits(i.paidCount + 1) + ' از ' + toPersianDigits(i.total) + ' — ' + i.bank;
+      const desc = 'مبلغ: ' + Number(i.amount).toLocaleString('fa-IR') + ' ریال' + (i.note ? '\n' + i.note : '');
+      return ['BEGIN:VEVENT', 'UID:inst-' + i.id + '-' + i.paidCount + '@checks-app', 'DTSTAMP:' + stamp,
+        'DTSTART;VALUE=DATE:' + instGregorian(i.nextDate), 'DTEND;VALUE=DATE:' + instGregorian(i.nextDate, 1),
+        'SUMMARY:' + instIcsEsc(title), 'DESCRIPTION:' + instIcsEsc(desc), 'TRANSP:TRANSPARENT',
+        'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + instIcsEsc(title), 'TRIGGER:-PT15H', 'END:VALARM',   // ۹ صبح روز قبل
+        'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:' + instIcsEsc(title), 'TRIGGER:PT9H', 'END:VALARM',     // ۹ صبح همان روز
+        'END:VEVENT'].join('\r\n');
+    }
+    function instIcsFile(list, name) {
+      const ics = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Checks//Installments//FA', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH']
+        .concat(list.map(instIcsEvent)).concat(['END:VCALENDAR']).join('\r\n');
+      instDownload(new Blob([ics], { type: 'text/calendar;charset=utf-8' }), name);
+    }
+    function addInstToCalendar(id) {
+      const it = installments.find(x => x.id === id);
+      if (!it || instDone(it) || !instValidDate(it.nextDate)) { xToast('تاریخ قسط بعدی معتبر نیست'); return; }
+      instIcsFile([it], 'قسط_' + it.bank.replace(/[^\w\u0600-\u06FF]+/g, '_') + '.ics');
+      xToast('فایل تقویم دانلود شد؛ بازش کنید تا به تقویم گوشی اضافه شود');
+    }
+    function addAllInstToCalendar() {
+      const list = installments.filter(i => !instDone(i) && instValidDate(i.nextDate));
+      if (!list.length) { xToast('قسط فعالی برای افزودن به تقویم نیست'); return; }
+      instIcsFile(list, 'اقساط_' + getTodayJalaliNormalized().replace(/\//g, '-') + '.ics');
+      xToast('فایل تقویم دانلود شد؛ بازش کنید تا به تقویم گوشی اضافه شود');
+    }
+
+    /* ---------- خروجی اکسل ---------- */
+    function exportInstExcel() {
+      if (!installments.length) { xToast('قسطی برای خروجی اکسل وجود ندارد'); return; }
+      if (typeof XLSX === 'undefined') { xToast('کتابخانه اکسل بارگذاری نشده است'); return; }
+      const thin = { style: 'thin', color: { rgb: '000000' } }, border = { top: thin, bottom: thin, left: thin, right: thin };
+      const head = { font: { name: 'Tahoma', sz: 11, bold: true, color: { rgb: 'FFFFFF' } }, fill: { fgColor: { rgb: '4F46E5' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const cell = { font: { name: 'Tahoma', sz: 10 }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const tot = { font: { name: 'Tahoma', sz: 11, bold: true }, fill: { fgColor: { rgb: 'E2E8F0' } }, alignment: { horizontal: 'center', vertical: 'center' }, border };
+      const build = (rows, moneyCols, widths, totalRow) => {
+        const ws = XLSX.utils.aoa_to_sheet(rows), rg = XLSX.utils.decode_range(ws['!ref']);
+        for (let R = rg.s.r; R <= rg.e.r; R++) for (let C = rg.s.c; C <= rg.e.c; C++) {
+          const c = ws[XLSX.utils.encode_cell({ r: R, c: C })]; if (!c) continue;
+          c.s = R === 0 ? head : (totalRow && R === rg.e.r ? tot : cell);
+          if (R > 0 && moneyCols.includes(C) && typeof c.v === 'number') c.z = '#,##0';
+        }
+        ws['!views'] = [{ RTL: true }]; ws['!cols'] = widths.map(w => ({ wch: w }));
+        return ws;
+      };
+      const list = installments.slice().sort((a, b) => (instDone(a) - instDone(b)) || a.nextDate.localeCompare(b.nextDate));
+      const rows = [['ردیف', 'بانک', 'مبلغ هر قسط (ریال)', 'تعداد کل', 'پرداخت‌شده', 'مانده', 'مبلغ باقی‌مانده (ریال)', 'قسط بعدی', 'وضعیت', 'توضیح']];
+      let totalLeft = 0;
+      list.forEach((i, k) => {
+        const left = i.total - i.paidCount; totalLeft += left * i.amount;
+        rows.push([toPersianDigits(k + 1), i.bank, i.amount, i.total, i.paidCount, left, left * i.amount, instDone(i) ? '—' : toPersianDigits(i.nextDate), instDone(i) ? 'تسویه شد' : instStatus(i).text, i.note || '']);
+      });
+      rows.push(['جمع کل', '', '', '', '', '', totalLeft, '', '', '']);
+      const wb = XLSX.utils.book_new();
+      const ws1 = build(rows, [2, 6], [8, 18, 18, 10, 12, 10, 22, 14, 16, 24], true);
+      const last = rows.length - 1; ws1['!merges'] = [{ s: { r: last, c: 0 }, e: { r: last, c: 5 } }];
+      XLSX.utils.book_append_sheet(wb, ws1, 'اقساط');
+      const hist = [['ردیف', 'بانک', 'شماره قسط', 'تاریخ پرداخت', 'مبلغ (ریال)']];
+      list.forEach(i => i.history.forEach(e => hist.push([toPersianDigits(hist.length), i.bank, toPersianDigits(e.n), toPersianDigits(e.date), i.amount])));
+      if (hist.length > 1) XLSX.utils.book_append_sheet(wb, build(hist, [4], [8, 18, 12, 16, 18], false), 'تاریخچه پرداخت');
+      XLSX.writeFile(wb, 'اقساط_' + getTodayJalaliNormalized().replace(/\//g, '-') + '.xlsx');
+    }
+
+    /* ---------- بک‌اپ: دستی (فایل) و خودکار روزانه (ابری، ۱۰ نسخه آخر) ---------- */
+    const instPlain = () => installments.map(i => { const { _local, ...r } = i; return r; });
+    function exportInstBackup() {
+      if (!installments.length) { xToast('اطلاعاتی برای بک‌اپ وجود ندارد'); return; }
+      const data = { installments: instPlain(), exportDate: new Date().toISOString() };
+      instDownload(new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }), 'پشتیبان_اقساط_' + getTodayJalaliNormalized().replace(/\//g, '-') + '.json');
+    }
+    async function instMerge(list) {
+      for (const raw of list) {
+        if (!raw || !raw.id) continue;
+        const it = instNormalize(raw), k = installments.findIndex(x => x.id === it.id);
+        if (k >= 0) installments[k] = it; else installments.push(it);
+        await instSaveDoc(it);
+      }
+      instCache(); renderInstallments();
+    }
+    function importInstBackup(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        try {
+          const d = JSON.parse(e.target.result), list = d.installments || d;
+          if (!Array.isArray(list) || (list.length && !list.some(x => x && x.id && x.bank))) { alert('فرمت فایل پشتیبان اقساط معتبر نیست.'); return; }
+          if (!confirm('آیا مطمئن هستید؟ اقساط این فایل اضافه یا جایگزین می‌شوند (موارد فعلی حذف نمی‌شوند).')) return;
+          await instMerge(list); xToast('اقساط با موفقیت بازیابی شد');
+        } catch (err) { alert('خطا در خواندن فایل پشتیبان!'); }
+      };
+      reader.readAsText(file); event.target.value = '';
+    }
+    async function autoInstBackup() {
+      try {
+        if (!installments.length || !(window.db && window.setDoc && window.getDocs)) return;
+        const d = new Date().toISOString().slice(0, 10);
+        const sig = JSON.stringify(instPlain().map(i => [i.id, i.amount, i.total, i.paidCount, i.nextDate]));
+        let h = 5381; for (let k = 0; k < sig.length; k++) h = ((h << 5) + h + sig.charCodeAt(k)) | 0;
+        const mark = d + '|' + h;
+        if (localStorage.last_inst_backup === mark) return;
+        await window.setDoc(window.doc(window.db, 'installment_backups', 'b_' + d), { date: d, count: installments.length, data: JSON.stringify(instPlain()) });
+        localStorage.last_inst_backup = mark;
+        const all = await window.getDocs(window.collection(window.db, 'installment_backups'));
+        const ids = []; all.forEach(sn => ids.push(sn.id)); ids.sort();
+        for (const id of ids.slice(0, -10)) await window.deleteDoc(window.doc(window.db, 'installment_backups', id));
+      } catch (e) { console.warn('بک‌اپ خودکار اقساط ناموفق:', e); }
+    }
+    async function showInstBackups() {
+      xPanel('بک‌اپ‌های خودکار اقساط', '<p>در حال دریافت...</p>');
+      try {
+        const all = await window.getDocs(window.collection(window.db, 'installment_backups'));
+        const rows = []; all.forEach(sn => rows.push({ id: sn.id, ...sn.data() }));
+        rows.sort((a, b) => b.id.localeCompare(a.id));
+        window._instBkRows = rows;
+        const b = xEl('pnlBody'); if (!b) return;
+        b.innerHTML = (rows.length ? '<p style="color:var(--text-muted);margin-bottom:8px">هر روز یک نسخه در فضای ابری ذخیره می‌شود (۱۰ نسخه‌ی آخر).</p>' : '<p>هنوز بک‌اپی ثبت نشده است.</p>')
+          + rows.map(r => '<div class="fc-it"><span>' + toPersianDigits(r.date) + '</span><span>' + toPersianDigits(r.count) + ' قسط</span><button class="btn btn-outline" onclick="restoreInstBackup(\'' + r.id + '\')">بازیابی</button></div>').join('');
+      } catch (e) { const b = xEl('pnlBody'); if (b) b.innerHTML = '<p>خطا در دریافت بک‌اپ‌ها (دسترسی collection «installment_backups» را در Firestore Rules باز کنید).</p>'; }
+    }
+    async function restoreInstBackup(id) {
+      const r = (window._instBkRows || []).find(x => x.id === id);
+      if (!r || !confirm('اقساط این نسخه بازیابی شوند؟ موارد فعلی حذف نمی‌شوند و فقط موارد هم‌شناسه بازنویسی می‌شوند.')) return;
+      try { closePanel(); await instMerge(JSON.parse(r.data)); xToast('بازیابی انجام شد'); } catch (e) { xToast('خطا در بازیابی'); }
+    }
+
+    function initInstallments() {
+      try { installments = JSON.parse(localStorage.getItem(INST_LS) || '[]').map(instNormalize); } catch (e) { installments = []; }
+      instSetSync('checking');
+      renderInstallments();
+      loadInstallments();
+      setInterval(sendInstNotifications, 60 * 1000);
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initInstallments); else initInstallments();
 
     /* ===== درج خودکار «/» هنگام تایپ تاریخ (۱۴۰۵/۰۷/۱۰) ===== */
     function formatJalaliTyping(value, inputType) {
@@ -2929,7 +3442,7 @@
       return out;
     }
     (function () {
-      const ids = ['dueDate', 'fromDateFilter', 'toDateFilter', 'instDate'];
+      const ids = ['dueDate', 'fromDateFilter', 'toDateFilter', 'instDate', 'instPayDate'];
       ids.forEach(id => {
         const el = document.getElementById(id);
         if (el) { el.setAttribute('inputmode', 'numeric'); el.setAttribute('maxlength', '10'); }
