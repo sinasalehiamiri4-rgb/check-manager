@@ -2951,9 +2951,12 @@
         if (typeof x === 'string') return { n: k + 1, date: normalizeDateStr(x) };
         const e = { n: parseInt(x.n, 10) || k + 1, date: normalizeDateStr(x.date || '') };
         if (x.prevNext != null) e.prevNext = normalizeDateStr(x.prevNext);
+        if (x.method === 'cash' || x.method === 'card') e.method = x.method;
+        if (x.method === 'card' && x.card) e.card = String(x.card);
         return e;
       });
     }
+    const instMethodText = e => e.method === 'card' ? 'کارت بانکی' + (e.card ? ' — ' + e.card : '') : (e.method === 'cash' ? 'صندوق' : '');
     // یکسان‌سازی داده (سازگار با اقساط قدیمی که فقط date و paid داشتند)
     function instNormalize(r) {
       const total = Math.min(Math.max(parseInt(r.total, 10) || 1, 1), 600);
@@ -3133,10 +3136,10 @@
         + '<div class="inst-fact"><span>مانده</span><b>' + (done ? '—' : toPersianDigits(left) + ' قسط') + '</b></div>'
         + '<div class="inst-fact"><span>' + (done ? 'وضعیت' : 'قسط بعدی') + '</span><b>' + (done ? 'تسویه شد' : toPersianDigits(i.nextDate || '—')) + '</b></div>'
         + '</div>'
+        + (i.history.length ? '<div class="inst-prog-text">آخرین پرداخت: <b>' + toPersianDigits(i.history[i.history.length - 1].date) + '</b>' + (instMethodText(i.history[i.history.length - 1]) ? ' · ' + xEsc(instMethodText(i.history[i.history.length - 1])) : '') + '</div>' : '')
         + (done ? '' : '<div class="inst-prog-text">مبلغ باقی‌مانده: <b>' + xFa(left * i.amount) + '</b> ریال</div>')
         + (done ? '' : '<div class="inst-actions no-print">'
-          + '<button class="btn btn-primary inst-pay" onclick="payInstallment(' + q + ')"><i class="fa-solid fa-circle-check"></i> پرداخت شد (قسط ' + toPersianDigits(i.paidCount + 1) + ')</button>'
-          + '<button class="btn btn-outline inst-ico" title="ثبت پرداخت با تاریخ دیگر" aria-label="ثبت پرداخت با تاریخ دیگر" onclick="openPayDate(' + q + ')"><i class="fa-solid fa-calendar-check" style="color:var(--success)"></i></button>'
+          + '<button class="btn btn-primary inst-pay" onclick="openPayDate(' + q + ')"><i class="fa-solid fa-circle-check"></i> پرداخت شد (قسط ' + toPersianDigits(i.paidCount + 1) + ')</button>'
           + '</div>')
         + '<div class="inst-actions inst-actions2 no-print">'
         + (done ? '' : '<button class="btn" onclick="addInstToCalendar(' + q + ')"><i class="fa-solid fa-calendar-plus" style="color:var(--info)"></i><span>تقویم</span></button>')
@@ -3147,37 +3150,61 @@
     }
 
     /* ---------- پرداخت قسط: شمارنده +۱ و یادآوری بعدی = تاریخ پرداخت + فاصله (پیش‌فرض ۳۰ روز) ---------- */
-    async function payInstallment(id, payDate) {
+    async function payInstallment(id, payDate, method, card) {
       const it = installments.find(x => x.id === id); if (!it || instDone(it)) return;
       const date = payDate ? normalizeDateStr(payDate) : getTodayJalaliNormalized();
       const prev = { paidCount: it.paidCount, nextDate: it.nextDate, history: it.history.slice() };
-      it.paidCount += 1; it.history = prev.history.concat({ n: it.paidCount, date, prevNext: prev.nextDate });
+      const entry = { n: it.paidCount + 1, date, prevNext: prev.nextDate };
+      if (method === 'cash' || method === 'card') entry.method = method;
+      if (method === 'card' && card) entry.card = card;
+      it.paidCount += 1; it.history = prev.history.concat(entry);
       if (!instDone(it)) it.nextDate = instAddDays(date, it.gap);
       renderInstallments();
+      const how = instMethodText(entry);
       const msg = instDone(it)
         ? 'آخرین قسط پرداخت شد؛ تسویه کامل شد 🎉'
-        : 'قسط ' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' ثبت شد. یادآوری بعدی: ' + toPersianDigits(it.nextDate);
+        : 'قسط ' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' ثبت شد' + (how ? ' (' + how + ')' : '') + '. یادآوری بعدی: ' + toPersianDigits(it.nextDate);
       xToast(msg, 'بازگردانی', async () => { Object.assign(it, prev); renderInstallments(); await instSaveDoc(it); instCache(); });
       await instSaveDoc(it); instCache();
     }
+    // پنجره ثبت پرداخت: تاریخ امروز خودکار پر می‌شود، روش پرداخت: صندوق یا کارت بانکی
     function openPayDate(id) {
       const it = installments.find(x => x.id === id); if (!it || instDone(it)) return;
+      let lastM = 'cash', lastCard = '';
+      try { lastM = localStorage.getItem('inst_last_method') === 'card' ? 'card' : 'cash'; lastCard = localStorage.getItem('inst_last_card') || ''; } catch (e) {}
+      const cards = new Set(); installments.forEach(x => x.history.forEach(e => e.card && cards.add(e.card)));
       xPanel('ثبت پرداخت قسط ' + toPersianDigits(it.paidCount + 1) + ' — ' + xEsc(it.bank),
-        '<p style="color:var(--text-muted);margin-bottom:8px">تاریخی که قسط را پرداخت کرده‌اید را بنویسید؛ یادآوری بعدی ' + toPersianDigits(it.gap) + ' روز بعد از همین تاریخ ثبت می‌شود.</p>'
+        '<p style="color:var(--text-muted);margin-bottom:10px">مبلغ: <b>' + xFa(it.amount) + '</b> ریال<br>یادآوری بعدی ' + toPersianDigits(it.gap) + ' روز بعد از تاریخ پرداخت ثبت می‌شود.</p>'
         + '<div class="form-group"><label>تاریخ پرداخت</label><input type="text" id="instPayDate" class="form-control" inputmode="numeric" maxlength="10" autocomplete="off" value="' + getTodayJalaliNormalized() + '"></div>'
+        + '<div class="form-group" style="margin-top:12px"><label>روش پرداخت</label><div class="inst-seg" id="instPayMethod">'
+        + '<button type="button" data-m="cash" class="' + (lastM === 'cash' ? 'active' : '') + '" onclick="setPayMethod(\'cash\')"><i class="fa-solid fa-vault"></i> صندوق</button>'
+        + '<button type="button" data-m="card" class="' + (lastM === 'card' ? 'active' : '') + '" onclick="setPayMethod(\'card\')"><i class="fa-solid fa-credit-card"></i> کارت بانکی</button></div></div>'
+        + '<div class="form-group" id="instCardWrap" style="margin-top:12px;display:' + (lastM === 'card' ? '' : 'none') + '"><label>نام کارت</label>'
+        + '<input type="text" id="instCardName" class="form-control" list="instCardList" autocomplete="off" placeholder="مثلا: ملی ۶۰۳۷" value="' + xEsc(lastCard).replace(/"/g, '&quot;') + '">'
+        + '<datalist id="instCardList">' + [...cards].map(c => '<option value="' + xEsc(c).replace(/"/g, '&quot;') + '">').join('') + '</datalist></div>'
         + '<div class="inst-form-actions"><button type="button" class="btn btn-outline" onclick="closePanel()">انصراف</button><button type="button" class="btn btn-primary" onclick="confirmPayDate(\'' + id + '\')"><i class="fa-solid fa-check"></i> ثبت پرداخت</button></div>');
+    }
+    function setPayMethod(m) {
+      document.querySelectorAll('#instPayMethod button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
+      const w = xEl('instCardWrap'); if (w) w.style.display = m === 'card' ? '' : 'none';
+      if (m === 'card') { const i = xEl('instCardName'); if (i) setTimeout(() => i.focus(), 50); }
     }
     async function confirmPayDate(id) {
       const v = normalizeDateStr(xEl('instPayDate').value);
       if (!instValidDate(v)) { xToast('تاریخ را درست وارد کنید (مثل 1405/07/10)'); return; }
-      closePanel(); await payInstallment(id, v);
+      const act = document.querySelector('#instPayMethod button.active');
+      const method = act ? act.dataset.m : 'cash';
+      const card = method === 'card' ? xEl('instCardName').value.trim() : '';
+      if (method === 'card' && !card) { xToast('نام کارت را وارد کنید'); return; }
+      try { localStorage.setItem('inst_last_method', method); if (card) localStorage.setItem('inst_last_card', card); } catch (e) {}
+      closePanel(); await payInstallment(id, v, method, card);
     }
     function showInstHistory(id) {
       const it = installments.find(x => x.id === id); if (!it) return;
       const pre = Math.max(it.paidCount - it.history.length, 0), left = it.total - it.paidCount;
       let h = '<p style="color:var(--text-muted);margin-bottom:8px">' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' قسط پرداخت شده · هر قسط ' + xFa(it.amount) + ' ریال</p>';
       if (pre) h += '<div class="fc-it"><span>قبل از ثبت در برنامه</span><span></span><b>' + toPersianDigits(pre) + ' قسط ✓</b></div>';
-      h += it.history.map(e => '<div class="fc-it"><span>قسط ' + toPersianDigits(e.n) + '</span><span>' + toPersianDigits(e.date) + '</span><b style="color:var(--success)">پرداخت شد ✓</b></div>').join('');
+      h += it.history.map(e => '<div class="fc-it"><span>قسط ' + toPersianDigits(e.n) + '</span><span>' + toPersianDigits(e.date) + '</span><b style="color:var(--success)">' + (instMethodText(e) || 'پرداخت شد ✓') + '</b></div>').join('');
       if (left > 0 && instValidDate(it.nextDate)) {
         const show = Math.min(left, 60);
         for (let k = 0; k < show; k++) h += '<div class="fc-it" style="opacity:' + (k ? '.6' : '1') + '"><span>قسط ' + toPersianDigits(it.paidCount + k + 1) + '</span><span>' + toPersianDigits(instAddDays(it.nextDate, k * it.gap)) + '</span><b>' + (k ? 'پیش‌بینی' : 'قسط بعدی') + '</b></div>';
@@ -3387,9 +3414,9 @@
       const ws1 = build(rows, [2, 6], [8, 18, 18, 10, 12, 10, 22, 14, 16, 24], true);
       const last = rows.length - 1; ws1['!merges'] = [{ s: { r: last, c: 0 }, e: { r: last, c: 5 } }];
       XLSX.utils.book_append_sheet(wb, ws1, 'اقساط');
-      const hist = [['ردیف', 'بانک', 'شماره قسط', 'تاریخ پرداخت', 'مبلغ (ریال)']];
-      list.forEach(i => i.history.forEach(e => hist.push([toPersianDigits(hist.length), i.bank, toPersianDigits(e.n), toPersianDigits(e.date), i.amount])));
-      if (hist.length > 1) XLSX.utils.book_append_sheet(wb, build(hist, [4], [8, 18, 12, 16, 18], false), 'تاریخچه پرداخت');
+      const hist = [['ردیف', 'بانک', 'شماره قسط', 'تاریخ پرداخت', 'مبلغ (ریال)', 'روش پرداخت', 'نام کارت']];
+      list.forEach(i => i.history.forEach(e => hist.push([toPersianDigits(hist.length), i.bank, toPersianDigits(e.n), toPersianDigits(e.date), i.amount, e.method === 'card' ? 'کارت بانکی' : (e.method === 'cash' ? 'صندوق' : ''), e.card || ''])));
+      if (hist.length > 1) XLSX.utils.book_append_sheet(wb, build(hist, [4], [8, 18, 12, 16, 18, 14, 20], false), 'تاریخچه پرداخت');
       XLSX.writeFile(wb, 'اقساط_' + getTodayJalaliNormalized().replace(/\//g, '-') + '.xlsx');
     }
 
