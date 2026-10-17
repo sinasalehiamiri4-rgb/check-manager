@@ -1498,7 +1498,7 @@
           <button type="button" class="inst-tool danger" onclick="instWipeAll()"><span class="inst-tool-ico" style="--c: var(--danger); --cl: var(--danger-light);"><i class="fa-solid fa-trash-can"></i></span><span>پاک کردن همه اطلاعات اقساط</span></button>
         </div>
         <div class="inst-tools-sec"><i class="fa-solid fa-circle-info"></i> نسخه برنامه</div>
-        <div class="inst-version"><span>نسخه اقساط: <b>۱۲</b> (۱۴۰۵/۰۷/۲۵)</span><button type="button" class="inst-link" onclick="instHardRefresh()"><i class="fa-solid fa-arrows-rotate"></i> بروزرسانی صفحه</button></div>
+        <div class="inst-version"><span>نسخه اقساط: <b>۱۴</b> (۱۴۰۵/۰۷/۲۵)</span><button type="button" class="inst-link" onclick="instHardRefresh()"><i class="fa-solid fa-arrows-rotate"></i> بروزرسانی صفحه</button></div>
         <input type="file" id="instBackupFile" accept=".json" style="display: none;" onchange="importInstBackup(event)">
       </div>
 
@@ -2953,6 +2953,7 @@
     /* اقساط در همان collection چک‌ها ذخیره می‌شوند (با پیشوند inst_) تا بدون تغییر در Firestore Rules روی همه دستگاه‌ها بالا بیایند */
     const INST_COL = 'checks', INST_PREFIX = 'inst_p_', INST_BK_PREFIX = 'inst_bk_';
     const instRef = id => window.doc(window.db, INST_COL, INST_PREFIX + id);
+    const instTomb = {};   // قسط‌هایی که در همین نشست حذف شده‌اند (تا با داده قدیمی سرور برنگردند)
     const INST_NOTIF_KEY = 'inst_notified_v2';
     const INST_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
 
@@ -3000,6 +3001,7 @@
         feeEvery: Math.min(Math.max(parseInt(r.feeEvery, 10) || 0, 0), 600), feeAmount: Math.max(+r.feeAmount || 0, 0), feeFirst: Math.min(Math.max(parseInt(r.feeFirst, 10) || 0, 0), 600),
         note: r.note || '', history: instNormHistory(r.history)
       };
+      if (+r.updated > 0) it.updated = +r.updated;
       if (r._local) it._local = true;
       return it;
     }
@@ -3023,6 +3025,7 @@
     }
 
     async function instSaveDoc(it) {
+      it.updated = Date.now();   // برچسب زمانی: جدیدترین نسخه همیشه برنده است
       const { id, _local, ...rest } = it;
       try {
         if (!(window.db && window.setDoc)) throw new Error('db not ready');
@@ -3036,6 +3039,7 @@
 
     async function loadInstallments() {
       if (instFetching) return; instFetching = true;
+      const loadStart = Date.now();
       try {
         for (let i = 0; i < 25 && !(window.db && window.getDocs); i++) await new Promise(r => setTimeout(r, 400));
         if (!(window.db && window.getDocs)) { instSetSync('fail', 'اتصال به سرور برقرار نشد'); return; }
@@ -3048,13 +3052,23 @@
           const old = await window.getDocs(window.collection(window.db, 'installments'));
           old.forEach(d => { if (!rid.has(d.id)) migrated.push(instNormalize({ ...d.data(), id: d.id, _local: true })); });
         } catch (e) { /* collection قدیمی در دسترس نیست؛ مشکلی نیست */ }
-        const pending = installments.filter(x => x._local && !migrated.some(m => m.id === x.id)).concat(migrated);
-        const pend = new Set(pending.map(x => x.id));
-        installments = remote.filter(x => !pend.has(x.id)).concat(pending);
+
+        // ادغام: هر قسط، نسخه جدیدتر (بر اساس زمان آخرین تغییر) برنده می‌شود
+        const byId = new Map(installments.map(x => [x.id, x]));
+        const merged = [], resave = [];
+        remote.forEach(r => {
+          if (instTomb[r.id]) return;
+          const l = byId.get(r.id); byId.delete(r.id);
+          if (l && (l._local || (l.updated || 0) > (r.updated || 0))) { merged.push(l); resave.push(l); }
+          else merged.push(r);
+        });
+        byId.forEach(l => { if (l._local || (l.updated || 0) > loadStart - 15000) { merged.push(l); resave.push(l); } });
+        migrated.forEach(m => { if (!merged.some(x => x.id === m.id) && !instTomb[m.id]) { merged.push(m); resave.push(m); } });
+        installments = merged;
         instCache(); renderInstallments(); instSetSync('ok');
-        for (const it of pending) await instSaveDoc(it);   // آپلود موارد ذخیره‌نشده / منتقل‌شده
+        for (const it of resave) await instSaveDoc(it);   // آپلود موارد ذخیره‌نشده / منتقل‌شده / جدیدتر
         for (const m of migrated) { try { await window.deleteDoc(window.doc(window.db, 'installments', m.id)); } catch (e) {} }
-        instCache(); sendInstNotifications(); autoInstBackup();
+        instCache(); renderInstallments(); sendInstNotifications(); autoInstBackup();
       } catch (e) {
         console.warn('دریافت اقساط ناموفق:', e);
         instSetSync('fail', e && e.code === 'permission-denied' ? 'دسترسی Firestore بسته است' : '');
@@ -3091,9 +3105,10 @@
     }, true);
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape' || !document.body.classList.contains('inst-mode')) return;
+      if (xEl('pnlOv')) return;   // اگر پنجره‌ای باز است، Escape فقط همان را می‌بندد
       if (xEl('installmentsView').classList.contains('inst-tools-open')) setInstPane('list');
       else if (xEl('instFormCard').style.display !== 'none') closeInstForm(); else exitInstallments();
-    });
+    }, true);
     document.addEventListener('visibilitychange', function () {
       if (document.visibilityState === 'visible' && document.body.classList.contains('inst-mode')) loadInstallments();
     });
@@ -3172,7 +3187,7 @@
     function instCardHtml(i) {
       const st = instStatus(i), done = instDone(i), left = i.total - i.paidCount;
       const pct = Math.round(i.paidCount / i.total * 100);
-      const q = "\\'" + i.id + "\\'";
+      const q = "'" + i.id + "'";
       return '<div class="inst-card ' + st.cls + '">'
         + '<div class="inst-card-head"><div class="inst-head-l"><div class="inst-avatar"><i class="fa-solid fa-building-columns"></i></div>'
         + '<div class="inst-head-t"><div class="inst-bank-name">' + xEsc(i.bank) + '</div>' + (i.note ? '<div class="inst-bank-note">' + xEsc(i.note) + '</div>' : '') + '</div></div>'
@@ -3215,7 +3230,8 @@
         ? 'آخرین قسط پرداخت شد؛ تسویه کامل شد 🎉'
         : 'قسط ' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' ثبت شد' + (how ? ' (' + how + ')' : '') + '. یادآوری بعدی: ' + toPersianDigits(it.nextDate);
       xToast(msg, 'بازگردانی', async () => { Object.assign(it, prev); renderInstallments(); await instSaveDoc(it); instCache(); });
-      await instSaveDoc(it); instCache();
+      const ok = await instSaveDoc(it); instCache();
+      if (!ok) xToast('پرداخت روی این دستگاه ثبت شد ولی روی سرور ذخیره نشد؛ اینترنت را بررسی کنید');
     }
     // پنجره ثبت پرداخت: تاریخ امروز خودکار پر می‌شود، روش پرداخت: صندوق یا کارت بانکی
     function openPayDate(id) {
@@ -3351,17 +3367,17 @@
 
     async function deleteInstallment(id) {
       const it = installments.find(x => x.id === id); if (!it) return;
-      installments = installments.filter(x => x.id !== id); instCache(); renderInstallments();
+      installments = installments.filter(x => x.id !== id); instTomb[id] = Date.now(); instCache(); renderInstallments();
       try { await window.deleteDoc(instRef(id)); } catch (e) { console.warn(e); }
       xToast('قسط حذف شد', 'بازگردانی', async () => {
-        installments.push(it); renderInstallments(); await instSaveDoc(it); instCache();
+        delete instTomb[id]; installments.push(it); renderInstallments(); await instSaveDoc(it); instCache();
       });
     }
 
     async function instClearPaid() {
       const done = installments.filter(instDone);
       if (!done.length || !confirm(toPersianDigits(done.length) + ' مورد تسویه‌شده حذف شود؟')) return;
-      installments = installments.filter(x => !instDone(x)); instCache(); renderInstallments();
+      installments = installments.filter(x => !instDone(x)); done.forEach(d => { instTomb[d.id] = Date.now(); }); instCache(); renderInstallments();
       for (const it of done) { try { await window.deleteDoc(instRef(it.id)); } catch (e) { console.warn(e); } }
     }
 
@@ -3565,7 +3581,7 @@
         alert('اتصال به سرور برقرار نشد و چیزی پاک نشد. اینترنت را بررسی کنید و دوباره تلاش کنید.');
         return;
       }
-      installments = []; instCache();
+      installments.forEach(d => { instTomb[d.id] = Date.now(); }); installments = []; instCache();
       try { localStorage.removeItem(INST_NOTIF_KEY); localStorage.removeItem('last_inst_backup'); } catch (e) {}
       closeInstForm(); renderInstallments();
       xToast('همه اطلاعات اقساط پاک شد');
