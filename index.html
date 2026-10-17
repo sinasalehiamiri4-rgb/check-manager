@@ -1422,7 +1422,8 @@
 
       <div class="inst-seg inst-subtabs no-print" id="instSubtabs">
         <button type="button" class="active" data-p="list" onclick="setInstPane('list')"><i class="fa-solid fa-list"></i> اقساط</button>
-        <button type="button" data-p="tools" onclick="setInstPane('tools')"><i class="fa-solid fa-toolbox"></i> ابزارها و پشتیبان‌گیری</button>
+        <button type="button" data-p="payments" onclick="setInstPane('payments')"><i class="fa-solid fa-receipt"></i> پرداختی‌ها</button>
+        <button type="button" data-p="tools" onclick="setInstPane('tools')"><i class="fa-solid fa-toolbox"></i> ابزارها</button>
       </div>
 
       <div class="inst-list-pane">
@@ -1481,6 +1482,25 @@
 
       </div><!-- /inst-list-pane -->
 
+      <div class="inst-pay-pane">
+        <div class="inst-stats">
+          <div class="stat-card passed"><h4>جمع پرداختی‌ها (ریال)</h4><div class="amount" id="ipTotal" style="color: var(--success);">۰</div><span class="inst-sub" id="ipTotalSub"></span></div>
+          <div class="stat-card delivered"><h4>تعداد پرداخت</h4><div class="amount" id="ipCount" style="color: var(--info);">۰</div><span class="inst-sub" id="ipCountSub"></span></div>
+          <div class="stat-card pending"><h4>پرداختی این ماه (ریال)</h4><div class="amount" id="ipMonth" style="color: var(--warning);">۰</div><span class="inst-sub" id="ipMonthName"></span></div>
+          <div class="stat-card bounced"><h4>آخرین پرداخت</h4><div class="amount" id="ipLast" style="color: var(--primary);">—</div><span class="inst-sub" id="ipLastSub"></span></div>
+        </div>
+        <div class="card inst-filters">
+          <div class="inst-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="ipSearch" class="form-control" placeholder="جستجو: بانک، کارت، تاریخ، مبلغ" oninput="instPayQuery = this.value; renderInstPayments()"></div>
+          <div class="inst-seg" id="ipSeg">
+            <button type="button" class="active" data-f="all" onclick="setInstPayFilter('all')">همه</button>
+            <button type="button" data-f="cash" onclick="setInstPayFilter('cash')">صندوق</button>
+            <button type="button" data-f="card" onclick="setInstPayFilter('card')">کارت بانکی</button>
+          </div>
+        </div>
+        <div id="ipList"></div>
+        <div id="ipNote" class="inst-prog-text" style="text-align:center; margin: 6px 0 16px;"></div>
+      </div><!-- /inst-pay-pane -->
+
       <div class="card inst-tools no-print">
         <div class="inst-tools-sec"><i class="fa-solid fa-share-nodes"></i> خروجی و یادآوری</div>
         <div class="inst-tools-grid c2">
@@ -1498,7 +1518,7 @@
           <button type="button" class="inst-tool danger" onclick="instWipeAll()"><span class="inst-tool-ico" style="--c: var(--danger); --cl: var(--danger-light);"><i class="fa-solid fa-trash-can"></i></span><span>پاک کردن همه اطلاعات اقساط</span></button>
         </div>
         <div class="inst-tools-sec"><i class="fa-solid fa-circle-info"></i> نسخه برنامه</div>
-        <div class="inst-version"><span>نسخه اقساط: <b>۱۴</b> (۱۴۰۵/۰۷/۲۵)</span><button type="button" class="inst-link" onclick="instHardRefresh()"><i class="fa-solid fa-arrows-rotate"></i> بروزرسانی صفحه</button></div>
+        <div class="inst-version"><span>نسخه اقساط: <b>۱۵</b> (۱۴۰۵/۰۷/۲۵)</span><button type="button" class="inst-link" onclick="instHardRefresh()"><i class="fa-solid fa-arrows-rotate"></i> بروزرسانی صفحه</button></div>
         <input type="file" id="instBackupFile" accept=".json" style="display: none;" onchange="importInstBackup(event)">
       </div>
 
@@ -2939,6 +2959,26 @@
     .inst-fee-box summary { cursor: pointer; font-weight: 700; color: var(--primary); }
     .inst-fee-note { background: var(--warning-light); color: var(--warning); border-radius: 10px; padding: 8px 10px; font-weight: 700; font-size: calc(12px * var(--fs, 1)); }
     .inst-version { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); }
+    /* --- لیست پرداختی‌ها --- */
+    #installmentsView:not(.inst-pay-open) .inst-pay-pane { display: none; }
+    #installmentsView.inst-pay-open .inst-list-pane,
+    #installmentsView.inst-pay-open .inst-fab,
+    #installmentsView.inst-pay-open #instAddBtn { display: none !important; }
+    .inst-pay-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+    .inst-pay-item { display: flex; align-items: center; gap: 12px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px 14px; box-shadow: 0 4px 12px rgba(15, 23, 42, .05); cursor: pointer; }
+    .inst-pay-item:active { transform: scale(.99); }
+    .inst-pay-ico { width: 40px; height: 40px; border-radius: 50%; background: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; font-size: 18px; }
+    .inst-pay-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+    .inst-pay-bank { font-weight: 800; font-size: calc(14px * var(--fs, 1)); overflow-wrap: anywhere; }
+    .inst-pay-sub { font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 2px 12px; }
+    .inst-pay-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+    .inst-chip { font-size: calc(11px * var(--fs, 1)); font-weight: 700; padding: 3px 9px; border-radius: 20px; background: var(--primary-light); color: var(--primary); overflow-wrap: anywhere; }
+    .inst-chip.cash { background: var(--success-light); color: var(--success); }
+    .inst-chip.fee { background: var(--warning-light); color: var(--warning); }
+    .inst-pay-amt { font-weight: 800; font-size: calc(15px * var(--fs, 1)); color: var(--success); text-align: left; flex: 0 0 auto; }
+    .inst-pay-amt small { display: block; font-size: calc(10px * var(--fs, 1)); color: var(--text-muted); font-weight: 600; }
+    @media (max-width: 768px) { .inst-pay-grid { grid-template-columns: 1fr; } }
+    @media (max-width: 380px) { .inst-pay-item { padding: 10px; gap: 9px; } .inst-pay-ico { width: 34px; height: 34px; font-size: 15px; } .inst-subtabs button { font-size: calc(11.5px * var(--fs, 1)); padding: 10px 4px; gap: 5px; } }
     @media print { .inst-fab { display: none !important; } .inst-grid { grid-template-columns: repeat(2, 1fr); } }
   </style>
 
@@ -3079,6 +3119,8 @@
     function setInstPane(p) {
       const v = xEl('installmentsView'); if (!v) return;
       v.classList.toggle('inst-tools-open', p === 'tools');
+      v.classList.toggle('inst-pay-open', p === 'payments');
+      if (p === 'payments') renderInstPayments();
       document.querySelectorAll('#instSubtabs button').forEach(b => b.classList.toggle('active', b.dataset.p === p));
       if (p === 'tools') closeInstForm();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3106,7 +3148,7 @@
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape' || !document.body.classList.contains('inst-mode')) return;
       if (xEl('pnlOv')) return;   // اگر پنجره‌ای باز است، Escape فقط همان را می‌بندد
-      if (xEl('installmentsView').classList.contains('inst-tools-open')) setInstPane('list');
+      if (xEl('installmentsView').classList.contains('inst-tools-open') || xEl('installmentsView').classList.contains('inst-pay-open')) setInstPane('list');
       else if (xEl('instFormCard').style.display !== 'none') closeInstForm(); else exitInstallments();
     }, true);
     document.addEventListener('visibilitychange', function () {
@@ -3132,6 +3174,7 @@
 
     function renderInstallments() {
       const box = xEl('instList'); if (!box) return;
+      renderInstPayments();
       const today = getTodayJalaliNormalized();
       const all = installments;
       const active = all.filter(i => !instDone(i));
@@ -3150,7 +3193,7 @@
       xEl('instMonth').textContent = xFa(sum(monthOpen));
       xEl('instMonthName').textContent = instMonthLabel(monthKey);
       xEl('instNext').textContent = nxt ? toPersianDigits(nxt.nextDate) : '—';
-      xEl('instNextSub').textContent = nxt ? nxt.bank + ' · ' + xFa(instNextAmt(nxt)) : '';
+      xEl('instNextSub').textContent = nxt ? nxt.bank + '، ' + xFa(instNextAmt(nxt)) : '';
       document.querySelectorAll('#countInst').forEach(e => e.textContent = toPersianDigits(active.length));
       xEl('instClearBtn').style.display = all.some(instDone) ? '' : 'none';
 
@@ -3201,7 +3244,7 @@
         + '</div>'
         + (instHasFee(i) ? '<div class="inst-prog-text">هر ' + toPersianDigits(i.feeEvery) + ' قسط یک قسط کارمزدی: <b>' + xFa(i.feeAmount) + '</b> ریال' + (done ? '' : ' (' + toPersianDigits(instFeeCount(i)) + ' مورد مانده)') + '</div>' : '')
         + (!done && instIsFee(i, i.paidCount + 1) ? '<div class="inst-fee-note"><i class="fa-solid fa-percent"></i> قسط بعدی کارمزدی است: ' + xFa(instNextAmt(i)) + ' ریال</div>' : '')
-        + (i.history.length ? '<div class="inst-prog-text">آخرین پرداخت: <b>' + toPersianDigits(i.history[i.history.length - 1].date) + '</b>' + (instMethodText(i.history[i.history.length - 1]) ? ' · ' + xEsc(instMethodText(i.history[i.history.length - 1])) : '') + '</div>' : '')
+        + (i.history.length ? '<div class="inst-prog-text">آخرین پرداخت: <b>' + toPersianDigits(i.history[i.history.length - 1].date) + '</b>' + (instMethodText(i.history[i.history.length - 1]) ? '، ' + xEsc(instMethodText(i.history[i.history.length - 1])) : '') + '</div>' : '')
         + (done ? '' : '<div class="inst-prog-text">مبلغ باقی‌مانده: <b>' + xFa(instRemaining(i)) + '</b> ریال</div>')
         + (done ? '' : '<div class="inst-actions no-print">'
           + '<button class="btn btn-primary inst-pay" onclick="openPayDate(' + q + ')"><i class="fa-solid fa-circle-check"></i> پرداخت شد (قسط ' + toPersianDigits(i.paidCount + 1) + ')</button>'
@@ -3268,7 +3311,7 @@
     function showInstHistory(id) {
       const it = installments.find(x => x.id === id); if (!it) return;
       const pre = Math.max(it.paidCount - it.history.length, 0), left = it.total - it.paidCount;
-      let h = '<p style="color:var(--text-muted);margin-bottom:8px">' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' قسط پرداخت شده · هر قسط ' + xFa(it.amount) + ' ریال' + (instHasFee(it) ? ' · کارمزدی ' + xFa(it.feeAmount) : '') + '</p>';
+      let h = '<p style="color:var(--text-muted);margin-bottom:8px">' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' قسط پرداخت شده، هر قسط ' + xFa(it.amount) + ' ریال' + (instHasFee(it) ? '، کارمزدی ' + xFa(it.feeAmount) : '') + '</p>';
       if (pre) h += '<div class="fc-it"><span>قبل از ثبت در برنامه</span><span></span><b>' + toPersianDigits(pre) + ' قسط ✓</b></div>';
       h += it.history.map(e => '<div class="fc-it"><span>قسط ' + toPersianDigits(e.n) + ' — ' + xFa(e.amount || it.amount) + '</span><span>' + toPersianDigits(e.date) + '</span><b style="color:var(--success)">' + (instMethodText(e) || 'پرداخت شد ✓') + '</b></div>').join('');
       if (left > 0 && instValidDate(it.nextDate)) {
@@ -3592,6 +3635,57 @@
       try { if (window.caches) { const ks = await caches.keys(); for (const k of ks) await caches.delete(k); } } catch (e) {}
       location.replace(location.pathname + '?v=' + Date.now());
     }
+    /* ---------- لیست پرداختی‌ها (همه پرداخت‌های ثبت‌شده، تازه‌ترین اول) ---------- */
+    let instPayQuery = '', instPayFilter = 'all';
+    function setInstPayFilter(f) {
+      instPayFilter = f;
+      document.querySelectorAll('#ipSeg button').forEach(b => b.classList.toggle('active', b.dataset.f === f));
+      renderInstPayments();
+    }
+    function instAllPayments() {
+      const out = [];
+      installments.forEach(p => p.history.forEach(h => out.push({
+        planId: p.id, bank: p.bank, n: h.n, total: p.total, date: h.date || '', amount: h.amount || instAmtAt(p, h.n),
+        method: h.method || '', card: h.card || '', fee: instIsFee(p, h.n)
+      })));
+      return out.sort((a, b) => b.date.localeCompare(a.date) || b.n - a.n);
+    }
+    function renderInstPayments() {
+      const box = xEl('ipList'); if (!box) return;
+      const all = instAllPayments();
+      const today = getTodayJalaliNormalized(), mk = today.slice(0, 7);
+      const sum = arr => arr.reduce((a, x) => a + (+x.amount || 0), 0);
+      xEl('ipTotal').textContent = xFa(sum(all));
+      xEl('ipTotalSub').textContent = all.length ? 'از ' + toPersianDigits(installments.filter(p => p.history.length).length) + ' وام' : '';
+      xEl('ipCount').textContent = toPersianDigits(all.length);
+      xEl('ipCountSub').textContent = all.length ? toPersianDigits(all.filter(x => x.method === 'card').length) + ' کارت، ' + toPersianDigits(all.filter(x => x.method === 'cash').length) + ' صندوق' : '';
+      xEl('ipMonth').textContent = xFa(sum(all.filter(x => x.date.slice(0, 7) === mk)));
+      xEl('ipMonthName').textContent = instMonthLabel(mk);
+      xEl('ipLast').textContent = all.length ? toPersianDigits(all[0].date) : '—';
+      xEl('ipLastSub').textContent = all.length ? all[0].bank + ' — ' + xFa(all[0].amount) : '';
+
+      const q = normSearch(instPayQuery).replace(/[,،]/g, '');
+      let list = all.filter(x => instPayFilter === 'all' ? true : x.method === instPayFilter);
+      if (q) list = list.filter(x => normSearch(x.bank + ' ' + x.card + ' ' + x.date + ' ' + x.amount + ' ' + instMethodText(x)).includes(q));
+
+      if (!list.length) {
+        box.innerHTML = '<div class="card inst-empty">' + (all.length ? 'موردی پیدا نشد.' : 'هنوز پرداختی ثبت نشده است. بعد از هر «پرداخت شد»، اینجا نمایش داده می‌شود.') + '</div>';
+      } else {
+        box.innerHTML = '<div class="inst-pay-grid">' + list.map(x =>
+          '<div class="inst-pay-item" onclick="showInstHistory(\'' + x.planId + '\')">'
+          + '<div class="inst-pay-ico"><i class="fa-solid fa-circle-check"></i></div>'
+          + '<div class="inst-pay-main"><div class="inst-pay-bank">' + xEsc(x.bank) + '</div>'
+          + '<div class="inst-pay-sub"><span>قسط ' + toPersianDigits(x.n) + ' از ' + toPersianDigits(x.total) + '</span><span><i class="fa-regular fa-calendar"></i> ' + toPersianDigits(x.date || '—') + '</span></div>'
+          + '<div class="inst-pay-chips">'
+          + (x.method === 'card' ? '<span class="inst-chip"><i class="fa-solid fa-credit-card"></i> ' + xEsc(x.card || 'کارت بانکی') + '</span>' : (x.method === 'cash' ? '<span class="inst-chip cash"><i class="fa-solid fa-vault"></i> صندوق</span>' : ''))
+          + (x.fee ? '<span class="inst-chip fee">کارمزدی</span>' : '') + '</div></div>'
+          + '<div class="inst-pay-amt">' + xFa(x.amount) + '<small>ریال</small></div></div>'
+        ).join('') + '</div>';
+      }
+      const pre = installments.reduce((a, p) => a + Math.max(p.paidCount - p.history.length, 0), 0);
+      xEl('ipNote').textContent = pre ? toPersianDigits(pre) + ' قسط دیگر قبل از ثبت در برنامه پرداخت شده‌اند و تاریخ ندارند.' : '';
+    }
+
     function initInstallments() {
       try { installments = JSON.parse(localStorage.getItem(INST_LS) || '[]').map(instNormalize); } catch (e) { installments = []; }
       instSetSync('checking');
