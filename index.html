@@ -1422,14 +1422,12 @@
 
       <div class="inst-seg inst-subtabs no-print" id="instSubtabs">
         <button type="button" class="active" data-p="list" onclick="setInstPane('list')"><i class="fa-solid fa-list"></i> اقساط</button>
-        <button type="button" data-p="payments" onclick="setInstPane('payments')"><i class="fa-solid fa-receipt"></i> پرداختی‌ها</button>
-        <button type="button" data-p="tools" onclick="setInstPane('tools')"><i class="fa-solid fa-toolbox"></i> ابزارها</button>
+        <button type="button" data-p="tools" onclick="setInstPane('tools')"><i class="fa-solid fa-toolbox"></i> ابزارها و پشتیبان‌گیری</button>
       </div>
 
       <div class="inst-list-pane">
       <div id="instSync" class="inst-sync no-print"></div>
 
-      <div id="instNotifBar" class="inst-notif-bar no-print" style="display:none"></div>
       <div id="instAlert" class="inst-alert no-print" style="display:none"></div>
 
       <div class="inst-stats">
@@ -1445,20 +1443,24 @@
           <input type="hidden" id="instEditId">
           <div class="form-grid">
             <div class="form-group"><label>بانک *</label><input type="text" id="instBank" class="form-control" required list="instBankList" placeholder="مثلا: ملت"><datalist id="instBankList"></datalist></div>
-            <div class="form-group"><label>مبلغ هر قسط (ریال) *</label><input type="text" id="instAmount" class="form-control" required inputmode="numeric" placeholder="مثلا: 25,000,000" oninput="instAmountInput(this)"><span class="inst-hint" id="instAmountHint"></span></div>
-            <div class="form-group"><label>تعداد کل اقساط *</label><input type="text" id="instTotalN" class="form-control" required inputmode="numeric" placeholder="مثلا: 36" oninput="formatDigitsInput(this); instFeePreview()"></div>
-            <div class="form-group"><label>تا الان چند قسط پرداخت شده؟</label><input type="text" id="instPaidN" class="form-control" inputmode="numeric" value="0" oninput="formatDigitsInput(this)"></div>
+            <div class="form-group"><label>مبلغ هر قسط (ریال) *</label><input type="text" id="instAmount" class="form-control" required inputmode="numeric" placeholder="مثلا: 25,000,000" oninput="instAmountInput(this); instCustomRefresh()"><span class="inst-hint" id="instAmountHint"></span></div>
+            <div class="form-group"><label>تعداد کل اقساط *</label><input type="text" id="instTotalN" class="form-control" required inputmode="numeric" placeholder="مثلا: 12" oninput="formatDigitsInput(this); instCustomRefresh()"></div>
+            <div class="form-group"><label>تا الان چند قسط پرداخت شده؟</label><input type="text" id="instPaidN" class="form-control" inputmode="numeric" value="0" oninput="formatDigitsInput(this); instCustomRefresh()"></div>
             <div class="form-group"><label>تاریخ سررسید قسط بعدی *</label><input type="text" id="instDate" class="form-control" inputmode="numeric" placeholder="1405/07/10"></div>
             <div class="form-group"><label>فاصله یادآوری بعد از هر پرداخت (روز)</label><input type="text" id="instGap" class="form-control" inputmode="numeric" value="30" oninput="formatDigitsInput(this)"></div>
-            <details id="instFeeBox" class="inst-fee-box" style="grid-column: 1 / -1;">
-              <summary><i class="fa-solid fa-percent"></i> قسط کارمزدی (اختیاری)</summary>
-              <div class="inst-hint" style="margin:8px 0">اگر هر چند قسط یک‌بار، یک قسط کارمزدی (با مبلغ متفاوت) دارید اینجا بنویسید. مثلاً «هر ۱۲ قسط» یعنی قسط‌های ۱، ۱۳، ۲۵ و ...</div>
+            <details id="instFeeBox" class="inst-fee-box" style="grid-column: 1 / -1;" ontoggle="if(this.open) renderInstCustomList()">
+              <summary><i class="fa-solid fa-percent"></i> مبلغ دستی اقساط / کارمزد (اختیاری)</summary>
+              <div class="inst-hint" style="margin:8px 0">مبلغ هر قسط را جدا وارد کنید. قسطی که خالی بماند، همان «مبلغ هر قسط» بالا حساب می‌شود. (قسط‌های پرداخت‌شده نمایش داده نمی‌شوند.)</div>
               <div class="form-grid">
-                <div class="form-group"><label>هر چند قسط یک‌بار؟</label><input type="text" id="instFeeEvery" class="form-control" inputmode="numeric" placeholder="مثلا: 12" oninput="formatDigitsInput(this); instFeePreview()"></div>
-                <div class="form-group"><label>مبلغ قسط کارمزدی (ریال)</label><input type="text" id="instFeeAmount" class="form-control" inputmode="numeric" placeholder="مثلا: 2,000,000" oninput="instMoneyInput(this)"></div>
-                <div class="form-group"><label>اولین قسط کارمزدی چندمین است؟</label><input type="text" id="instFeeFirst" class="form-control" inputmode="numeric" placeholder="خالی = قسط ۱" oninput="formatDigitsInput(this); instFeePreview()"></div>
+                <div class="form-group"><label>از قسط</label><input type="text" id="instBulkFrom" class="form-control" inputmode="numeric" placeholder="مثلا: 4" oninput="formatDigitsInput(this)"></div>
+                <div class="form-group"><label>تا قسط (خالی = فقط همان یک قسط)</label><input type="text" id="instBulkTo" class="form-control" inputmode="numeric" placeholder="مثلا: 4" oninput="formatDigitsInput(this)"></div>
+                <div class="form-group"><label>مبلغ (ریال) — خالی = مبلغ عادی</label><input type="text" id="instBulkAmt" class="form-control" inputmode="numeric" placeholder="مثلا: 2,000,000" oninput="instMoneyInput(this)"></div>
               </div>
-              <div class="inst-fee-preview" id="instFeePreview"></div>
+              <div class="inst-custom-actions">
+                <button type="button" class="btn btn-outline" onclick="instCustomApply()"><i class="fa-solid fa-check"></i> اعمال روی بازه</button>
+                <button type="button" class="btn btn-outline" style="color:var(--danger)" onclick="instCustomClear()"><i class="fa-solid fa-eraser"></i> پاک‌کردن همه مبالغ دستی</button>
+              </div>
+              <div id="instCustomList" class="inst-custom-list"></div>
             </details>
             <div class="form-group" style="grid-column: 1 / -1;"><label>توضیح (اختیاری)</label><input type="text" id="instNote" class="form-control" placeholder="مثلا: وام ماشین"></div>
           </div>
@@ -1484,31 +1486,11 @@
 
       </div><!-- /inst-list-pane -->
 
-      <div class="inst-pay-pane">
-        <div class="inst-stats">
-          <div class="stat-card passed"><h4>جمع پرداختی‌ها (ریال)</h4><div class="amount" id="ipTotal" style="color: var(--success);">۰</div><span class="inst-sub" id="ipTotalSub"></span></div>
-          <div class="stat-card delivered"><h4>تعداد پرداخت</h4><div class="amount" id="ipCount" style="color: var(--info);">۰</div><span class="inst-sub" id="ipCountSub"></span></div>
-          <div class="stat-card pending"><h4>پرداختی این ماه (ریال)</h4><div class="amount" id="ipMonth" style="color: var(--warning);">۰</div><span class="inst-sub" id="ipMonthName"></span></div>
-          <div class="stat-card bounced"><h4>آخرین پرداخت</h4><div class="amount" id="ipLast" style="color: var(--primary);">—</div><span class="inst-sub" id="ipLastSub"></span></div>
-        </div>
-        <div class="card inst-filters">
-          <div class="inst-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="ipSearch" class="form-control" placeholder="جستجو: بانک، کارت، تاریخ، مبلغ" oninput="instPayQuery = this.value; renderInstPayments()"></div>
-          <div class="inst-seg" id="ipSeg">
-            <button type="button" class="active" data-f="all" onclick="setInstPayFilter('all')">همه</button>
-            <button type="button" data-f="cash" onclick="setInstPayFilter('cash')">صندوق</button>
-            <button type="button" data-f="card" onclick="setInstPayFilter('card')">کارت بانکی</button>
-          </div>
-        </div>
-        <div id="ipList"></div>
-        <div id="ipNote" class="inst-prog-text" style="text-align:center; margin: 6px 0 16px;"></div>
-      </div><!-- /inst-pay-pane -->
-
       <div class="card inst-tools no-print">
         <div class="inst-tools-sec"><i class="fa-solid fa-share-nodes"></i> خروجی و یادآوری</div>
-        <div class="inst-tools-grid c3">
+        <div class="inst-tools-grid c2">
           <button type="button" class="inst-tool" onclick="exportInstExcel()"><span class="inst-tool-ico" style="--c: var(--success); --cl: var(--success-light);"><i class="fa-solid fa-file-excel"></i></span><span>خروجی اکسل</span></button>
           <button type="button" class="inst-tool" onclick="addAllInstToCalendar()"><span class="inst-tool-ico" style="--c: var(--info); --cl: var(--info-light);"><i class="fa-solid fa-calendar-plus"></i></span><span>همه به تقویم</span></button>
-          <button type="button" class="inst-tool" onclick="instTestNotif()"><span class="inst-tool-ico" style="--c: var(--warning); --cl: var(--warning-light);"><i class="fa-solid fa-bell"></i></span><span>اعلان آزمایشی</span></button>
         </div>
         <div class="inst-tools-sec"><i class="fa-solid fa-shield-halved"></i> پشتیبان‌گیری</div>
         <div class="inst-tools-grid c3">
@@ -1521,7 +1503,7 @@
           <button type="button" class="inst-tool danger" onclick="instWipeAll()"><span class="inst-tool-ico" style="--c: var(--danger); --cl: var(--danger-light);"><i class="fa-solid fa-trash-can"></i></span><span>پاک کردن همه اطلاعات اقساط</span></button>
         </div>
         <div class="inst-tools-sec"><i class="fa-solid fa-circle-info"></i> نسخه برنامه</div>
-        <div class="inst-version"><span>نسخه اقساط: <b>۱۷</b> (۱۴۰۵/۰۷/۲۵)</span><button type="button" class="inst-link" onclick="instHardRefresh()"><i class="fa-solid fa-arrows-rotate"></i> بروزرسانی صفحه</button></div>
+        <div class="inst-version"><span>نسخه اقساط: <b>۱۴</b> (۱۴۰۵/۰۷/۲۵)</span><button type="button" class="inst-link" onclick="instHardRefresh()"><i class="fa-solid fa-arrows-rotate"></i> بروزرسانی صفحه</button></div>
         <input type="file" id="instBackupFile" accept=".json" style="display: none;" onchange="importInstBackup(event)">
       </div>
 
@@ -2960,36 +2942,15 @@
     #installmentsView.inst-tools-open #instAddBtn { display: none !important; }
     .inst-fee-box { border: 1px dashed var(--border-color); border-radius: 12px; padding: 10px 12px; }
     .inst-fee-box summary { cursor: pointer; font-weight: 700; color: var(--primary); }
+    .inst-custom-actions { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px 0 10px; }
+    .inst-custom-list { max-height: 300px; overflow-y: auto; display: grid; gap: 6px; padding: 2px; }
+    .inst-custom-row { display: flex; align-items: center; gap: 10px; }
+    .inst-custom-row > span { min-width: 64px; font-weight: 700; color: var(--text-muted); }
+    .inst-custom-row .form-control { flex: 1; }
+    .inst-custom-row.on > span { color: var(--warning); }
+    .inst-custom-row.on .form-control { border-color: var(--warning); }
     .inst-fee-note { background: var(--warning-light); color: var(--warning); border-radius: 10px; padding: 8px 10px; font-weight: 700; font-size: calc(12px * var(--fs, 1)); }
     .inst-version { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); }
-    /* --- لیست پرداختی‌ها --- */
-    #installmentsView:not(.inst-pay-open) .inst-pay-pane { display: none; }
-    #installmentsView.inst-pay-open .inst-list-pane,
-    #installmentsView.inst-pay-open .inst-fab,
-    #installmentsView.inst-pay-open #instAddBtn { display: none !important; }
-    .inst-pay-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
-    .inst-pay-item { display: flex; align-items: center; gap: 12px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 12px 14px; box-shadow: 0 4px 12px rgba(15, 23, 42, .05); cursor: pointer; }
-    .inst-pay-item:active { transform: scale(.99); }
-    .inst-pay-ico { width: 40px; height: 40px; border-radius: 50%; background: var(--success-light); color: var(--success); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; font-size: 18px; }
-    .inst-pay-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-    .inst-pay-bank { font-weight: 800; font-size: calc(14px * var(--fs, 1)); overflow-wrap: anywhere; }
-    .inst-pay-sub { font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); display: flex; flex-wrap: wrap; gap: 2px 12px; }
-    .inst-pay-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
-    .inst-chip { font-size: calc(11px * var(--fs, 1)); font-weight: 700; padding: 3px 9px; border-radius: 20px; background: var(--primary-light); color: var(--primary); overflow-wrap: anywhere; }
-    .inst-chip.cash { background: var(--success-light); color: var(--success); }
-    .inst-chip.fee { background: var(--warning-light); color: var(--warning); }
-    .inst-pay-amt { font-weight: 800; font-size: calc(15px * var(--fs, 1)); color: var(--success); text-align: left; flex: 0 0 auto; }
-    .inst-pay-amt small { display: block; font-size: calc(10px * var(--fs, 1)); color: var(--text-muted); font-weight: 600; }
-    @media (max-width: 768px) { .inst-pay-grid { grid-template-columns: 1fr; } }
-    @media (max-width: 380px) { .inst-pay-item { padding: 10px; gap: 9px; } .inst-pay-ico { width: 34px; height: 34px; font-size: 15px; } .inst-subtabs button { font-size: calc(11.5px * var(--fs, 1)); padding: 10px 4px; gap: 5px; } }
-    .inst-card-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
-    .inst-card-chips:empty { display: none; }
-    .inst-chip-btn { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--border-color); background: var(--bg-main); color: var(--text-main); border-radius: 22px; padding: 9px 14px; font-family: inherit; font-weight: 700; font-size: calc(12.5px * var(--fs, 1)); cursor: pointer; }
-    .inst-chip-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
-    .inst-chip-btn .x { opacity: .7; font-size: 16px; line-height: 1; padding: 0 2px; }
-    .inst-fee-preview { margin-top: 8px; font-size: calc(12px * var(--fs, 1)); color: var(--primary); font-weight: 700; min-height: 1em; }
-    .inst-notif-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--info-light); color: var(--info); border: 1px solid var(--info); border-radius: 14px; padding: 10px 14px; margin-bottom: 12px; font-weight: 700; font-size: calc(12.5px * var(--fs, 1)); line-height: 1.8; }
-    .inst-notif-bar .btn { flex: 0 0 auto; }
     @media print { .inst-fab { display: none !important; } .inst-grid { grid-template-columns: repeat(2, 1fr); } }
   </style>
 
@@ -3005,13 +2966,12 @@
     const INST_COL = 'checks', INST_PREFIX = 'inst_p_', INST_BK_PREFIX = 'inst_bk_';
     const instRef = id => window.doc(window.db, INST_COL, INST_PREFIX + id);
     const instTomb = {};   // قسط‌هایی که در همین نشست حذف شده‌اند (تا با داده قدیمی سرور برنگردند)
-    const INST_NOTIF_KEY = 'inst_notified_v3';
+    const INST_NOTIF_KEY = 'inst_notified_v2';
     const INST_MONTHS = ['فروردین', 'اردیبهشت', 'خرداد', 'تیر', 'مرداد', 'شهریور', 'مهر', 'آبان', 'آذر', 'دی', 'بهمن', 'اسفند'];
 
     function instCache() {
       try { localStorage.setItem(INST_LS, JSON.stringify(installments)); } catch (e) {}
-      clearTimeout(window._instBk); window._instBk = setTimeout(autoInstBackup, 4000);
-      clearTimeout(window._instSw); window._instSw = setTimeout(() => { instSyncSW(); }, 800);   // بک‌اپ خودکار (۴ ثانیه بعد از هر تغییر)
+      clearTimeout(window._instBk); window._instBk = setTimeout(autoInstBackup, 4000);   // بک‌اپ خودکار (۴ ثانیه بعد از هر تغییر)
     }
     function instMonthLabel(key) {
       if (key === 'done') return 'تسویه‌شده';
@@ -3046,11 +3006,17 @@
       const total = Math.min(Math.max(parseInt(r.total, 10) || 1, 1), 600);
       let pc = r.paidCount != null ? (parseInt(r.paidCount, 10) || 0) : (r.paid ? 1 : 0);
       pc = Math.min(Math.max(pc, 0), total);
+      // مبلغ دستی هر قسط: { شماره قسط: مبلغ }
+      const custom = {};
+      if (r.custom && typeof r.custom === 'object') for (const k in r.custom) { const n = parseInt(k, 10), v = +r.custom[k]; if (n >= 1 && n <= total && v > 0) custom[n] = v; }
+      // سازگاری با نسخه قبلی (هر N قسط یک قسط کارمزدی): تبدیل به مبلغ دستی
+      const fe = parseInt(r.feeEvery, 10) || 0, fa = +r.feeAmount || 0, ff = parseInt(r.feeFirst, 10) || 0;
+      if (fe > 0 && fa > 0 && !Object.keys(custom).length) for (let k = (ff || fe); k <= total; k += fe) custom[k] = fa;
       const it = {
         id: r.id, bank: r.bank || '', amount: +r.amount || 0, total, paidCount: pc,
         nextDate: normalizeDateStr(r.nextDate || r.date || ''),
         gap: Math.min(Math.max(parseInt(r.gap, 10) || 30, 1), 365),
-        feeEvery: Math.min(Math.max(parseInt(r.feeEvery, 10) || 0, 0), 600), feeAmount: Math.max(+r.feeAmount || 0, 0), feeFirst: Math.min(Math.max(parseInt(r.feeFirst, 10) || 0, 0), 600),
+        custom,
         note: r.note || '', history: instNormHistory(r.history)
       };
       if (+r.updated > 0) it.updated = +r.updated;
@@ -3058,10 +3024,10 @@
       return it;
     }
     const instDone = i => i.paidCount >= i.total;
-    // مبلغ قسط شماره k (۱-مبنا): قسط کارمزدی هر N قسط یک‌بار، از قسط «feeFirst» به بعد
-    const instHasFee = i => i.feeEvery > 0 && i.feeAmount > 0;
-    function instIsFee(i, k) { if (!instHasFee(i)) return false; const f = i.feeFirst || 1; /* پیش‌فرض: از قسط اول، سپس هر N قسط (N=12 → ۱، ۱۳، ۲۵ ...) */ return k >= f && (k - f) % i.feeEvery === 0; }
-    const instAmtAt = (i, k) => instIsFee(i, k) ? i.feeAmount : i.amount;
+    // مبلغ قسط شماره k (۱-مبنا): اگر مبلغ دستی ثبت شده باشد همان، وگرنه مبلغ عادی
+    const instHasFee = i => !!i.custom && Object.keys(i.custom).length > 0;
+    const instIsFee = (i, k) => !!i.custom && i.custom[k] > 0;
+    const instAmtAt = (i, k) => instIsFee(i, k) ? i.custom[k] : i.amount;
     const instNextAmt = i => instAmtAt(i, i.paidCount + 1);
     function instRemaining(i) { let t = 0; for (let k = i.paidCount + 1; k <= i.total; k++) t += instAmtAt(i, k); return t; }
     const instFeeCount = i => { let c = 0; for (let k = i.paidCount + 1; k <= i.total; k++) if (instIsFee(i, k)) c++; return c; };
@@ -3097,12 +3063,7 @@
         if (!(window.db && window.getDocs)) { instSetSync('fail', 'اتصال به سرور برقرار نشد'); return; }
         const snap = await window.getDocs(window.collection(window.db, INST_COL));
         const remote = [];
-        let remoteCards = null;
-        snap.forEach(d => {
-          if (d.id === INST_CARDS_ID) remoteCards = d.data();
-          else if (d.id.startsWith(INST_PREFIX)) remote.push(instNormalize({ ...d.data(), id: d.id.slice(INST_PREFIX.length) }));
-        });
-        instMergeRemoteCards(remoteCards); window._instLoadedOnce = true;
+        snap.forEach(d => { if (d.id.startsWith(INST_PREFIX)) remote.push(instNormalize({ ...d.data(), id: d.id.slice(INST_PREFIX.length) })); });
         // انتقال اقساطی که قبلاً در collection قدیمی «installments» ذخیره شده بودند (اگر وجود داشته باشد)
         const migrated = [], rid = new Set(remote.map(x => x.id));
         try {
@@ -3136,8 +3097,6 @@
     function setInstPane(p) {
       const v = xEl('installmentsView'); if (!v) return;
       v.classList.toggle('inst-tools-open', p === 'tools');
-      v.classList.toggle('inst-pay-open', p === 'payments');
-      if (p === 'payments') renderInstPayments();
       document.querySelectorAll('#instSubtabs button').forEach(b => b.classList.toggle('active', b.dataset.p === p));
       if (p === 'tools') closeInstForm();
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3165,11 +3124,11 @@
     document.addEventListener('keydown', function (e) {
       if (e.key !== 'Escape' || !document.body.classList.contains('inst-mode')) return;
       if (xEl('pnlOv')) return;   // اگر پنجره‌ای باز است، Escape فقط همان را می‌بندد
-      if (xEl('installmentsView').classList.contains('inst-tools-open') || xEl('installmentsView').classList.contains('inst-pay-open')) setInstPane('list');
+      if (xEl('installmentsView').classList.contains('inst-tools-open')) setInstPane('list');
       else if (xEl('instFormCard').style.display !== 'none') closeInstForm(); else exitInstallments();
     }, true);
     document.addEventListener('visibilitychange', function () {
-      if (document.visibilityState === 'visible') { sendInstNotifications(); if (document.body.classList.contains('inst-mode')) loadInstallments(); }
+      if (document.visibilityState === 'visible' && document.body.classList.contains('inst-mode')) loadInstallments();
     });
 
     /* ---------- رندر ---------- */
@@ -3191,7 +3150,6 @@
 
     function renderInstallments() {
       const box = xEl('instList'); if (!box) return;
-      renderInstPayments(); instUpdateNotifBar();
       const today = getTodayJalaliNormalized();
       const all = installments;
       const active = all.filter(i => !instDone(i));
@@ -3210,7 +3168,7 @@
       xEl('instMonth').textContent = xFa(sum(monthOpen));
       xEl('instMonthName').textContent = instMonthLabel(monthKey);
       xEl('instNext').textContent = nxt ? toPersianDigits(nxt.nextDate) : '—';
-      xEl('instNextSub').textContent = nxt ? nxt.bank + '، ' + xFa(instNextAmt(nxt)) : '';
+      xEl('instNextSub').textContent = nxt ? nxt.bank + ' · ' + xFa(instNextAmt(nxt)) : '';
       document.querySelectorAll('#countInst').forEach(e => e.textContent = toPersianDigits(active.length));
       xEl('instClearBtn').style.display = all.some(instDone) ? '' : 'none';
 
@@ -3259,9 +3217,9 @@
         + '<div class="inst-fact"><span>مانده</span><b>' + (done ? '—' : toPersianDigits(left) + ' قسط') + '</b></div>'
         + '<div class="inst-fact"><span>' + (done ? 'وضعیت' : 'قسط بعدی') + '</span><b>' + (done ? 'تسویه شد' : toPersianDigits(i.nextDate || '—')) + '</b></div>'
         + '</div>'
-        + (instHasFee(i) ? '<div class="inst-prog-text">هر ' + toPersianDigits(i.feeEvery) + ' قسط یک قسط کارمزدی: <b>' + xFa(i.feeAmount) + '</b> ریال' + (done ? '' : ' (' + toPersianDigits(instFeeCount(i)) + ' مورد مانده)') + '</div>' : '')
+        + (!done && instFeeCount(i) > 0 ? '<div class="inst-prog-text"><b>' + toPersianDigits(instFeeCount(i)) + '</b> قسط با مبلغ دستی (کارمزدی) مانده</div>' : '')
         + (!done && instIsFee(i, i.paidCount + 1) ? '<div class="inst-fee-note"><i class="fa-solid fa-percent"></i> قسط بعدی کارمزدی است: ' + xFa(instNextAmt(i)) + ' ریال</div>' : '')
-        + (i.history.length ? '<div class="inst-prog-text">آخرین پرداخت: <b>' + toPersianDigits(i.history[i.history.length - 1].date) + '</b>' + (instMethodText(i.history[i.history.length - 1]) ? '، ' + xEsc(instMethodText(i.history[i.history.length - 1])) : '') + '</div>' : '')
+        + (i.history.length ? '<div class="inst-prog-text">آخرین پرداخت: <b>' + toPersianDigits(i.history[i.history.length - 1].date) + '</b>' + (instMethodText(i.history[i.history.length - 1]) ? ' · ' + xEsc(instMethodText(i.history[i.history.length - 1])) : '') + '</div>' : '')
         + (done ? '' : '<div class="inst-prog-text">مبلغ باقی‌مانده: <b>' + xFa(instRemaining(i)) + '</b> ریال</div>')
         + (done ? '' : '<div class="inst-actions no-print">'
           + '<button class="btn btn-primary inst-pay" onclick="openPayDate(' + q + ')"><i class="fa-solid fa-circle-check"></i> پرداخت شد (قسط ' + toPersianDigits(i.paidCount + 1) + ')</button>'
@@ -3272,47 +3230,6 @@
         + '<button class="btn" onclick="editInstallment(' + q + ')"><i class="fa-solid fa-pen" style="color:var(--warning)"></i><span>ویرایش</span></button>'
         + '<button class="btn" onclick="deleteInstallment(' + q + ')"><i class="fa-solid fa-trash" style="color:var(--danger)"></i><span>حذف</span></button>'
         + '</div></div>';
-    }
-
-    /* ---------- کارت‌های بانکی ذخیره‌شده (یک‌بار بنویس، همیشه در دسترس؛ بین دستگاه‌ها همگام) ---------- */
-    const INST_CARDS_ID = 'inst_cards';
-    let instCards = { names: [], seeded: false, updated: 0 };
-    try { const c = JSON.parse(localStorage.getItem('inst_cards') || '{}'); if (Array.isArray(c.names)) instCards = { names: c.names, seeded: !!c.seeded, updated: +c.updated || 0 }; } catch (e) {}
-    function instCardsSave() {
-      instCards.updated = Date.now();
-      try { localStorage.setItem('inst_cards', JSON.stringify(instCards)); } catch (e) {}
-      try {
-        if (window.db && window.setDoc) window.setDoc(window.doc(window.db, INST_COL, INST_CARDS_ID), { names: instCards.names, seeded: !!instCards.seeded, updated: instCards.updated }).catch(e => console.warn('ذخیره کارت‌ها:', e));
-      } catch (e) {}
-    }
-    function instCardAdd(name) {
-      name = (name || '').trim(); if (!name || instCards.names.includes(name)) return;
-      instCards.names.push(name); instCardsSave();
-    }
-    // یک‌بار: کارت‌هایی که قبلاً در پرداخت‌ها نوشته شده‌اند هم به لیست اضافه می‌شوند
-    function instCardsSeed() {
-      if (instCards.seeded || !window._instLoadedOnce) return;
-      const set = new Set(instCards.names);
-      installments.forEach(p => p.history.forEach(h => { if (h.card) set.add(h.card); }));
-      instCards.names = [...set]; instCards.seeded = true; instCardsSave();
-    }
-    function instMergeRemoteCards(r) {
-      if (!r || !Array.isArray(r.names)) return;
-      const ru = +r.updated || 0;
-      if (ru > instCards.updated) { instCards = { names: r.names, seeded: instCards.seeded || !!r.seeded, updated: ru }; try { localStorage.setItem('inst_cards', JSON.stringify(instCards)); } catch (e) {} }
-      else if (instCards.updated > ru) instCardsSave();
-    }
-    function instRenderCardChips() {
-      const box = xEl('instCardChips'); if (!box) return;
-      const cur = (xEl('instCardName') || {}).value || '';
-      box.innerHTML = instCards.names.map((n, k) =>
-        '<button type="button" class="inst-chip-btn' + (n === cur.trim() ? ' active' : '') + '" onclick="instPickCard(' + k + ')">'
-        + '<i class="fa-solid fa-credit-card"></i> ' + xEsc(n) + ' <span class="x" title="حذف از لیست" onclick="event.stopPropagation(); instDelCard(' + k + ')">×</span></button>').join('');
-    }
-    function instPickCard(k) { const i = xEl('instCardName'); if (i && instCards.names[k] != null) { i.value = instCards.names[k]; instRenderCardChips(); } }
-    function instDelCard(k) {
-      const n = instCards.names[k]; if (n == null || !confirm('کارت «' + n + '» از لیست ذخیره‌شده‌ها حذف شود؟\n(پرداخت‌های قبلی تغییر نمی‌کنند)')) return;
-      instCards.names.splice(k, 1); instCardsSave(); instRenderCardChips();
     }
 
     /* ---------- پرداخت قسط: شمارنده +۱ و یادآوری بعدی = تاریخ پرداخت + فاصله (پیش‌فرض ۳۰ روز) ---------- */
@@ -3339,7 +3256,7 @@
       const it = installments.find(x => x.id === id); if (!it || instDone(it)) return;
       let lastM = 'cash', lastCard = '';
       try { lastM = localStorage.getItem('inst_last_method') === 'card' ? 'card' : 'cash'; lastCard = localStorage.getItem('inst_last_card') || ''; } catch (e) {}
-      instCardsSeed();
+      const cards = new Set(); installments.forEach(x => x.history.forEach(e => e.card && cards.add(e.card)));
       xPanel('ثبت پرداخت قسط ' + toPersianDigits(it.paidCount + 1) + ' — ' + xEsc(it.bank),
         '<p style="color:var(--text-muted);margin-bottom:10px">مبلغ این قسط: <b>' + xFa(instNextAmt(it)) + '</b> ریال' + (instIsFee(it, it.paidCount + 1) ? ' (کارمزدی)' : '') + '<br>یادآوری بعدی ' + toPersianDigits(it.gap) + ' روز بعد از تاریخ پرداخت ثبت می‌شود.</p>'
         + '<div class="form-group"><label>تاریخ پرداخت</label><input type="text" id="instPayDate" class="form-control" inputmode="numeric" maxlength="10" autocomplete="off" value="' + getTodayJalaliNormalized() + '"></div>'
@@ -3347,11 +3264,9 @@
         + '<button type="button" data-m="cash" class="' + (lastM === 'cash' ? 'active' : '') + '" onclick="setPayMethod(\'cash\')"><i class="fa-solid fa-vault"></i> صندوق</button>'
         + '<button type="button" data-m="card" class="' + (lastM === 'card' ? 'active' : '') + '" onclick="setPayMethod(\'card\')"><i class="fa-solid fa-credit-card"></i> کارت بانکی</button></div></div>'
         + '<div class="form-group" id="instCardWrap" style="margin-top:12px;display:' + (lastM === 'card' ? '' : 'none') + '"><label>نام کارت</label>'
-        + '<div class="inst-card-chips" id="instCardChips"></div>'
-        + '<input type="text" id="instCardName" class="form-control" autocomplete="off" placeholder="یکی را بزنید یا نام کارت جدید را بنویسید" oninput="instRenderCardChips()" value="' + xEsc(lastCard).replace(/"/g, '&quot;') + '">'
-        + '<div class="inst-hint" style="margin-top:6px">کارت جدید بعد از ثبت پرداخت ذخیره می‌شود و دفعه بعد لازم نیست دوباره بنویسید.</div></div>'
+        + '<input type="text" id="instCardName" class="form-control" list="instCardList" autocomplete="off" placeholder="مثلا: ملی ۶۰۳۷" value="' + xEsc(lastCard).replace(/"/g, '&quot;') + '">'
+        + '<datalist id="instCardList">' + [...cards].map(c => '<option value="' + xEsc(c).replace(/"/g, '&quot;') + '">').join('') + '</datalist></div>'
         + '<div class="inst-form-actions"><button type="button" class="btn btn-outline" onclick="closePanel()">انصراف</button><button type="button" class="btn btn-primary" onclick="confirmPayDate(\'' + id + '\')"><i class="fa-solid fa-check"></i> ثبت پرداخت</button></div>');
-      instRenderCardChips();
     }
     function setPayMethod(m) {
       document.querySelectorAll('#instPayMethod button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
@@ -3366,13 +3281,12 @@
       const card = method === 'card' ? xEl('instCardName').value.trim() : '';
       if (method === 'card' && !card) { xToast('نام کارت را وارد کنید'); return; }
       try { localStorage.setItem('inst_last_method', method); if (card) localStorage.setItem('inst_last_card', card); } catch (e) {}
-      if (card) instCardAdd(card);
       closePanel(); await payInstallment(id, v, method, card);
     }
     function showInstHistory(id) {
       const it = installments.find(x => x.id === id); if (!it) return;
       const pre = Math.max(it.paidCount - it.history.length, 0), left = it.total - it.paidCount;
-      let h = '<p style="color:var(--text-muted);margin-bottom:8px">' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' قسط پرداخت شده، هر قسط ' + xFa(it.amount) + ' ریال' + (instHasFee(it) ? '، کارمزدی ' + xFa(it.feeAmount) : '') + '</p>';
+      let h = '<p style="color:var(--text-muted);margin-bottom:8px">' + toPersianDigits(it.paidCount) + ' از ' + toPersianDigits(it.total) + ' قسط پرداخت شده · مبلغ عادی ' + xFa(it.amount) + ' ریال' + (instHasFee(it) ? ' · ' + toPersianDigits(Object.keys(it.custom).length) + ' قسط با مبلغ دستی' : '') + '</p>';
       if (pre) h += '<div class="fc-it"><span>قبل از ثبت در برنامه</span><span></span><b>' + toPersianDigits(pre) + ' قسط ✓</b></div>';
       h += it.history.map(e => '<div class="fc-it"><span>قسط ' + toPersianDigits(e.n) + ' — ' + xFa(e.amount || it.amount) + '</span><span>' + toPersianDigits(e.date) + '</span><b style="color:var(--success)">' + (instMethodText(e) || 'پرداخت شد ✓') + '</b></div>').join('');
       if (left > 0 && instValidDate(it.nextDate)) {
@@ -3395,14 +3309,6 @@
     }
 
     /* ---------- فرم ---------- */
-    function instFeePreview() {
-      const el = xEl('instFeePreview'); if (!el) return;
-      const num = id => parseInt(toEnglishDigits(xEl(id).value).replace(/[^\d]/g, ''), 10) || 0;
-      const every = num('instFeeEvery'), first = num('instFeeFirst') || 1, total = num('instTotalN');
-      if (!every || !total) { el.textContent = ''; return; }
-      const list = []; for (let k = first; k <= total; k += every) list.push(k);
-      el.textContent = list.length ? 'قسط‌های کارمزدی: ' + list.slice(0, 8).map(toPersianDigits).join('، ') + (list.length > 8 ? ' و ...' : '') + '  (' + toPersianDigits(list.length) + ' مورد)' : 'هیچ قسطی در این بازه کارمزدی نمی‌شود';
-    }
     function instMoneyInput(el) {
       const d = toEnglishDigits(el.value).replace(/[^\d]/g, '').slice(0, 15);
       el.value = d ? Number(d).toLocaleString('en-US') : '';
@@ -3412,6 +3318,44 @@
       el.value = d ? Number(d).toLocaleString('en-US') : '';
       xEl('instAmountHint').textContent = d ? toPersianDigits(Number(d).toLocaleString('en-US')) + ' ریال  =  ' + xFa(Number(d) / 10) + ' تومان' : '';
     }
+    /* ---------- مبلغ دستی هر قسط ---------- */
+    let instCustomDraft = {};
+    const instNum = v => parseInt(toEnglishDigits(String(v == null ? '' : v)).replace(/[^\d]/g, ''), 10) || 0;
+    const instCustomRefresh = () => { const b = xEl('instFeeBox'); if (b && b.open) renderInstCustomList(); };
+    function renderInstCustomList() {
+      const box = xEl('instCustomList'); if (!box) return;
+      const total = Math.min(instNum(xEl('instTotalN').value), 600);
+      const paid = Math.min(instNum(xEl('instPaidN').value), total);
+      const base = instNum(xEl('instAmount').value);
+      if (!total || paid >= total) { box.innerHTML = '<div class="inst-hint">اول «تعداد کل اقساط» را وارد کنید (و قسطی باقی مانده باشد).</div>'; return; }
+      const ph = base ? base.toLocaleString('en-US') : 'مبلغ عادی';
+      let h = '';
+      for (let k = paid + 1; k <= total; k++) {
+        const v = instCustomDraft[k];
+        h += '<div class="inst-custom-row' + (v ? ' on' : '') + '"><span>قسط ' + toPersianDigits(k) + '</span>'
+          + '<input type="text" class="form-control" inputmode="numeric" data-k="' + k + '" placeholder="' + ph + '" value="' + (v ? Number(v).toLocaleString('en-US') : '') + '" oninput="instCustomInput(this)"></div>';
+      }
+      box.innerHTML = h;
+    }
+    function instCustomInput(el) {
+      instMoneyInput(el);
+      const k = +el.dataset.k, v = instNum(el.value);
+      if (v > 0) instCustomDraft[k] = v; else delete instCustomDraft[k];
+      if (el.parentNode) el.parentNode.classList.toggle('on', v > 0);
+    }
+    function instCustomApply() {
+      const total = Math.min(instNum(xEl('instTotalN').value), 600);
+      const from = instNum(xEl('instBulkFrom').value), to = instNum(xEl('instBulkTo').value) || from, v = instNum(xEl('instBulkAmt').value);
+      if (!total) { xToast('اول تعداد کل اقساط را وارد کنید'); return; }
+      if (from < 1 || to < from || to > total) { xToast('بازه قسط‌ها را درست وارد کنید (۱ تا ' + toPersianDigits(total) + ')'); return; }
+      for (let k = from; k <= to; k++) { if (v > 0) instCustomDraft[k] = v; else delete instCustomDraft[k]; }
+      renderInstCustomList();
+    }
+    function instCustomClear() {
+      if (!Object.keys(instCustomDraft).length) return;
+      instCustomDraft = {}; renderInstCustomList();
+    }
+
     function openInstForm() {
       xEl('instFormCard').style.display = '';
       xEl('installmentsView').classList.add('inst-form-open');
@@ -3422,8 +3366,9 @@
       xEl('instFormCard').style.display = 'none';
       xEl('installmentsView').classList.remove('inst-form-open');
       xEl('instEditId').value = '';
-      ['instBank', 'instAmount', 'instTotalN', 'instDate', 'instNote', 'instFeeEvery', 'instFeeAmount', 'instFeeFirst'].forEach(i => xEl(i).value = '');
-      xEl('instFeeBox').open = false; xEl('instFeePreview').textContent = '';
+      ['instBank', 'instAmount', 'instTotalN', 'instDate', 'instNote', 'instBulkFrom', 'instBulkTo', 'instBulkAmt'].forEach(i => xEl(i).value = '');
+      instCustomDraft = {}; xEl('instCustomList').innerHTML = '';
+      xEl('instFeeBox').open = false;
       xEl('instPaidN').value = '0'; xEl('instGap').value = '30';
       xEl('instAmountHint').textContent = '';
       xEl('instFormTitle').textContent = 'ثبت قسط جدید';
@@ -3437,22 +3382,22 @@
       const amount = num('instAmount'), total = num('instTotalN');
       const paid = num('instPaidN') || 0, gap = num('instGap') || 30;
       const date = normalizeDateStr(xEl('instDate').value);
-      const feeEvery = num('instFeeEvery') || 0, feeAmount = num('instFeeAmount') || 0, feeFirst = num('instFeeFirst') || 0;
       const editId = xEl('instEditId').value;
       if (!bank) { xToast('نام بانک را وارد کنید'); return; }
       if (!amount || amount <= 0) { xToast('مبلغ هر قسط را درست وارد کنید'); return; }
       if (!total || total < 1 || total > 600) { xToast('تعداد کل اقساط را درست وارد کنید'); return; }
       if (paid > total) { xToast('تعداد پرداخت‌شده‌ها نمی‌تواند بیشتر از تعداد کل باشد'); return; }
-      if ((feeEvery > 0) !== (feeAmount > 0)) { xEl('instFeeBox').open = true; xToast('برای قسط کارمزدی، هم «هر چند قسط» و هم «مبلغ» را بنویسید'); return; }
-      if (feeFirst > total) { xEl('instFeeBox').open = true; xToast('شماره اولین قسط کارمزدی نباید از تعداد کل اقساط بیشتر باشد'); return; }
+      // فقط مبالغی که با مبلغ عادی فرق دارند ذخیره می‌شوند
+      const custom = {};
+      Object.keys(instCustomDraft).forEach(k => { const n = +k, v = +instCustomDraft[k]; if (n >= 1 && n <= total && v > 0 && v !== amount) custom[n] = v; });
       if (gap < 1 || gap > 365) { xToast('فاصله یادآوری باید بین ۱ تا ۳۶۵ روز باشد'); return; }
       if (paid < total && !instValidDate(date)) { xToast('تاریخ قسط بعدی را درست وارد کنید (مثل 1405/07/10)'); return; }
       let it;
       if (editId) {
         it = installments.find(x => x.id === editId);
-        if (it) { Object.assign(it, { bank, amount, total, paidCount: paid, nextDate: date, gap, note, feeEvery, feeAmount, feeFirst }); if (it.history.length > paid) it.history = it.history.slice(0, paid); }
+        if (it) { Object.assign(it, { bank, amount, total, paidCount: paid, nextDate: date, gap, note, custom }); if (it.history.length > paid) it.history = it.history.slice(0, paid); }
       } else {
-        it = { id: 'i' + Date.now(), bank, amount, total, paidCount: paid, nextDate: date, gap, note, history: [], feeEvery, feeAmount, feeFirst };
+        it = { id: 'i' + Date.now(), bank, amount, total, paidCount: paid, nextDate: date, gap, note, history: [], custom };
         installments.push(it);
       }
       const ok = it ? await instSaveDoc(it) : true;
@@ -3472,8 +3417,8 @@
       xEl('instDate').value = it.nextDate;
       xEl('instGap').value = it.gap;
       xEl('instNote').value = it.note || '';
-      xEl('instFeeEvery').value = it.feeEvery || ''; xEl('instFeeAmount').value = it.feeAmount ? Number(it.feeAmount).toLocaleString('en-US') : ''; xEl('instFeeFirst').value = it.feeFirst || '';
-      xEl('instFeeBox').open = instHasFee(it); instFeePreview();
+      instCustomDraft = Object.assign({}, it.custom || {});
+      xEl('instFeeBox').open = instHasFee(it); renderInstCustomList();
       xEl('instFormTitle').textContent = 'ویرایش قسط';
     }
 
@@ -3494,89 +3439,27 @@
     }
 
     /* ---------- اعلان سررسید اقساط (همان مجوز اعلان چک‌ها) ---------- */
-    /* مراحل یادآوری: ۳ روز قبل، ۱ روز قبل، روز سررسید، و هر روز بعد از سررسید تا پرداخت */
-    function instReminderStage(d) { if (d === null) return null; if (d < 0) return 'late'; if (d === 0) return 'd0'; if (d === 1) return 'd1'; if (d <= 3) return 'd3'; return null; }
     async function sendInstNotifications() {
       if (!notifSupported() || Notification.permission !== 'granted') return;
       const today = getTodayJalaliNormalized();
+      const due = installments.filter(i => { if (instDone(i)) return false; const d = daysUntil(i.nextDate); return d !== null && d <= 1; });
+      if (!due.length) return;
       let sent = {}; try { sent = JSON.parse(localStorage.getItem(INST_NOTIF_KEY) || '{}'); } catch (e) {}
-      const fresh = [];
-      installments.forEach(i => {
-        if (instDone(i) || !instValidDate(i.nextDate)) return;
-        const d = daysUntil(i.nextDate), st = instReminderStage(d); if (!st) return;
-        const key = i.id + '|' + i.nextDate + '|' + st;
-        if (st === 'late' ? sent[key] === today : sent[key] !== undefined) return;
-        fresh.push({ i, d, st, key });
-      });
+      const key = i => i.id + '|' + i.nextDate;
+      const fresh = due.filter(i => sent[key(i)] !== today);
       if (!fresh.length) return;
-      const opts = { dir: 'rtl', lang: 'fa', renotify: true, requireInteraction: true, data: { url: location.pathname, page: 'installments' } };
-      const markSent = list => list.forEach(f => { sent[f.key] = today; });
-      if (fresh.length <= 4) {
-        for (const f of fresh) {
-          const i = f.i, n = i.paidCount + 1, amt = Number(instNextAmt(i)).toLocaleString('fa-IR');
-          const when = f.st === 'late' ? toPersianDigits(-f.d) + ' روز از سررسید قسط گذشته' : (f.st === 'd0' ? 'امروز سررسید قسط است' : (f.st === 'd1' ? 'فردا سررسید قسط است' : toPersianDigits(f.d) + ' روز تا سررسید قسط'));
-          const ok = await showNotif('💳 ' + when + ' — ' + i.bank, Object.assign({}, opts, {
-            tag: 'inst-' + i.id,
-            body: 'قسط ' + toPersianDigits(n) + ' از ' + toPersianDigits(i.total) + (instIsFee(i, n) ? ' (کارمزدی)' : '') + ' | مبلغ: ' + amt + ' ریال | سررسید: ' + toPersianDigits(i.nextDate)
-          }));
-          if (ok) markSent([f]);
-        }
+      let title, body;
+      if (fresh.length === 1) {
+        const i = fresh[0], d = daysUntil(i.nextDate);
+        title = '💳 قسط ' + toPersianDigits(i.paidCount + 1) + ' از ' + toPersianDigits(i.total) + (d < 0 ? ' (سررسیدگذشته)' : (d === 0 ? ' امروز' : ' فردا'));
+        body = i.bank + ' | مبلغ: ' + Number(instNextAmt(i)).toLocaleString('fa-IR') + ' ریال';
       } else {
-        const ok = await showNotif('💳 ' + toPersianDigits(fresh.length) + ' قسط نزدیک یا گذشته از سررسید', Object.assign({}, opts, {
-          tag: 'inst-summary', body: fresh.slice(0, 4).map(f => f.i.bank).join('، ') + ' و ...'
-        }));
-        if (ok) markSent(fresh);
+        title = '💳 ' + toPersianDigits(fresh.length) + ' قسط نزدیک یا گذشته از سررسید';
+        body = fresh.slice(0, 3).map(i => i.bank).join('، ') + (fresh.length > 3 ? ' و ...' : '');
       }
-      try { localStorage.setItem(INST_NOTIF_KEY, JSON.stringify(sent)); } catch (e) {}
+      const ok = await showNotif(title, { body, dir: 'rtl', lang: 'fa', tag: 'inst-due', renotify: true, requireInteraction: true, data: { url: location.href } });
+      if (ok) { fresh.forEach(i => { sent[key(i)] = today; }); try { localStorage.setItem(INST_NOTIF_KEY, JSON.stringify(sent)); } catch (e) {} }
     }
-    async function instTestNotif() {
-      if (!notifSupported()) { alert('این مرورگر از اعلان پشتیبانی نمی‌کند.'); return; }
-      if (Notification.permission !== 'granted') { await enableNotifications(); if (Notification.permission !== 'granted') return; }
-      const ok = await showNotif('💳 اعلان آزمایشی اقساط', { body: 'اگر این پیام را می‌بینید، یادآوری سررسید قسط‌ها روی این دستگاه کار می‌کند.', dir: 'rtl', lang: 'fa', tag: 'inst-test', data: { url: location.pathname, page: 'installments' } });
-      xToast(ok ? 'اعلان آزمایشی ارسال شد' : 'ارسال اعلان ناموفق بود');
-    }
-    function instUpdateNotifBar() {
-      const bar = xEl('instNotifBar'); if (!bar) return;
-      if (!installments.some(i => !instDone(i))) { bar.style.display = 'none'; return; }
-      if (!notifSupported()) {
-        bar.innerHTML = '<span><i class="fa-solid fa-bell-slash"></i> این مرورگر اعلان را پشتیبانی نمی‌کند. در آیفون، سایت را «Add to Home Screen» کنید و از روی صفحه اصلی باز کنید.</span>';
-        bar.style.display = ''; return;
-      }
-      if (Notification.permission === 'granted') { bar.style.display = 'none'; return; }
-      bar.innerHTML = Notification.permission === 'denied'
-        ? '<span><i class="fa-solid fa-bell-slash"></i> اعلان‌ها برای این سایت مسدود است؛ از تنظیمات مرورگر یا گوشی، اجازه اعلان را فعال کنید.</span>'
-        : '<span><i class="fa-solid fa-bell"></i> برای دریافت یادآوری سررسید قسط‌ها (مثل وام)، اعلان را فعال کنید.</span><button type="button" class="btn btn-primary" onclick="enableNotifications()">فعال‌سازی اعلان</button>';
-      bar.style.display = '';
-    }
-
-    /* ---------- اعلان در پس‌زمینه (Chrome اندروید، برنامه نصب‌شده): لیست سررسیدها برای sw.js ذخیره می‌شود ---------- */
-    function instIdbSet(key, val) {
-      return new Promise(res => {
-        try {
-          const rq = indexedDB.open('checks-app', 1);
-          rq.onupgradeneeded = () => rq.result.createObjectStore('kv');
-          rq.onsuccess = () => { try { const tx = rq.result.transaction('kv', 'readwrite'); tx.objectStore('kv').put(val, key); tx.oncomplete = () => { rq.result.close(); res(true); }; tx.onerror = () => res(false); } catch (e) { res(false); } };
-          rq.onerror = () => res(false);
-        } catch (e) { res(false); }
-      });
-    }
-    async function instSyncSW() {
-      try {
-        const due = installments.filter(i => !instDone(i) && instValidDate(i.nextDate)).map(i => {
-          const g = instGregorian(i.nextDate);
-          return { id: i.id, bank: i.bank, n: i.paidCount + 1, total: i.total, amount: instNextAmt(i), fee: instIsFee(i, i.paidCount + 1), nextDate: i.nextDate, due: g.slice(0, 4) + '-' + g.slice(4, 6) + '-' + g.slice(6, 8) };
-        });
-        await instIdbSet('due', due);
-        if (notifSupported() && Notification.permission === 'granted' && 'serviceWorker' in navigator) {
-          const reg = await Promise.race([navigator.serviceWorker.ready, new Promise(r => setTimeout(() => r(null), 4000))]);
-          if (reg && reg.periodicSync) reg.periodicSync.register('inst-due', { minInterval: 6 * 3600 * 1000 }).catch(() => {});
-        }
-      } catch (e) {}
-    }
-    function openInstallmentsView() { if (!document.body.classList.contains('inst-mode')) showInstallments(); }
-    try {
-      if ('serviceWorker' in navigator) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.type === 'open-installments') openInstallmentsView(); });
-    } catch (e) {}
 
     /* ---------- پیش‌بینی: اقساط باقی‌مانده تا ۲۴ ماه آینده (برای پنل «پیش‌بینی سررسید») ---------- */
     function instForecastItems() {
@@ -3657,7 +3540,7 @@
       let totalLeft = 0;
       list.forEach((i, k) => {
         const left = i.total - i.paidCount, remAmt = instRemaining(i); totalLeft += remAmt;
-        rows.push([toPersianDigits(k + 1), i.bank, i.amount, i.total, i.paidCount, left, remAmt, instDone(i) ? '—' : toPersianDigits(i.nextDate), instDone(i) ? 'تسویه شد' : instStatus(i).text, instHasFee(i) ? 'هر ' + toPersianDigits(i.feeEvery) + ' قسط: ' + Number(i.feeAmount).toLocaleString('en-US') : '', i.note || '']);
+        rows.push([toPersianDigits(k + 1), i.bank, i.amount, i.total, i.paidCount, left, remAmt, instDone(i) ? '—' : toPersianDigits(i.nextDate), instDone(i) ? 'تسویه شد' : instStatus(i).text, instHasFee(i) ? toPersianDigits(Object.keys(i.custom).length) + ' قسط با مبلغ دستی' : '', i.note || '']);
       });
       rows.push(['جمع کل', '', '', '', '', '', totalLeft, '', '', '', '']);
       const wb = XLSX.utils.book_new();
@@ -3703,7 +3586,7 @@
       try {
         if (!installments.length || !(window.db && window.setDoc && window.getDocs)) return;
         const d = new Date().toISOString().slice(0, 10);
-        const sig = JSON.stringify(instPlain().map(i => [i.id, i.amount, i.total, i.paidCount, i.nextDate, i.feeEvery, i.feeAmount, i.feeFirst]));
+        const sig = JSON.stringify(instPlain().map(i => [i.id, i.amount, i.total, i.paidCount, i.nextDate, i.custom]));
         let h = 5381; for (let k = 0; k < sig.length; k++) h = ((h << 5) + h + sig.charCodeAt(k)) | 0;
         const mark = d + '|' + h;
         if (localStorage.last_inst_backup === mark) return;
@@ -3743,7 +3626,7 @@
         if (!(window.db && window.getDocs && window.deleteDoc)) throw new Error('db not ready');
         const snap = await window.getDocs(window.collection(window.db, INST_COL));
         const ids = [];
-        snap.forEach(d => { if (d.id.startsWith(INST_PREFIX) || d.id === INST_CARDS_ID || (wipeBk && d.id.startsWith(INST_BK_PREFIX))) ids.push(d.id); });
+        snap.forEach(d => { if (d.id.startsWith(INST_PREFIX) || (wipeBk && d.id.startsWith(INST_BK_PREFIX))) ids.push(d.id); });
         for (const id of ids) await window.deleteDoc(window.doc(window.db, INST_COL, id));
         try {   // collection قدیمی (اگر وجود داشته باشد)
           const old = await window.getDocs(window.collection(window.db, 'installments')); const oids = [];
@@ -3756,7 +3639,6 @@
         return;
       }
       installments.forEach(d => { instTomb[d.id] = Date.now(); }); installments = []; instCache();
-      instCards = { names: [], seeded: true, updated: Date.now() }; try { localStorage.setItem('inst_cards', JSON.stringify(instCards)); localStorage.removeItem('inst_last_card'); } catch (e) {}
       try { localStorage.removeItem(INST_NOTIF_KEY); localStorage.removeItem('last_inst_backup'); } catch (e) {}
       closeInstForm(); renderInstallments();
       xToast('همه اطلاعات اقساط پاک شد');
@@ -3767,68 +3649,11 @@
       try { if (window.caches) { const ks = await caches.keys(); for (const k of ks) await caches.delete(k); } } catch (e) {}
       location.replace(location.pathname + '?v=' + Date.now());
     }
-    /* ---------- لیست پرداختی‌ها (همه پرداخت‌های ثبت‌شده، تازه‌ترین اول) ---------- */
-    let instPayQuery = '', instPayFilter = 'all';
-    function setInstPayFilter(f) {
-      instPayFilter = f;
-      document.querySelectorAll('#ipSeg button').forEach(b => b.classList.toggle('active', b.dataset.f === f));
-      renderInstPayments();
-    }
-    function instAllPayments() {
-      const out = [];
-      installments.forEach(p => p.history.forEach(h => out.push({
-        planId: p.id, bank: p.bank, n: h.n, total: p.total, date: h.date || '', amount: h.amount || instAmtAt(p, h.n),
-        method: h.method || '', card: h.card || '', fee: instIsFee(p, h.n)
-      })));
-      return out.sort((a, b) => b.date.localeCompare(a.date) || b.n - a.n);
-    }
-    function renderInstPayments() {
-      const box = xEl('ipList'); if (!box) return;
-      const all = instAllPayments();
-      const today = getTodayJalaliNormalized(), mk = today.slice(0, 7);
-      const sum = arr => arr.reduce((a, x) => a + (+x.amount || 0), 0);
-      xEl('ipTotal').textContent = xFa(sum(all));
-      xEl('ipTotalSub').textContent = all.length ? 'از ' + toPersianDigits(installments.filter(p => p.history.length).length) + ' وام' : '';
-      xEl('ipCount').textContent = toPersianDigits(all.length);
-      xEl('ipCountSub').textContent = all.length ? toPersianDigits(all.filter(x => x.method === 'card').length) + ' کارت، ' + toPersianDigits(all.filter(x => x.method === 'cash').length) + ' صندوق' : '';
-      xEl('ipMonth').textContent = xFa(sum(all.filter(x => x.date.slice(0, 7) === mk)));
-      xEl('ipMonthName').textContent = instMonthLabel(mk);
-      xEl('ipLast').textContent = all.length ? toPersianDigits(all[0].date) : '—';
-      xEl('ipLastSub').textContent = all.length ? all[0].bank + ' — ' + xFa(all[0].amount) : '';
-
-      const q = normSearch(instPayQuery).replace(/[,،]/g, '');
-      let list = all.filter(x => instPayFilter === 'all' ? true : x.method === instPayFilter);
-      if (q) list = list.filter(x => normSearch(x.bank + ' ' + x.card + ' ' + x.date + ' ' + x.amount + ' ' + instMethodText(x)).includes(q));
-
-      if (!list.length) {
-        box.innerHTML = '<div class="card inst-empty">' + (all.length ? 'موردی پیدا نشد.' : 'هنوز پرداختی ثبت نشده است. بعد از هر «پرداخت شد»، اینجا نمایش داده می‌شود.') + '</div>';
-      } else {
-        box.innerHTML = '<div class="inst-pay-grid">' + list.map(x =>
-          '<div class="inst-pay-item" onclick="showInstHistory(\'' + x.planId + '\')">'
-          + '<div class="inst-pay-ico"><i class="fa-solid fa-circle-check"></i></div>'
-          + '<div class="inst-pay-main"><div class="inst-pay-bank">' + xEsc(x.bank) + '</div>'
-          + '<div class="inst-pay-sub"><span>قسط ' + toPersianDigits(x.n) + ' از ' + toPersianDigits(x.total) + '</span><span><i class="fa-regular fa-calendar"></i> ' + toPersianDigits(x.date || '—') + '</span></div>'
-          + '<div class="inst-pay-chips">'
-          + (x.method === 'card' ? '<span class="inst-chip"><i class="fa-solid fa-credit-card"></i> ' + xEsc(x.card || 'کارت بانکی') + '</span>' : (x.method === 'cash' ? '<span class="inst-chip cash"><i class="fa-solid fa-vault"></i> صندوق</span>' : ''))
-          + (x.fee ? '<span class="inst-chip fee">کارمزدی</span>' : '') + '</div></div>'
-          + '<div class="inst-pay-amt">' + xFa(x.amount) + '<small>ریال</small></div></div>'
-        ).join('') + '</div>';
-      }
-      const pre = installments.reduce((a, p) => a + Math.max(p.paidCount - p.history.length, 0), 0);
-      xEl('ipNote').textContent = pre ? toPersianDigits(pre) + ' قسط دیگر قبل از ثبت در برنامه پرداخت شده‌اند و تاریخ ندارند.' : '';
-    }
-
-    (function () {   // وقتی وضعیت مجوز اعلان عوض شد، نوار و همگام‌سازی به‌روز شوند
-      const orig = updateNotifButtons;
-      updateNotifButtons = function () { orig.apply(this, arguments); try { instUpdateNotifBar(); instSyncSW(); } catch (e) {} };
-    })();
     function initInstallments() {
       try { installments = JSON.parse(localStorage.getItem(INST_LS) || '[]').map(instNormalize); } catch (e) { installments = []; }
       instSetSync('checking');
       renderInstallments();
       loadInstallments();
-      sendInstNotifications(); instSyncSW();
-      if (location.hash === '#installments') setTimeout(openInstallmentsView, 400);
       setInterval(sendInstNotifications, 60 * 1000);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initInstallments); else initInstallments();
