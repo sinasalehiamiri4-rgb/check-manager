@@ -1450,8 +1450,9 @@
             <div class="form-group"><label>فاصله یادآوری بعد از هر پرداخت (روز)</label><input type="text" id="instGap" class="form-control" inputmode="numeric" value="30" oninput="formatDigitsInput(this)"></div>
             <details id="instFeeBox" class="inst-fee-box" style="grid-column: 1 / -1;" ontoggle="if(this.open) renderInstCustomList()">
               <summary><i class="fa-solid fa-percent"></i> مبلغ دستی اقساط / کارمزد (اختیاری)</summary>
-              <div class="inst-hint" style="margin:8px 0">مبلغ هر قسط را جدا وارد کنید. قسطی که خالی بماند، همان «مبلغ هر قسط» بالا حساب می‌شود. (قسط‌های پرداخت‌شده نمایش داده نمی‌شوند.)</div>
+              <div class="inst-hint" style="margin:8px 0">اگر «هر چند قسط یک‌بار کارمزد» را وارد کنید (مثلا ۱۲)، فقط قسط ۱۳ و ۲۵ و ۳۷ و … نمایش داده می‌شود تا مبلغ کارمزد هر کدام را دستی وارد کنید. بقیه اقساط همان «مبلغ هر قسط» بالا حساب می‌شوند. (قسط‌های پرداخت‌شده نمایش داده نمی‌شوند.)</div>
               <div class="form-grid">
+                <div class="form-group" style="grid-column: 1 / -1;"><label>هر چند قسط یک‌بار کارمزد دارد؟ (خالی = نمایش همه اقساط)</label><input type="text" id="instFeeEvery" class="form-control" inputmode="numeric" placeholder="مثلا: 12" oninput="formatDigitsInput(this); instCustomRefresh()"></div>
                 <div class="form-group"><label>از قسط</label><input type="text" id="instBulkFrom" class="form-control" inputmode="numeric" placeholder="مثلا: 4" oninput="formatDigitsInput(this)"></div>
                 <div class="form-group"><label>تا قسط (خالی = فقط همان یک قسط)</label><input type="text" id="instBulkTo" class="form-control" inputmode="numeric" placeholder="مثلا: 4" oninput="formatDigitsInput(this)"></div>
                 <div class="form-group"><label>مبلغ (ریال) — خالی = مبلغ عادی</label><input type="text" id="instBulkAmt" class="form-control" inputmode="numeric" placeholder="مثلا: 2,000,000" oninput="instMoneyInput(this)"></div>
@@ -3017,6 +3018,7 @@
         nextDate: normalizeDateStr(r.nextDate || r.date || ''),
         gap: Math.min(Math.max(parseInt(r.gap, 10) || 30, 1), 365),
         custom,
+        feeEvery: Math.min(Math.max(parseInt(r.feeEvery, 10) || 0, 0), 600),
         note: r.note || '', history: instNormHistory(r.history)
       };
       if (+r.updated > 0) it.updated = +r.updated;
@@ -3329,12 +3331,17 @@
       const base = instNum(xEl('instAmount').value);
       if (!total || paid >= total) { box.innerHTML = '<div class="inst-hint">اول «تعداد کل اقساط» را وارد کنید (و قسطی باقی مانده باشد).</div>'; return; }
       const ph = base ? base.toLocaleString('en-US') : 'مبلغ عادی';
-      let h = '';
+      const every = instNum(xEl('instFeeEvery').value);
+      const isFeeRow = k => !every || (k > every && (k - 1) % every === 0);
+      let h = '', shown = 0;
       for (let k = paid + 1; k <= total; k++) {
         const v = instCustomDraft[k];
+        if (!v && !isFeeRow(k)) continue;
+        shown++;
         h += '<div class="inst-custom-row' + (v ? ' on' : '') + '"><span>قسط ' + toPersianDigits(k) + '</span>'
-          + '<input type="text" class="form-control" inputmode="numeric" data-k="' + k + '" placeholder="' + ph + '" value="' + (v ? Number(v).toLocaleString('en-US') : '') + '" oninput="instCustomInput(this)"></div>';
+          + '<input type="text" class="form-control" inputmode="numeric" data-k="' + k + '" placeholder="' + (every ? 'مبلغ کارمزد' : ph) + '" value="' + (v ? Number(v).toLocaleString('en-US') : '') + '" oninput="instCustomInput(this)"></div>';
       }
+      if (!shown) h = '<div class="inst-hint">با این تعداد اقساط، قسط کارمزدی (هر ' + toPersianDigits(every) + ' قسط) باقی نمانده است.</div>';
       box.innerHTML = h;
     }
     function instCustomInput(el) {
@@ -3366,7 +3373,7 @@
       xEl('instFormCard').style.display = 'none';
       xEl('installmentsView').classList.remove('inst-form-open');
       xEl('instEditId').value = '';
-      ['instBank', 'instAmount', 'instTotalN', 'instDate', 'instNote', 'instBulkFrom', 'instBulkTo', 'instBulkAmt'].forEach(i => xEl(i).value = '');
+      ['instBank', 'instAmount', 'instTotalN', 'instDate', 'instNote', 'instBulkFrom', 'instBulkTo', 'instBulkAmt', 'instFeeEvery'].forEach(i => xEl(i).value = '');
       instCustomDraft = {}; xEl('instCustomList').innerHTML = '';
       xEl('instFeeBox').open = false;
       xEl('instPaidN').value = '0'; xEl('instGap').value = '30';
@@ -3381,6 +3388,7 @@
       const bank = xEl('instBank').value.trim(), note = xEl('instNote').value.trim();
       const amount = num('instAmount'), total = num('instTotalN');
       const paid = num('instPaidN') || 0, gap = num('instGap') || 30;
+      const feeEvery = Math.min(num('instFeeEvery') || 0, 600);
       const date = normalizeDateStr(xEl('instDate').value);
       const editId = xEl('instEditId').value;
       if (!bank) { xToast('نام بانک را وارد کنید'); return; }
@@ -3395,9 +3403,9 @@
       let it;
       if (editId) {
         it = installments.find(x => x.id === editId);
-        if (it) { Object.assign(it, { bank, amount, total, paidCount: paid, nextDate: date, gap, note, custom }); if (it.history.length > paid) it.history = it.history.slice(0, paid); }
+        if (it) { Object.assign(it, { bank, amount, total, paidCount: paid, nextDate: date, gap, note, custom, feeEvery }); if (it.history.length > paid) it.history = it.history.slice(0, paid); }
       } else {
-        it = { id: 'i' + Date.now(), bank, amount, total, paidCount: paid, nextDate: date, gap, note, history: [], custom };
+        it = { id: 'i' + Date.now(), bank, amount, total, paidCount: paid, nextDate: date, gap, note, history: [], custom, feeEvery };
         installments.push(it);
       }
       const ok = it ? await instSaveDoc(it) : true;
@@ -3418,7 +3426,8 @@
       xEl('instGap').value = it.gap;
       xEl('instNote').value = it.note || '';
       instCustomDraft = Object.assign({}, it.custom || {});
-      xEl('instFeeBox').open = instHasFee(it); renderInstCustomList();
+      xEl('instFeeEvery').value = it.feeEvery ? toPersianDigits(it.feeEvery) : ''; if (it.feeEvery) formatDigitsInput(xEl('instFeeEvery'));
+      xEl('instFeeBox').open = instHasFee(it) || !!it.feeEvery; renderInstCustomList();
       xEl('instFormTitle').textContent = 'ویرایش قسط';
     }
 
@@ -3586,7 +3595,7 @@
       try {
         if (!installments.length || !(window.db && window.setDoc && window.getDocs)) return;
         const d = new Date().toISOString().slice(0, 10);
-        const sig = JSON.stringify(instPlain().map(i => [i.id, i.amount, i.total, i.paidCount, i.nextDate, i.custom]));
+        const sig = JSON.stringify(instPlain().map(i => [i.id, i.amount, i.total, i.paidCount, i.nextDate, i.custom, i.feeEvery]));
         let h = 5381; for (let k = 0; k < sig.length; k++) h = ((h << 5) + h + sig.charCodeAt(k)) | 0;
         const mark = d + '|' + h;
         if (localStorage.last_inst_backup === mark) return;
