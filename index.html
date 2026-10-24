@@ -1601,7 +1601,17 @@
           } catch (e) {}
         }
       } else {
-        signInAnonymously(auth).catch((e) => console.warn('auth error', e));
+        signInAnonymously(auth).catch((e) => {
+          console.warn('auth error', e);
+          // اگر ورود ناشناس انجام نشد، اتصال را مثل قبل برقرار کن (تا زمانی که Rules قدیمی فعال است کار کند) و علت را نشان بده
+          window.db = db;
+          if (!started) { started = true; fetchChecksFromFirebase(); }
+          const b = document.createElement('div');
+          b.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;z-index:99999;background:#7a1f1f;color:#fff;padding:12px;border-radius:10px;font-size:13px;direction:rtl;font-family:Vazirmatn,sans-serif';
+          b.textContent = 'ورود ناشناس انجام نشد: ' + (e && e.code ? e.code : e) + ' — در Firebase بخش Authentication ورود Anonymous را فعال کنید.';
+          b.onclick = () => b.remove();
+          document.body.appendChild(b);
+        });
       }
     });
     // اگر آدرس صفحه با #uid تمام شود، UID دوباره نمایش داده می‌شود
