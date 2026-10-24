@@ -1537,6 +1537,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAKENJiZka9ynVjYLCsz8-5mjlvaryCHaQ",
@@ -1549,9 +1550,9 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);   // ورود ناشناس؛ شناسه (UID) روی همین دستگاه ثابت می‌ماند
     const db = getFirestore(app);
 
-    window.db = db;
     window.collection = collection;
     window.doc = doc;
     window.setDoc = setDoc;
@@ -1559,7 +1560,52 @@
     window.deleteDoc = deleteDoc;
     window.getDoc = getDoc;
 
-    fetchChecksFromFirebase();
+    // نمایش UID این دستگاه (برای ثبت در Firestore Rules)
+    window.showMyUid = function () {
+      const uid = (auth.currentUser && auth.currentUser.uid) || '';
+      if (document.getElementById('uidBox')) return;
+      const box = document.createElement('div');
+      box.id = 'uidBox';
+      box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;direction:rtl;font-family:Vazirmatn,sans-serif';
+      box.innerHTML = '<div style="background:#1e1f23;color:#fff;padding:22px;border-radius:14px;width:min(360px,92vw)">'
+        + '<h3 style="margin:0 0 10px">شناسه این دستگاه (UID)</h3>'
+        + '<p style="margin:0 0 10px;font-size:13px;opacity:.8">این کد را کپی کن و در Firebase قسمت Rules ثبت کن.</p>'
+        + '<textarea id="uidTxt" readonly style="width:100%;height:70px;direction:ltr;padding:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px"></textarea>'
+        + '<div style="display:flex;gap:8px;margin-top:12px">'
+        + '<button id="uidCopy" style="flex:1;padding:10px;border:0;border-radius:8px;background:#4f8cff;color:#fff;font-size:15px">کپی</button>'
+        + '<button id="uidClose" style="flex:1;padding:10px;border:0;border-radius:8px;background:#444;color:#fff;font-size:15px">بستن</button>'
+        + '</div></div>';
+      document.body.appendChild(box);
+      const t = document.getElementById('uidTxt');
+      t.value = uid;
+      document.getElementById('uidCopy').onclick = async () => {
+        try { await navigator.clipboard.writeText(uid); } catch (e) { t.select(); document.execCommand('copy'); }
+        document.getElementById('uidCopy').textContent = 'کپی شد ✓';
+      };
+      document.getElementById('uidClose').onclick = () => box.remove();
+    };
+
+    let started = false;
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.db = db;
+        if (!started) {
+          started = true;
+          fetchChecksFromFirebase();
+          // بار اول روی هر دستگاه، UID را نشان بده
+          try {
+            if (!localStorage.getItem('uidShown_' + user.uid)) {
+              localStorage.setItem('uidShown_' + user.uid, '1');
+              setTimeout(window.showMyUid, 1500);
+            }
+          } catch (e) {}
+        }
+      } else {
+        signInAnonymously(auth).catch((e) => console.warn('auth error', e));
+      }
+    });
+    // اگر آدرس صفحه با #uid تمام شود، UID دوباره نمایش داده می‌شود
+    window.addEventListener('hashchange', () => { if (location.hash === '#uid') window.showMyUid(); });
   </script>
 
   <script>
