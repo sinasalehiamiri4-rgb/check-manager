@@ -1599,6 +1599,8 @@
               setTimeout(window.showMyUid, 1500);
             }
           } catch (e) {}
+          // اگر آدرس با #uid یا ?uid باز شده باشد، همیشه UID را نشان بده
+          if (location.hash === '#uid' || /[?&]uid(=|&|$)/.test(location.search)) setTimeout(window.showMyUid, 1000);
         }
       } else {
         signInAnonymously(auth).catch((e) => {
