@@ -1537,7 +1537,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, doc, setDoc, getDocs, deleteDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAKeNJIzka9ynVjYLCsz8-5mjlvarYcHaQ",
@@ -1550,7 +1550,8 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);   // ورود ناشناس؛ شناسه (UID) روی همین دستگاه ثابت می‌ماند
+    // بدون iframe و پاپ‌آپ گوگل (سریع‌تر و بدون وابستگی به apis.google.com)؛ ورود ناشناس و ذخیره‌ی UID روی دستگاه
+    const auth = initializeAuth(app, { persistence: [indexedDBLocalPersistence, browserLocalPersistence] });
     const db = getFirestore(app);
 
     window.collection = collection;
@@ -1620,6 +1621,20 @@
         };
         card.appendChild(cp);
 
+        // تشخیص وضعیت اتصال
+        const diag = $el('div', 'font-size:12px;line-height:1.9;background:#111;border-radius:10px;padding:10px;margin-bottom:16px;direction:rtl');
+        card.appendChild(diag);
+        const lines = [];
+        lines.push('ورود به Firebase: ' + (myUid ? 'موفق ✓' : 'انجام نشده ✗'));
+        lines.push('اینترنت مرورگر: ' + (navigator.onLine ? 'وصل' : 'قطع'));
+        diag.textContent = lines.join('\n');
+        diag.style.whiteSpace = 'pre-line';
+        if (myUid) {
+          try { await getDoc(doc(db, 'checks', '__ping__')); lines.push('دسترسی به اطلاعات: مجاز ✓'); }
+          catch (e) { lines.push('دسترسی به اطلاعات: ' + (e && e.code === 'permission-denied' ? 'رد شد ✗ (این دستگاه هنوز در Rules/پنل ثبت نیست یا کد اشتباه است)' : 'خطا: ' + (e && e.code ? e.code : e))); }
+          diag.textContent = lines.join('\n');
+        }
+
         // بخش ۲: فقط ادمین (اگر خواندن لیست مجاز بود)
         let list = null;
         try { list = (await getDocs(collection(db, 'allowed_devices'))).docs.map(d => d.data()); } catch (e) { list = null; }
@@ -1683,6 +1698,7 @@
       document.body.appendChild(btn);
     }
 
+    initDevicePanel();
     let fetchedAuthed = false;
     let retryTimer = null;
 
