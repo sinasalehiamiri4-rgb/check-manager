@@ -1586,12 +1586,144 @@
     };
 
     let started = false;
+    /* ====== پنل دستگاه‌ها: کد دستگاه برای همه، ثبت دستگاه فقط برای ادمین ====== */
+    const FONT = 'font-family:Vazirmatn,sans-serif;direction:rtl;';
+    const BTN = 'padding:9px 12px;border:0;border-radius:8px;color:#fff;font-size:14px;cursor:pointer;font-family:inherit;';
+    const $el = (tag, css, text) => { const e = document.createElement(tag); if (css) e.style.cssText = css; if (text != null) e.textContent = text; return e; };
+    const shortId = (uid) => String(uid || '').slice(-5);
+
+    async function openDevices() {
+      if (document.getElementById('devBox')) return;
+      const myUid = auth.currentUser && auth.currentUser.uid;
+      const box = $el('div', 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:center;' + FONT);
+      box.id = 'devBox';
+      const card = $el('div', 'background:#1e1f23;color:#fff;padding:20px;border-radius:14px;width:min(440px,94vw);max-height:88vh;overflow:auto');
+      box.appendChild(card);
+      document.body.appendChild(box);
+
+      const inputCss = 'width:100%;padding:10px;margin-bottom:8px;border-radius:8px;border:1px solid #444;background:#111;color:#fff;font-size:14px;font-family:inherit;box-sizing:border-box;';
+
+      const render = async () => {
+        card.textContent = '';
+        card.appendChild($el('h3', 'margin:0 0 12px', 'دستگاه‌ها'));
+
+        // بخش ۱: کد این دستگاه (برای همه)
+        card.appendChild($el('div', 'font-size:13px;opacity:.85;margin-bottom:6px', 'کد این دستگاه (برای ثبت در پنل ادمین):'));
+        const t = $el('textarea', inputCss + 'height:64px;direction:ltr;');
+        t.readOnly = true; t.value = myUid || 'هنوز وارد نشده؛ اینترنت/VPN را بررسی کن.';
+        card.appendChild(t);
+        const cp = $el('button', BTN + 'width:100%;background:#4f8cff;margin-bottom:16px', 'کپی کد');
+        cp.onclick = async () => {
+          if (!myUid) return;
+          try { await navigator.clipboard.writeText(myUid); } catch (e) { t.select(); document.execCommand('copy'); }
+          cp.textContent = 'کپی شد ✓';
+        };
+        card.appendChild(cp);
+
+        // بخش ۲: فقط ادمین (اگر خواندن لیست مجاز بود)
+        let list = null;
+        try { list = (await getDocs(collection(db, 'allowed_devices'))).docs.map(d => d.data()); } catch (e) { list = null; }
+        if (list) {
+          card.appendChild($el('div', 'border-top:1px solid #333;margin:4px 0 12px'));
+          card.appendChild($el('div', 'font-size:14px;font-weight:700;margin-bottom:8px', 'پنل ادمین: ثبت دستگاه جدید'));
+          const nameIn = $el('input', inputCss); nameIn.placeholder = 'اسم دستگاه (مثلاً گوشی بابا)';
+          const codeIn = $el('input', inputCss + 'direction:ltr;'); codeIn.placeholder = 'کد دستگاه را اینجا بگذار';
+          card.appendChild(nameIn); card.appendChild(codeIn);
+          const row = $el('div', 'display:flex;gap:8px;margin-bottom:6px');
+          const paste = $el('button', BTN + 'flex:1;background:#555', 'چسباندن کد');
+          paste.onclick = async () => { try { codeIn.value = (await navigator.clipboard.readText()).trim(); } catch (e) { alert('اجازه‌ی چسباندن داده نشد؛ کد را دستی بچسبان.'); } };
+          const save = $el('button', BTN + 'flex:1;background:#2e9d5b', 'ثبت دستگاه');
+          const msg = $el('div', 'font-size:13px;min-height:20px;margin-bottom:10px');
+          save.onclick = async () => {
+            const code = codeIn.value.trim();
+            const name = nameIn.value.trim().slice(0, 40) || 'بدون نام';
+            if (!/^[A-Za-z0-9]{20,40}$/.test(code)) { msg.style.color = '#ff8a80'; msg.textContent = 'کد معتبر نیست (باید حدود ۲۸ حرف و عدد انگلیسی باشد).'; return; }
+            save.disabled = true;
+            try {
+              await setDoc(doc(db, 'allowed_devices', code), { uid: code, name: name, at: Date.now() });
+              render();
+            } catch (e) { msg.style.color = '#ff8a80'; msg.textContent = 'خطا: ' + (e && e.code ? e.code : e); save.disabled = false; }
+          };
+          row.appendChild(paste); row.appendChild(save);
+          card.appendChild(row); card.appendChild(msg);
+
+          card.appendChild($el('div', 'font-size:13px;opacity:.85;margin:8px 0', 'دستگاه‌های ثبت‌شده:'));
+          if (!list.length) card.appendChild($el('div', 'font-size:13px;opacity:.6', 'هنوز دستگاهی ثبت نشده (دستگاه اصلی همیشه دسترسی دارد).'));
+          list.forEach(a => {
+            const r = $el('div', 'display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px;margin-bottom:8px;background:#111;border-radius:10px');
+            const info = $el('div', 'flex:1;min-width:0');
+            info.appendChild($el('div', 'font-size:14px', String(a.name || 'بدون نام')));
+            info.appendChild($el('div', 'font-size:12px;opacity:.65;direction:ltr;text-align:right', '…' + shortId(a.uid) + (a.at ? '  ·  ' + new Date(a.at).toLocaleDateString('fa-IR') : '')));
+            r.appendChild(info);
+            const rm = $el('button', BTN + 'background:#a33', 'حذف');
+            rm.onclick = async () => {
+              if (!confirm('دسترسی «' + String(a.name || '') + '» حذف شود؟')) return;
+              try { await deleteDoc(doc(db, 'allowed_devices', a.uid)); } catch (e) { alert('خطا: ' + (e && e.code ? e.code : e)); }
+              render();
+            };
+            r.appendChild(rm);
+            card.appendChild(r);
+          });
+        } else {
+          card.appendChild($el('div', 'font-size:12px;opacity:.6;margin-bottom:10px', 'ثبت دستگاه فقط از دستگاه ادمین ممکن است.'));
+        }
+
+        const close = $el('button', BTN + 'width:100%;background:#444;margin-top:8px', 'بستن');
+        close.onclick = () => box.remove();
+        card.appendChild(close);
+      };
+      render();
+    }
+
+    function initDevicePanel() {
+      if (document.getElementById('devBtn')) return;
+      const btn = $el('button', 'position:fixed;left:12px;bottom:16px;z-index:9998;width:42px;height:42px;border-radius:50%;border:0;background:#4f8cff;color:#fff;font-size:19px;box-shadow:0 2px 10px rgba(0,0,0,.35);cursor:pointer;opacity:.9');
+      btn.id = 'devBtn'; btn.title = 'دستگاه‌ها'; btn.textContent = '🛡';
+      btn.onclick = openDevices;
+      document.body.appendChild(btn);
+    }
+
+    let fetchedAuthed = false;
+    let retryTimer = null;
+
+    function authBanner(msg) {
+      let b = document.getElementById('authBanner');
+      if (!b) {
+        b = document.createElement('div');
+        b.id = 'authBanner';
+        b.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;z-index:99999;background:#7a1f1f;color:#fff;padding:12px;border-radius:10px;font-size:13px;direction:rtl;font-family:Vazirmatn,sans-serif;line-height:1.8';
+        document.body.appendChild(b);
+      }
+      b.textContent = msg;
+    }
+    function removeAuthBanner() { const b = document.getElementById('authBanner'); if (b) b.remove(); }
+
+    function tryAnonymousSignIn() {
+      signInAnonymously(auth).catch((e) => {
+        console.warn('auth error', e);
+        const code = (e && e.code) ? e.code : String(e);
+        let msg;
+        if (code === 'auth/network-request-failed') msg = 'اتصال به سرور ورود برقرار نشد. اینترنت یا VPN را بررسی کن؛ خودکار دوباره تلاش می‌شود…';
+        else if (code === 'auth/operation-not-allowed') msg = 'ورود ناشناس در Firebase فعال نیست (Authentication ← Sign-in method ← Anonymous).';
+        else msg = 'ورود ناشناس انجام نشد: ' + code;
+        authBanner(msg);
+        // اتصال اولیه مثل قبل (تا زمانی که Rules قدیمی فعال است کار کند)
+        if (!started) { window.db = db; started = true; fetchChecksFromFirebase(); }
+        clearTimeout(retryTimer);
+        if (code === 'auth/network-request-failed') retryTimer = setTimeout(tryAnonymousSignIn, 5000);
+      });
+    }
+
     onAuthStateChanged(auth, (user) => {
       if (user) {
+        clearTimeout(retryTimer);
+        removeAuthBanner();
         window.db = db;
-        if (!started) {
+        if (!fetchedAuthed) {
+          fetchedAuthed = true;
           started = true;
           fetchChecksFromFirebase();
+          initDevicePanel();
           // بار اول روی هر دستگاه، UID را نشان بده
           try {
             if (!localStorage.getItem('uidShown_' + user.uid)) {
@@ -1603,19 +1735,11 @@
           if (location.hash === '#uid' || /[?&]uid(=|&|$)/.test(location.search)) setTimeout(window.showMyUid, 1000);
         }
       } else {
-        signInAnonymously(auth).catch((e) => {
-          console.warn('auth error', e);
-          // اگر ورود ناشناس انجام نشد، اتصال را مثل قبل برقرار کن (تا زمانی که Rules قدیمی فعال است کار کند) و علت را نشان بده
-          window.db = db;
-          if (!started) { started = true; fetchChecksFromFirebase(); }
-          const b = document.createElement('div');
-          b.style.cssText = 'position:fixed;bottom:12px;left:12px;right:12px;z-index:99999;background:#7a1f1f;color:#fff;padding:12px;border-radius:10px;font-size:13px;direction:rtl;font-family:Vazirmatn,sans-serif';
-          b.textContent = 'ورود ناشناس انجام نشد: ' + (e && e.code ? e.code : e) + ' — در Firebase بخش Authentication ورود Anonymous را فعال کنید.';
-          b.onclick = () => b.remove();
-          document.body.appendChild(b);
-        });
+        tryAnonymousSignIn();
       }
     });
+    // با برگشتن اینترنت یا VPN دوباره تلاش کن
+    window.addEventListener('online', () => { if (!fetchedAuthed) tryAnonymousSignIn(); });
     // اگر آدرس صفحه با #uid تمام شود، UID دوباره نمایش داده می‌شود
     window.addEventListener('hashchange', () => { if (location.hash === '#uid') window.showMyUid(); });
   </script>
