@@ -1629,10 +1629,33 @@
         lines.push('اینترنت مرورگر: ' + (navigator.onLine ? 'وصل' : 'قطع'));
         diag.textContent = lines.join('\n');
         diag.style.whiteSpace = 'pre-line';
+        let hasAccess = false;
         if (myUid) {
-          try { await getDoc(doc(db, 'checks', 'ping_test')); lines.push('دسترسی به اطلاعات: مجاز ✓'); }
+          try { await getDoc(doc(db, 'checks', 'ping_test')); hasAccess = true; lines.push('دسترسی به اطلاعات: مجاز ✓'); }
           catch (e) { lines.push('دسترسی به اطلاعات: ' + (e && e.code === 'permission-denied' ? 'رد شد ✗ (این دستگاه هنوز در Rules/پنل ثبت نیست یا کد اشتباه است)' : 'خطا: ' + (e && e.code ? e.code : e))); }
           diag.textContent = lines.join('\n');
+        }
+
+        // درخواست دسترسی (فقط دستگاهی که هنوز دسترسی ندارد)
+        if (myUid && !hasAccess) {
+          card.appendChild($el('div', 'font-size:14px;font-weight:700;margin-bottom:8px', 'درخواست دسترسی'));
+          card.appendChild($el('div', 'font-size:12px;opacity:.75;margin-bottom:8px;line-height:1.8', 'اسم این دستگاه را بنویس و بزن «ارسال درخواست به ادمین». کد خودکار همراه درخواست می‌رود و در پنل ادمین و مالک نشان داده می‌شود.'));
+          const nm = $el('input', inputCss); nm.placeholder = 'اسم این دستگاه (مثلاً گوشی بابا)';
+          card.appendChild(nm);
+          const sendBtn = $el('button', BTN + 'width:100%;background:#2e9d5b;margin-bottom:6px', 'ارسال درخواست به ادمین');
+          const sm = $el('div', 'font-size:13px;min-height:20px;margin-bottom:14px;line-height:1.8');
+          sendBtn.onclick = async () => {
+            sendBtn.disabled = true;
+            try {
+              await setDoc(doc(db, 'pending_devices', myUid), { uid: myUid, name: (nm.value.trim() || 'بدون نام').slice(0, 39), at: Date.now() });
+              sm.style.color = '#7be0a0'; sm.textContent = 'ارسال شد ✓ بعد از تایید ادمین، صفحه را رفرش کن.';
+            } catch (e) {
+              sm.style.color = '#ff8a80';
+              sm.textContent = (e && e.code === 'permission-denied') ? 'ارسال انجام نشد (دسترسی رد شد). از ادمین بخواه Rules را به‌روز کند.' : 'خطا: ' + (e && e.code ? e.code : e);
+            }
+            sendBtn.disabled = false;
+          };
+          card.appendChild(sendBtn); card.appendChild(sm);
         }
 
         // بخش ۲: فقط ادمین (اگر خواندن لیست مجاز بود)
@@ -1644,13 +1667,49 @@
         diag.textContent = diag.textContent + '\nنقش این دستگاه: ' + role;
         if (list) {
           card.appendChild($el('div', 'border-top:1px solid #333;margin:4px 0 12px'));
-          card.appendChild($el('div', 'font-size:14px;font-weight:700;margin-bottom:8px', 'پنل ادمین: ثبت دستگاه جدید'));
+          let pend = [];
+          try { pend = (await getDocs(collection(db, 'pending_devices'))).docs.map(d => d.data()).filter(p => p && p.uid && p.uid !== myUid); } catch (e) { pend = []; }
+          card.appendChild($el('div', 'font-size:14px;font-weight:700;margin-bottom:8px', 'درخواست‌های در انتظار' + (pend.length ? ' (' + pend.length + ')' : '')));
+          if (!pend.length) card.appendChild($el('div', 'font-size:13px;opacity:.6;margin-bottom:14px', 'درخواستی نیست.'));
+          pend.forEach(p => {
+            const r = $el('div', 'padding:10px;margin-bottom:8px;background:#111;border-radius:10px');
+            r.appendChild($el('div', 'font-size:14px', String(p.name || 'بدون نام')));
+            r.appendChild($el('div', 'font-size:12px;opacity:.65;direction:ltr;text-align:right;margin-bottom:8px;word-break:break-all', String(p.uid)));
+            const br = $el('div', 'display:flex;gap:6px;flex-wrap:wrap');
+            const cpy = $el('button', BTN + 'flex:1;background:#4f8cff', 'کپی کد');
+            cpy.onclick = async () => { try { await navigator.clipboard.writeText(p.uid); } catch (e) {} cpy.textContent = 'کپی شد ✓'; };
+            const ok = $el('button', BTN + 'flex:1;background:#2e9d5b', 'تایید');
+            ok.onclick = async () => {
+              ok.disabled = true;
+              try {
+                await setDoc(doc(db, 'allowed_devices', p.uid), { uid: p.uid, name: String(p.name || 'بدون نام').slice(0, 40), at: Date.now() });
+                await deleteDoc(doc(db, 'pending_devices', p.uid));
+              } catch (e) { alert('خطا: ' + (e && e.code ? e.code : e)); }
+              render(); refreshBadge();
+            };
+            const no = $el('button', BTN + 'flex:1;background:#a33', 'رد');
+            no.onclick = async () => { try { await deleteDoc(doc(db, 'pending_devices', p.uid)); } catch (e) {} render(); refreshBadge(); };
+            br.appendChild(cpy); br.appendChild(ok); br.appendChild(no);
+            r.appendChild(br);
+            card.appendChild(r);
+          });
+          card.appendChild($el('div', 'border-top:1px solid #333;margin:10px 0 12px'));
+          card.appendChild($el('div', 'font-size:14px;font-weight:700;margin-bottom:8px', 'ثبت دستی دستگاه جدید'));
           const nameIn = $el('input', inputCss); nameIn.placeholder = 'اسم دستگاه (مثلاً گوشی بابا)';
           const codeIn = $el('input', inputCss + 'direction:ltr;'); codeIn.placeholder = 'کد دستگاه را اینجا بگذار';
+          // هر متنی که چسبانده شود (حتی کل پیام دریافتی)، کد و اسم از آن جدا می‌شود
+          const smartFill = (raw) => {
+            const txt = String(raw || '');
+            const m = txt.match(/کد:\s*([A-Za-z0-9]{20,40})/) || txt.match(/\b([A-Za-z0-9]{28})\b/);
+            if (m) codeIn.value = m[1]; else codeIn.value = txt.trim();
+            const n = txt.match(/اسم دستگاه:\s*([^\n]+)/);
+            if (n && !nameIn.value.trim()) nameIn.value = n[1].trim().slice(0, 40);
+          };
+          codeIn.addEventListener('input', () => { if (codeIn.value.length > 40) smartFill(codeIn.value); });
           card.appendChild(nameIn); card.appendChild(codeIn);
           const row = $el('div', 'display:flex;gap:8px;margin-bottom:6px');
           const paste = $el('button', BTN + 'flex:1;background:#555', 'چسباندن کد');
-          paste.onclick = async () => { try { codeIn.value = (await navigator.clipboard.readText()).trim(); } catch (e) { alert('اجازه‌ی چسباندن داده نشد؛ کد را دستی بچسبان.'); } };
+          paste.onclick = async () => { try { smartFill(await navigator.clipboard.readText()); } catch (e) { alert('اجازه‌ی چسباندن داده نشد؛ کد را دستی بچسبان.'); } };
           const save = $el('button', BTN + 'flex:1;background:#2e9d5b', 'ثبت دستگاه');
           const msg = $el('div', 'font-size:13px;min-height:20px;margin-bottom:10px');
           save.onclick = async () => {
@@ -1708,10 +1767,22 @@
       render();
     }
 
+    async function refreshBadge() {
+      try {
+        const n = (await getDocs(collection(db, 'pending_devices'))).size;
+        const b = document.getElementById('devBadge');
+        if (!b) return;
+        b.textContent = String(n); b.style.display = n ? 'block' : 'none';
+      } catch (e) {}   // دستگاه عادی اجازه‌ی خواندن ندارد؛ نشانی نمی‌دهد
+    }
+
     function initDevicePanel() {
       if (document.getElementById('devBtn')) return;
       const btn = $el('button', 'position:fixed;left:12px;bottom:16px;z-index:9998;width:42px;height:42px;border-radius:50%;border:0;background:#4f8cff;color:#fff;font-size:19px;box-shadow:0 2px 10px rgba(0,0,0,.35);cursor:pointer;opacity:.9');
       btn.id = 'devBtn'; btn.title = 'دستگاه‌ها'; btn.textContent = '🛡';
+      const badge = $el('span', 'display:none;position:absolute;top:-4px;right:-4px;background:#e53935;color:#fff;border-radius:10px;font-size:11px;min-width:18px;height:18px;line-height:18px;text-align:center');
+      badge.id = 'devBadge';
+      btn.appendChild(badge);
       btn.onclick = openDevices;
       document.body.appendChild(btn);
     }
@@ -1758,6 +1829,7 @@
           started = true;
           fetchChecksFromFirebase();
           initDevicePanel();
+          refreshBadge(); setInterval(refreshBadge, 30000);
           // بار اول روی هر دستگاه، UID را نشان بده
           try {
             if (!localStorage.getItem('uidShown_' + user.uid)) {
