@@ -1636,8 +1636,12 @@
         }
 
         // بخش ۲: فقط ادمین (اگر خواندن لیست مجاز بود)
-        let list = null;
+        let list = null, admins = null;
         try { list = (await getDocs(collection(db, 'allowed_devices'))).docs.map(d => d.data()); } catch (e) { list = null; }
+        // فقط مالک می‌تواند لیست ادمین‌ها را بخواند
+        try { admins = new Set((await getDocs(collection(db, 'admins'))).docs.map(d => d.id)); } catch (e) { admins = null; }
+        const role = admins ? 'مالک (می‌تواند ادمین تعیین کند)' : (list ? 'ادمین (می‌تواند دستگاه ثبت کند)' : 'دستگاه عادی');
+        diag.textContent = diag.textContent + '\nنقش این دستگاه: ' + role;
         if (list) {
           card.appendChild($el('div', 'border-top:1px solid #333;margin:4px 0 12px'));
           card.appendChild($el('div', 'font-size:14px;font-weight:700;margin-bottom:8px', 'پنل ادمین: ثبت دستگاه جدید'));
@@ -1665,14 +1669,28 @@
           card.appendChild($el('div', 'font-size:13px;opacity:.85;margin:8px 0', 'دستگاه‌های ثبت‌شده:'));
           if (!list.length) card.appendChild($el('div', 'font-size:13px;opacity:.6', 'هنوز دستگاهی ثبت نشده (دستگاه اصلی همیشه دسترسی دارد).'));
           list.forEach(a => {
-            const r = $el('div', 'display:flex;align-items:center;gap:8px;justify-content:space-between;padding:10px;margin-bottom:8px;background:#111;border-radius:10px');
-            const info = $el('div', 'flex:1;min-width:0');
-            info.appendChild($el('div', 'font-size:14px', String(a.name || 'بدون نام')));
+            const r = $el('div', 'display:flex;flex-wrap:wrap;align-items:center;gap:8px;justify-content:space-between;padding:10px;margin-bottom:8px;background:#111;border-radius:10px');
+            const info = $el('div', 'flex:1 1 140px;min-width:0');
+            const isAdm = !!(admins && admins.has(a.uid));
+            info.appendChild($el('div', 'font-size:14px', String(a.name || 'بدون نام') + (isAdm ? '  👑 ادمین' : '')));
             info.appendChild($el('div', 'font-size:12px;opacity:.65;direction:ltr;text-align:right', '…' + shortId(a.uid) + (a.at ? '  ·  ' + new Date(a.at).toLocaleDateString('fa-IR') : '')));
             r.appendChild(info);
+            if (admins) {
+              const tg = $el('button', BTN + 'background:' + (isAdm ? '#8a6d1d' : '#6a4fd1'), isAdm ? 'لغو ادمین' : 'ادمین کن');
+              tg.onclick = async () => {
+                tg.disabled = true;
+                try {
+                  if (isAdm) await deleteDoc(doc(db, 'admins', a.uid));
+                  else await setDoc(doc(db, 'admins', a.uid), { uid: a.uid, name: String(a.name || '').slice(0, 40), at: Date.now() });
+                } catch (e) { alert('خطا: ' + (e && e.code ? e.code : e)); }
+                render();
+              };
+              r.appendChild(tg);
+            }
             const rm = $el('button', BTN + 'background:#a33', 'حذف');
             rm.onclick = async () => {
               if (!confirm('دسترسی «' + String(a.name || '') + '» حذف شود؟')) return;
+              try { if (admins) await deleteDoc(doc(db, 'admins', a.uid)); } catch (e) {}
               try { await deleteDoc(doc(db, 'allowed_devices', a.uid)); } catch (e) { alert('خطا: ' + (e && e.code ? e.code : e)); }
               render();
             };
@@ -1680,7 +1698,7 @@
             card.appendChild(r);
           });
         } else {
-          card.appendChild($el('div', 'font-size:12px;opacity:.6;margin-bottom:10px', 'ثبت دستگاه فقط از دستگاه ادمین ممکن است.'));
+          card.appendChild($el('div', 'font-size:12px;opacity:.6;margin-bottom:10px', 'ثبت دستگاه فقط از دستگاه ادمین یا مالک ممکن است.'));
         }
 
         const close = $el('button', BTN + 'width:100%;background:#444;margin-top:8px', 'بستن');
