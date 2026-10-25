@@ -1630,7 +1630,7 @@
         diag.textContent = lines.join('\n');
         diag.style.whiteSpace = 'pre-line';
         if (myUid) {
-          try { await getDoc(doc(db, 'checks', '__ping__')); lines.push('دسترسی به اطلاعات: مجاز ✓'); }
+          try { await getDoc(doc(db, 'checks', 'ping_test')); lines.push('دسترسی به اطلاعات: مجاز ✓'); }
           catch (e) { lines.push('دسترسی به اطلاعات: ' + (e && e.code === 'permission-denied' ? 'رد شد ✗ (این دستگاه هنوز در Rules/پنل ثبت نیست یا کد اشتباه است)' : 'خطا: ' + (e && e.code ? e.code : e))); }
           diag.textContent = lines.join('\n');
         }
