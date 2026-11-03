@@ -3278,6 +3278,15 @@
       const p = _jParts(jalaliToUTC(y, m, d) + n * 864e5);
       return p.year + '/' + String(p.month).padStart(2, '0') + '/' + String(p.day).padStart(2, '0');
     }
+    // سررسید بعدی بر اساس «سررسید قبلی» (نه تاریخ پرداخت). فاصله ۳۰ روز = یک ماه شمسی کامل (همان روز ماه بعد)
+    function instAddMonths(dateStr, n) {
+      let [y, m, d] = normalizeDateStr(dateStr).split('/').map(Number);
+      let t = (y * 12 + (m - 1)) + n; y = Math.floor(t / 12); m = (t % 12) + 1;
+      d = Math.min(d, m <= 6 ? 31 : 30);
+      return y + '/' + String(m).padStart(2, '0') + '/' + String(d).padStart(2, '0');
+    }
+    function instNextDue(dateStr, gap) { return gap === 30 ? instAddMonths(dateStr, 1) : instAddDays(dateStr, gap); }
+    function instDueAt(it, k) { let d = it.nextDate; for (let j = 0; j < k; j++) d = instNextDue(d, it.gap); return d; }
     function instNormHistory(h) {
       return (Array.isArray(h) ? h : []).map((x, k) => {
         if (typeof x === 'string') return { n: k + 1, date: normalizeDateStr(x) };
@@ -3523,7 +3532,7 @@
     }
 
     /* ---------- پرداخت قسط: شمارنده +۱ و یادآوری بعدی = تاریخ پرداخت + فاصله (پیش‌فرض ۳۰ روز) ---------- */
-    async function payInstallment(id, payDate, method, card) {
+    async function payInstallment(id, payDate, method, card, nextOverride) {
       const it = installments.find(x => x.id === id); if (!it || instDone(it)) return;
       const date = payDate ? normalizeDateStr(payDate) : getTodayJalaliNormalized();
       const prev = { paidCount: it.paidCount, nextDate: it.nextDate, history: it.history.slice() };
@@ -3531,7 +3540,7 @@
       if (method === 'cash' || method === 'card') entry.method = method;
       if (method === 'card' && card) entry.card = card;
       it.paidCount += 1; it.history = prev.history.concat(entry);
-      if (!instDone(it)) it.nextDate = instAddDays(date, it.gap);
+      if (!instDone(it)) it.nextDate = (nextOverride && instValidDate(nextOverride)) ? nextOverride : instNextDue(prev.nextDate && instValidDate(prev.nextDate) ? prev.nextDate : date, it.gap);
       renderInstallments();
       const how = instMethodText(entry);
       const msg = instDone(it)
@@ -3548,8 +3557,9 @@
       try { lastM = localStorage.getItem('inst_last_method') === 'card' ? 'card' : 'cash'; lastCard = localStorage.getItem('inst_last_card') || ''; } catch (e) {}
       const cards = new Set(); installments.forEach(x => x.history.forEach(e => e.card && cards.add(e.card)));
       xPanel('ثبت پرداخت قسط ' + toPersianDigits(it.paidCount + 1) + ' — ' + xEsc(it.bank),
-        '<p style="color:var(--text-muted);margin-bottom:10px">مبلغ این قسط: <b>' + xFa(instNextAmt(it)) + '</b> ریال' + (instIsFee(it, it.paidCount + 1) ? ' (کارمزدی)' : '') + '<br>یادآوری بعدی ' + toPersianDigits(it.gap) + ' روز بعد از تاریخ پرداخت ثبت می‌شود.</p>'
+        '<p style="color:var(--text-muted);margin-bottom:10px">مبلغ این قسط: <b>' + xFa(instNextAmt(it)) + '</b> ریال' + (instIsFee(it, it.paidCount + 1) ? ' (کارمزدی)' : '') + '<br>تاریخ قسط بعدی از روی سررسید همین قسط محاسبه می‌شود (می‌توانید دستی تغییر دهید).</p>'
         + '<div class="form-group"><label>تاریخ پرداخت</label><input type="text" id="instPayDate" class="form-control" inputmode="numeric" maxlength="10" autocomplete="off" value="' + getTodayJalaliNormalized() + '"></div>'
+        + (it.paidCount + 1 < it.total ? '<div class="form-group" style="margin-top:12px"><label>تاریخ سررسید قسط بعدی</label><input type="text" id="instPayNext" class="form-control" inputmode="numeric" maxlength="10" autocomplete="off" value="' + instNextDue(instValidDate(it.nextDate) ? it.nextDate : getTodayJalaliNormalized(), it.gap) + '"></div>' : '')
         + '<div class="form-group" style="margin-top:12px"><label>روش پرداخت</label><div class="inst-seg" id="instPayMethod">'
         + '<button type="button" data-m="cash" class="' + (lastM === 'cash' ? 'active' : '') + '" onclick="setPayMethod(\'cash\')"><i class="fa-solid fa-vault"></i> صندوق</button>'
         + '<button type="button" data-m="card" class="' + (lastM === 'card' ? 'active' : '') + '" onclick="setPayMethod(\'card\')"><i class="fa-solid fa-credit-card"></i> کارت بانکی</button></div></div>'
@@ -3571,7 +3581,9 @@
       const card = method === 'card' ? xEl('instCardName').value.trim() : '';
       if (method === 'card' && !card) { xToast('نام کارت را وارد کنید'); return; }
       try { localStorage.setItem('inst_last_method', method); if (card) localStorage.setItem('inst_last_card', card); } catch (e) {}
-      closePanel(); await payInstallment(id, v, method, card);
+      const nEl = xEl('instPayNext'); let nxt = '';
+      if (nEl) { nxt = normalizeDateStr(nEl.value); if (!instValidDate(nxt)) { xToast('تاریخ قسط بعدی را درست وارد کنید (مثل 1405/07/10)'); return; } }
+      closePanel(); await payInstallment(id, v, method, card, nxt);
     }
     function showInstHistory(id) {
       const it = installments.find(x => x.id === id); if (!it) return;
@@ -3581,7 +3593,7 @@
       h += it.history.map(e => '<div class="fc-it"><span>قسط ' + toPersianDigits(e.n) + ' — ' + xFa(e.amount || it.amount) + '</span><span>' + toPersianDigits(e.date) + '</span><b style="color:var(--success)">' + (instMethodText(e) || 'پرداخت شد ✓') + '</b></div>').join('');
       if (left > 0 && instValidDate(it.nextDate)) {
         const show = Math.min(left, 60);
-        for (let k = 0; k < show; k++) h += '<div class="fc-it" style="opacity:' + (k ? '.6' : '1') + '"><span>قسط ' + toPersianDigits(it.paidCount + k + 1) + ' — ' + xFa(instAmtAt(it, it.paidCount + k + 1)) + (instIsFee(it, it.paidCount + k + 1) ? ' (کارمزد)' : '') + '</span><span>' + toPersianDigits(instAddDays(it.nextDate, k * it.gap)) + '</span><b>' + (k ? 'پیش‌بینی' : 'قسط بعدی') + '</b></div>';
+        for (let k = 0; k < show; k++) h += '<div class="fc-it" style="opacity:' + (k ? '.6' : '1') + '"><span>قسط ' + toPersianDigits(it.paidCount + k + 1) + ' — ' + xFa(instAmtAt(it, it.paidCount + k + 1)) + (instIsFee(it, it.paidCount + k + 1) ? ' (کارمزد)' : '') + '</span><span>' + toPersianDigits(instDueAt(it, k)) + '</span><b>' + (k ? 'پیش‌بینی' : 'قسط بعدی') + '</b></div>';
         if (left > show) h += '<p style="color:var(--text-muted);margin-top:6px">و ' + toPersianDigits(left - show) + ' قسط دیگر...</p>';
       }
       if (it.history.length) h += '<button type="button" class="btn btn-outline" style="margin-top:12px;color:var(--danger)" onclick="undoLastInstPay(\'' + id + '\')"><i class="fa-solid fa-rotate-left"></i> حذف آخرین پرداخت</button>';
@@ -3593,7 +3605,7 @@
       const last = it.history.pop();
       it.paidCount = Math.max(it.paidCount - 1, 0);
       if (last.prevNext) it.nextDate = last.prevNext;
-      else if (it.history.length) it.nextDate = instAddDays(it.history[it.history.length - 1].date, it.gap);
+      else if (it.history.length) it.nextDate = instNextDue(it.history[it.history.length - 1].date, it.gap);
       closePanel(); renderInstallments(); xToast('آخرین پرداخت حذف شد');
       await instSaveDoc(it); instCache();
     }
@@ -3765,7 +3777,7 @@
       installments.forEach(i => {
         if (instDone(i) || !instValidDate(i.nextDate)) return;
         for (let k = 0; k < i.total - i.paidCount; k++) {
-          const d = instAddDays(i.nextDate, k * i.gap);
+          const d = instDueAt(i, k);
           if (d > limit) { window._instForecastCut = true; break; }
           out.push({ dueDate: d, issuer: '💳 قسط ' + toPersianDigits(i.paidCount + k + 1) + ' از ' + toPersianDigits(i.total) + (instIsFee(i, i.paidCount + k + 1) ? ' (کارمزد)' : ''), bank: i.bank, amount: instAmtAt(i, i.paidCount + k + 1), status: 'در انتظار' });
         }
