@@ -1175,6 +1175,7 @@
 
       <div class="header-actions">
         <button type="button" class="btn btn-outline hdr-inst-btn" onclick="showInstallments()" title="اقساط"><i class="fa-solid fa-money-bill-transfer" style="color: var(--warning);"></i> <span>اقساط</span> <span class="badge-count" id="countInst">۰</span></button>
+        <button type="button" class="btn btn-outline hdr-acc-btn" onclick="showAccounts()" title="حساب‌های بانکی"><i class="fa-solid fa-building-columns" style="color: var(--success);"></i> <span>حساب‌ها</span></button>
         <div class="sys-menu" id="sysMenu">
           <button class="btn btn-outline sys-menu-btn" onclick="toggleSysMenu(event)" title="تنظیمات و ابزارهای سیستم"><i class="fa-solid fa-gear"></i> <span>سیستم</span> <i class="fa-solid fa-chevron-down sys-chevron"></i></button>
           <div class="sys-dropdown" id="sysDropdown">
@@ -1206,6 +1207,7 @@
         </button>
         <div class="mobile-dropdown" id="mobileDropdown">
           <button class="btn hdr-inst-btn" onclick="showInstallments(); closeMobileMenu();"><i class="fa-solid fa-money-bill-transfer" style="color: var(--warning);"></i> اقساط</button>
+          <button class="btn hdr-acc-btn" onclick="showAccounts(); closeMobileMenu();"><i class="fa-solid fa-building-columns" style="color: var(--success);"></i> حساب‌های بانکی</button>
           <div class="fs-box" onclick="event.stopPropagation()">
               <div class="fs-title"><i class="fa-solid fa-font"></i> اندازه‌ی فونت کل سایت</div>
               <div class="fs-ctrl">
@@ -1509,6 +1511,76 @@
       </div>
 
       <button type="button" class="inst-fab no-print" onclick="openInstForm()" aria-label="قسط جدید"><i class="fa-solid fa-plus"></i></button>
+    </div>
+
+    <!-- ===== بخش حساب‌های بانکی (جدا از چک‌ها و اقساط) ===== -->
+    <div id="accountsView" style="display:none">
+      <div class="inst-top no-print">
+        <button type="button" class="btn btn-outline" onclick="closeAccounts()"><i class="fa-solid fa-arrow-right"></i> <span>بازگشت به اسناد</span></button>
+        <button type="button" class="btn btn-outline" id="accEyeBtn" onclick="accToggleHide()" title="پنهان/نمایش مبلغ‌ها" style="flex: 0 0 auto;"><i class="fa-solid fa-eye"></i></button>
+        <button type="button" class="btn btn-primary" id="accAddBtn" onclick="openAccForm()"><i class="fa-solid fa-plus"></i> <span>حساب جدید</span></button>
+      </div>
+
+      <div id="accSync" class="inst-sync no-print"></div>
+
+      <div class="inst-stats">
+        <div class="stat-card passed"><h4>جمع کل موجودی (ریال)</h4><div class="amount" id="accTotal" style="color: var(--success);">۰</div><span class="inst-sub" id="accTotalSub"></span></div>
+        <div class="stat-card delivered"><h4>تعداد حساب‌ها</h4><div class="amount" id="accCount" style="color: var(--info);">۰</div><span class="inst-sub">ثبت‌شده</span></div>
+        <div class="stat-card pending"><h4>تعداد بانک‌ها</h4><div class="amount" id="accBanks" style="color: var(--warning);">۰</div><span class="inst-sub">محل نگهداری پول</span></div>
+        <div class="stat-card delivered"><h4>بیشترین موجودی</h4><div class="amount" id="accTop" style="color: var(--primary);">—</div><span class="inst-sub" id="accTopSub"></span></div>
+      </div>
+
+      <div class="card acc-break" id="accBreak" style="display:none"></div>
+
+      <div class="card no-print" id="accFormCard" style="display:none">
+        <div class="card-title"><i class="fa-solid fa-building-columns" style="color: var(--primary);"></i> <span id="accFormTitle">ثبت حساب جدید</span></div>
+        <form id="accForm" onsubmit="saveAccount(event)" autocomplete="off">
+          <input type="hidden" id="accEditId">
+          <div class="form-grid">
+            <div class="form-group"><label>نام بانک / محل نگهداری پول *</label><input type="text" id="accBank" class="form-control" required list="accBankList" placeholder="مثلا: ملت"><datalist id="accBankList"></datalist></div>
+            <div class="form-group"><label>نوع حساب</label>
+              <select id="accType" class="form-control"></select>
+            </div>
+            <div class="form-group"><label>موجودی (ریال) *</label><input type="text" id="accBalance" class="form-control" required inputmode="numeric" placeholder="مثلا: 150,000,000" oninput="accFmtAmt(this)"></div>
+            <div class="form-group"><label>صاحب حساب</label><input type="text" id="accOwner" class="form-control" placeholder="مثلا: خودم / همسرم / شرکت"></div>
+            <div class="form-group"><label>شماره حساب / کارت / شبا (اختیاری)</label><input type="text" id="accNumber" class="form-control" style="direction:ltr; text-align:right;" placeholder="6037-...."></div>
+            <div class="form-group"><label>شعبه / شهر (اختیاری)</label><input type="text" id="accBranch" class="form-control" placeholder="مثلا: شعبه مرکزی"></div>
+            <div class="form-group" style="grid-column: 1 / -1;"><label>توضیح (اختیاری)</label><input type="text" id="accNote" class="form-control" placeholder="مثلا: پول مخصوص خرید ماشین"></div>
+          </div>
+          <div class="inst-form-actions">
+            <button type="button" class="btn btn-outline" onclick="closeAccForm()">انصراف</button>
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> ذخیره</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card inst-filters no-print">
+        <div class="inst-search"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="accSearch" class="form-control" placeholder="جستجو: بانک، صاحب حساب، شماره، توضیح" oninput="accQuery = this.value; renderAccounts()"></div>
+        <select id="accSort" class="form-control" style="flex: 0 1 190px;" onchange="accSortBy = this.value; renderAccounts()"><option value="balance">بیشترین موجودی</option><option value="old">قدیمی‌ترین بروزرسانی</option><option value="type">بر اساس نوع حساب</option></select>
+      </div>
+
+      <div id="accList"></div>
+
+      <div class="card inst-tools no-print" style="margin-top: 16px;">
+        <div class="inst-tools-sec"><i class="fa-solid fa-share-nodes"></i> خروجی</div>
+        <div class="inst-tools-grid c2">
+          <button type="button" class="inst-tool" onclick="accExportExcel()"><span class="inst-tool-ico" style="--c: var(--success); --cl: var(--success-light);"><i class="fa-solid fa-file-excel"></i></span><span>خروجی اکسل</span></button>
+          <button type="button" class="inst-tool" onclick="window.print()"><span class="inst-tool-ico" style="--c: var(--info); --cl: var(--info-light);"><i class="fa-solid fa-print"></i></span><span>چاپ</span></button>
+        </div>
+        <div class="inst-tools-sec"><i class="fa-solid fa-shield-halved"></i> پشتیبان‌گیری</div>
+        <div class="inst-tools-grid c3">
+          <button type="button" class="inst-tool" onclick="accExportBackup()"><span class="inst-tool-ico" style="--c: var(--primary); --cl: var(--primary-light);"><i class="fa-solid fa-download"></i></span><span>دانلود بک‌اپ</span></button>
+          <button type="button" class="inst-tool" onclick="document.getElementById('accBackupFile').click()"><span class="inst-tool-ico" style="--c: var(--warning); --cl: var(--warning-light);"><i class="fa-solid fa-upload"></i></span><span>بازیابی بک‌اپ</span></button>
+          <button type="button" class="inst-tool" onclick="accShowBackups()"><span class="inst-tool-ico" style="--c: var(--info); --cl: var(--info-light);"><i class="fa-solid fa-cloud-arrow-down"></i></span><span>بک‌اپ‌های خودکار</span></button>
+        </div>
+        <div class="inst-tools-sec"><i class="fa-solid fa-triangle-exclamation"></i> پاک‌سازی</div>
+        <div class="inst-tools-grid c1">
+          <button type="button" class="inst-tool danger" onclick="accWipeAll()"><span class="inst-tool-ico" style="--c: var(--danger); --cl: var(--danger-light);"><i class="fa-solid fa-trash-can"></i></span><span>پاک کردن همه حساب‌ها</span></button>
+        </div>
+        <input type="file" id="accBackupFile" accept=".json" style="display: none;" onchange="accImportBackup(event)">
+      </div>
+
+      <button type="button" class="inst-fab no-print" onclick="openAccForm()" aria-label="حساب جدید"><i class="fa-solid fa-plus"></i></button>
     </div>
   </div>
 
@@ -1916,7 +1988,7 @@
         const querySnapshot = await window.getDocs(window.collection(window.db, "checks"));
         checks = [];
         querySnapshot.forEach((docSnap) => {
-          if (docSnap.id.startsWith('inst_')) return;   // مستندات بخش اقساط (در همین collection ذخیره می‌شوند)
+          if (docSnap.id.startsWith('inst_') || docSnap.id.startsWith('acc_')) return;   // مستندات بخش اقساط (در همین collection ذخیره می‌شوند)
           checks.push({ ...docSnap.data(), serial: docSnap.id });
         });
         renderTable();
@@ -3402,6 +3474,7 @@
     }
     function showInstallments() {
       if (document.body.classList.contains('inst-mode')) { exitInstallments(); return; }
+      if (typeof closeAccounts === 'function') closeAccounts(true);
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       document.body.classList.add('inst-mode');
       setInstPane('list');
@@ -4017,6 +4090,551 @@
         if ((el.id === 'fromDateFilter' || el.id === 'toDateFilter') && (el.value.length === 10 || el.value.length === 0)) renderTable();
       }, true);
     })();
+  </script>
+
+  <style>
+    /* ===== حساب‌های بانکی ===== */
+    body.acc-mode #todayAlert,
+    body.acc-mode .stats-grid,
+    body.acc-mode #formCard,
+    body.acc-mode .calc-card,
+    body.acc-mode #checksCard,
+    body.acc-mode .fab,
+    body.acc-mode .sheet-backdrop { display: none !important; }
+    body.acc-mode #accountsView { display: block !important; }
+    body.acc-mode .hdr-acc-btn { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    #accountsView { min-width: 0; max-width: 100%; padding-bottom: 20px; }
+    #accountsView * { min-width: 0; }
+
+    .acc-group { margin-bottom: 20px; }
+    .acc-ghead { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; margin: 6px 2px 8px; }
+    .acc-gname { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: calc(15px * var(--fs, 1)); overflow-wrap: anywhere; }
+    .acc-gname i { color: var(--primary); }
+    .acc-gname small, .acc-gtotal small { font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); font-weight: 600; }
+    .acc-gtotal { font-weight: 800; font-size: calc(16px * var(--fs, 1)); color: var(--success); }
+    .acc-gtotal.neg { color: var(--danger); }
+    .acc-gshare { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .acc-gshare .inst-progress { flex: 1; }
+    .acc-gshare .pct { font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); font-weight: 700; white-space: nowrap; }
+
+    .acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 10px; }
+    .acc-card { position: relative; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 18px; padding: 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 6px 18px rgba(15, 23, 42, .07); overflow: hidden; }
+    .acc-card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--success); }
+    .acc-card.neg::before { background: var(--danger); }
+    .acc-card-head { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+    .acc-balance { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+    .acc-balance b { font-size: calc(21px * var(--fs, 1)); font-weight: 800; color: var(--success); overflow-wrap: anywhere; }
+    .acc-card.neg .acc-balance b { color: var(--danger); }
+    .acc-balance small { font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); font-weight: 600; }
+    .acc-num { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--bg-main); border-radius: 12px; padding: 6px 6px 6px 12px; font-size: calc(13px * var(--fs, 1)); direction: ltr; letter-spacing: .4px; font-weight: 700; overflow-wrap: anywhere; }
+    .acc-num button { border: none; background: var(--card-bg); color: var(--primary); border-radius: 9px; width: 34px; height: 34px; cursor: pointer; flex: 0 0 auto; }
+    .acc-note { font-size: calc(12px * var(--fs, 1)); color: var(--text-muted); line-height: 1.8; overflow-wrap: anywhere; }
+    .acc-date { font-size: calc(11px * var(--fs, 1)); color: var(--text-muted); }
+    .acc-actions { display: flex; gap: 8px; margin-top: 2px; }
+    .acc-actions .btn { min-height: 44px; border-radius: 12px; justify-content: center; }
+    .acc-actions .acc-upd { flex: 1; }
+    .acc-actions .acc-ico { width: 44px; padding: 0; flex: 0 0 auto; }
+    .acc-bal-input { font-size: calc(18px * var(--fs, 1)) !important; font-weight: 800; text-align: center; margin: 8px 0 12px; }
+
+    .acc-prev { text-align: center; background: var(--bg-main); border-radius: 12px; padding: 10px; margin: 0 0 12px; font-weight: 700; line-height: 1.8; min-height: 44px; }
+    .acc-brow { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: calc(13px * var(--fs, 1)); }
+    .acc-brow .acc-bl { flex: 0 0 120px; font-weight: 700; }
+    .acc-brow .acc-bl i { color: var(--primary); margin-left: 4px; }
+    .acc-brow .inst-progress { flex: 1; }
+    .acc-brow b { flex: 0 0 38px; text-align: left; color: var(--text-muted); }
+    .acc-brow em { flex: 0 0 auto; font-style: normal; font-weight: 800; }
+    .acc-net { background: var(--bg-main); border-radius: 12px; padding: 10px 12px; font-size: calc(12.5px * var(--fs, 1)); line-height: 2; color: var(--text-muted); margin-top: 4px; }
+    .acc-net b { color: var(--text-main); }
+    .acc-date.warn { color: var(--warning); font-weight: 700; }
+    @media (max-width: 768px) {
+      .acc-brow { flex-wrap: wrap; } .acc-brow .acc-bl { flex-basis: 100%; }
+      #accAddBtn { display: none; }
+      #accountsView { padding-bottom: 90px; }
+      .acc-grid { grid-template-columns: 1fr; }
+      #accountsView.acc-form-open .inst-fab { display: none; }
+    }
+    @media (min-width: 769px) { .acc-grid { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); } }
+    @media print { .acc-actions, .acc-num button { display: none !important; } .acc-grid { grid-template-columns: repeat(2, 1fr); } }
+  </style>
+
+  <script>
+    /* ===== بخش حساب‌های بانکی: کاملاً مستقل از چک‌ها و اقساط ===== */
+    /* هر مورد یک «حساب» است: بانک، نوع حساب، موجودی، صاحب حساب، شماره و ... */
+    /* ذخیره‌سازی: همان collection چک‌ها با پیشوند acc_p_ (بدون نیاز به تغییر Firestore Rules) + کش روی دستگاه */
+    let accounts = [];
+    let accQuery = '';
+    let accSortBy = 'balance';
+    let accFetching = false;
+    const ACC_LS = 'accounts_cache';
+    const ACC_COL = 'checks', ACC_PREFIX = 'acc_p_', ACC_BK_PREFIX = 'acc_bk_';
+    const accRef = id => window.doc(window.db, ACC_COL, ACC_PREFIX + id);
+    const accTomb = {};   // حساب‌هایی که در همین نشست حذف شده‌اند (تا با داده قدیمی سرور برنگردند)
+    const ACC_TYPES = {
+      'جاری': 'fa-money-check',
+      'پس‌انداز': 'fa-piggy-bank',
+      'قرض‌الحسنه': 'fa-hand-holding-heart',
+      'سپرده کوتاه‌مدت': 'fa-coins',
+      'سپرده بلندمدت': 'fa-coins',
+      'نقد / صندوق': 'fa-wallet',
+      'اوراق': 'fa-file-invoice-dollar',
+      'سایر': 'fa-building-columns'
+    };
+    const ACC_BANKS = ['ملی', 'ملت', 'صادرات', 'تجارت', 'سپه', 'رفاه کارگران', 'کشاورزی', 'مسکن', 'پاسارگاد', 'پارسیان', 'اقتصاد نوین', 'سامان', 'سینا', 'شهر', 'آینده', 'دی', 'قوامین', 'ایران زمین', 'گردشگری', 'کارآفرین', 'سرمایه', 'توسعه تعاون', 'پست بانک', 'صنعت و معدن', 'توسعه صادرات', 'بلو', 'نقد (دست خودم)'];
+
+    const accNewId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const accClean = s => String(s == null ? '' : s).replace(/ي/g, 'ی').replace(/ك/g, 'ک').replace(/\s+/g, ' ').trim();
+    function accNum(s) {
+      const t = toEnglishDigits(s == null ? '' : s).replace(/[^0-9-]/g, '');
+      const n = parseInt(t.replace(/-/g, ''), 10) || 0;
+      return t.startsWith('-') ? -n : n;
+    }
+    const accMoney = n => (n < 0 ? '−' : '') + xFa(Math.abs(n));
+    let accHide = false; try { accHide = localStorage.getItem('acc_hide') === '1'; } catch (e) {}
+    const accMask = n => accHide ? '•••••' : accMoney(n);
+    function accEye() { const b = xEl('accEyeBtn'); if (b) b.innerHTML = accHide ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>'; }
+    function accToggleHide() { accHide = !accHide; try { localStorage.setItem('acc_hide', accHide ? '1' : '0'); } catch (e) {} renderAccounts(); }
+    const accLast = a => a.hist.length ? a.hist[a.hist.length - 1].t : (a.updated || 0);
+    function accFmtAmt(el) {
+      const raw = toEnglishDigits(el.value);
+      if (!/[0-9]/.test(raw)) { el.value = raw.trim().startsWith('-') ? '-' : ''; return; }
+      el.value = accNum(raw).toLocaleString('en-US');
+    }
+    function accHash(str) { let h = 5381; for (let i = 0; i < str.length; i++) h = ((h << 5) + h + str.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+
+    // یکسان‌سازی داده
+    function accNormalize(r) {
+      const hist = (Array.isArray(r.hist) ? r.hist : []).map(h => ({ t: +h.t || 0, b: Math.round(+h.b || 0), d: h.d != null ? Math.round(+h.d) : null, n: accClean(h.n), k: h.k || '' })).filter(h => h.t).slice(-200);
+      const a = {
+        id: r.id, bank: accClean(r.bank),
+        type: ACC_TYPES[r.type] ? r.type : 'سایر',
+        balance: Math.round(+r.balance || 0),
+        owner: accClean(r.owner), number: toEnglishDigits(accClean(r.number)),
+        branch: accClean(r.branch), note: accClean(r.note),
+        balanceDate: normalizeDateStr(r.balanceDate || ''),
+        hist
+      };
+      if (+r.updated > 0) a.updated = +r.updated;
+      if (r._local) a._local = true;
+      return a;
+    }
+    const accPlain = () => accounts.map(({ _local, ...rest }) => rest);
+
+    /* ---------- وضعیت همگام‌سازی ---------- */
+    function accSetSync(state, detail) {
+      const el = xEl('accSync'); if (!el) return;
+      if (state === 'ok') { el.className = 'inst-sync ok no-print'; el.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> همگام با سرور'; }
+      else if (state === 'fail') {
+        el.className = 'inst-sync fail no-print';
+        el.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> فقط روی این دستگاه ذخیره می‌شود' + (detail ? ' (' + xEsc(detail) + ')' : '');
+      } else { el.className = 'inst-sync no-print'; el.innerHTML = '<i class="fa-solid fa-rotate"></i> در حال بررسی اتصال...'; }
+    }
+    function accCache() {
+      try { localStorage.setItem(ACC_LS, JSON.stringify(accounts)); } catch (e) {}
+      clearTimeout(window._accBk); window._accBk = setTimeout(autoAccBackup, 4000);   // بک‌اپ خودکار (۴ ثانیه بعد از هر تغییر)
+    }
+    async function accSaveDoc(a) {
+      a.updated = Date.now();   // برچسب زمانی: جدیدترین نسخه همیشه برنده است
+      const { id, _local, ...rest } = a;
+      try {
+        if (!(window.db && window.setDoc)) throw new Error('db not ready');
+        await window.setDoc(accRef(id), rest);
+        delete a._local; accSetSync('ok'); return true;
+      } catch (e) {
+        a._local = true; console.warn('ذخیره حساب:', e);
+        accSetSync('fail', e && e.code === 'permission-denied' ? 'دسترسی Firestore بسته است' : ''); return false;
+      }
+    }
+    async function loadAccounts() {
+      if (accFetching) return; accFetching = true;
+      const loadStart = Date.now();
+      try {
+        for (let i = 0; i < 25 && !(window.db && window.getDocs); i++) await new Promise(r => setTimeout(r, 400));
+        if (!(window.db && window.getDocs)) { accSetSync('fail', 'اتصال به سرور برقرار نشد'); return; }
+        const snap = await window.getDocs(window.collection(window.db, ACC_COL));
+        const remote = [];
+        snap.forEach(d => { if (d.id.startsWith(ACC_PREFIX)) remote.push(accNormalize({ ...d.data(), id: d.id.slice(ACC_PREFIX.length) })); });
+        // ادغام: هر حساب، نسخه جدیدتر (بر اساس زمان آخرین تغییر) برنده می‌شود
+        const byId = new Map(accounts.map(x => [x.id, x]));
+        const merged = [], resave = [];
+        remote.forEach(r => {
+          if (accTomb[r.id]) return;
+          const l = byId.get(r.id); byId.delete(r.id);
+          if (l && (l._local || (l.updated || 0) > (r.updated || 0))) { merged.push(l); resave.push(l); }
+          else merged.push(r);
+        });
+        byId.forEach(l => { if (l._local || (l.updated || 0) > loadStart - 15000) { merged.push(l); resave.push(l); } });
+        accounts = merged;
+        accCache(); renderAccounts(); accSetSync('ok');
+        for (const a of resave) await accSaveDoc(a);   // آپلود موارد ذخیره‌نشده / جدیدتر
+        accCache(); renderAccounts(); autoAccBackup();
+      } catch (e) {
+        console.warn('دریافت حساب‌ها ناموفق:', e);
+        accSetSync('fail', e && e.code === 'permission-denied' ? 'دسترسی Firestore بسته است' : '');
+      } finally { accFetching = false; }
+    }
+
+    /* ---------- نمایش / خروج از بخش ---------- */
+    function showAccounts() {
+      if (document.body.classList.contains('acc-mode')) { closeAccounts(); return; }
+      document.body.classList.remove('inst-mode');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.body.classList.add('acc-mode');
+      closeAccForm(); renderAccounts();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      loadAccounts();
+    }
+    function closeAccounts(silent) {
+      if (!document.body.classList.contains('acc-mode')) return;
+      document.body.classList.remove('acc-mode');
+      closeAccForm();
+      if (!silent) { switchTab(currentTab); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+    }
+    document.addEventListener('click', function (e) {
+      if (!document.body.classList.contains('acc-mode')) return;
+      const b = e.target.closest && e.target.closest('.tabs-navigation .tab-btn');
+      if (b && /switchTab/.test(b.getAttribute('onclick') || '')) document.body.classList.remove('acc-mode');
+    }, true);
+    document.addEventListener('keydown', function (e) {
+      if (e.key !== 'Escape' || !document.body.classList.contains('acc-mode')) return;
+      if (xEl('pnlOv')) return;   // اگر پنجره‌ای باز است، Escape فقط همان را می‌بندد
+      if (xEl('accFormCard').style.display !== 'none') closeAccForm(); else closeAccounts();
+    }, true);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && document.body.classList.contains('acc-mode')) loadAccounts();
+    });
+
+    /* ---------- رندر ---------- */
+    function accFillSelects() {
+      const sel = xEl('accType');
+      if (sel && !sel.options.length) sel.innerHTML = Object.keys(ACC_TYPES).map(t => '<option value="' + xEsc(t) + '">' + xEsc(t) + '</option>').join('');
+      const dl = xEl('accBankList');
+      if (dl) {
+        const names = [...new Set([...accounts.map(a => a.bank), ...ACC_BANKS])].filter(Boolean);
+        dl.innerHTML = names.map(n => '<option value="' + xEsc(n) + '"></option>').join('');
+      }
+    }
+    function renderAccounts() {
+      const listEl = xEl('accList'); if (!listEl) return;
+      const total = accounts.reduce((s, a) => s + a.balance, 0);
+      const map = new Map();
+      accounts.forEach(a => { const g = map.get(a.bank) || { bank: a.bank, total: 0, items: [] }; g.total += a.balance; g.items.push(a); map.set(a.bank, g); });
+      const groups = [...map.values()].sort((a, b) => b.total - a.total);
+
+      // آمار کل (مستقل از جستجو)
+      xEl('accTotal').textContent = accMask(total);
+      xEl('accTotal').style.color = total < 0 ? 'var(--danger)' : 'var(--success)';
+      xEl('accTotalSub').textContent = accounts.length ? 'مجموع همه حساب‌ها' : '';
+      xEl('accCount').textContent = toPersianDigits(accounts.length);
+      xEl('accBanks').textContent = toPersianDigits(groups.length);
+      xEl('accTop').textContent = groups.length ? groups[0].bank : '—';
+      xEl('accTopSub').textContent = groups.length ? accMask(groups[0].total) + ' ریال' : '';
+
+      const bk = xEl('accBreak');
+      if (bk) {
+        if (!accounts.length) bk.style.display = 'none';
+        else {
+          const tm = new Map(); accounts.forEach(a => tm.set(a.type, (tm.get(a.type) || 0) + a.balance));
+          const posAll = [...tm.values()].reduce((s, v) => s + Math.max(0, v), 0);
+          let h = '<div class="inst-tools-sec"><i class="fa-solid fa-chart-pie"></i> توزیع پول بر اساس نوع حساب</div>';
+          [...tm.entries()].sort((x, y) => y[1] - x[1]).forEach(([t, v]) => {
+            const pc = posAll > 0 ? Math.round(Math.max(0, v) / posAll * 100) : 0;
+            h += '<div class="acc-brow"><span class="acc-bl"><i class="fa-solid ' + (ACC_TYPES[t] || 'fa-building-columns') + '"></i> ' + xEsc(t) + '</span><div class="inst-progress"><span style="width:' + pc + '%"></span></div><b>' + toPersianDigits(pc) + '٪</b><em>' + accMask(v) + '</em></div>';
+          });
+          const pend = (typeof checks !== 'undefined' ? checks : []).filter(c => c.status === 'در انتظار').reduce((s, c) => s + (+c.amount || 0), 0);
+          const instRem = (typeof installments !== 'undefined' && typeof instRemaining === 'function') ? installments.filter(i => !instDone(i)).reduce((s, i) => s + instRemaining(i), 0) : 0;
+          if (pend || instRem) h += '<div class="acc-net">' + (pend ? 'چک و حواله‌های در انتظار: <b>' + accMask(pend) + '</b> ریال<br>' : '') + (instRem ? 'مانده کل اقساط: <b>' + accMask(instRem) + '</b> ریال' : '') + '</div>';
+          bk.style.display = 'block'; bk.innerHTML = h;
+        }
+      }
+      const q = toEnglishDigits(accQuery).trim().toLowerCase();
+      const match = a => !q || [a.bank, a.type, a.owner, a.number, a.branch, a.note, a.balance, a.balanceDate].join(' ').toLowerCase().includes(q);
+      const pos = groups.reduce((s, g) => s + Math.max(0, g.total), 0);
+
+      let html = '';
+      groups.forEach(g => {
+        const items = g.items.filter(match).sort(accSortBy === 'old' ? (x, y) => accLast(x) - accLast(y) : accSortBy === 'type' ? (x, y) => x.type.localeCompare(y.type, 'fa') : (x, y) => y.balance - x.balance);
+        if (!items.length) return;
+        const pct = pos > 0 ? Math.round(Math.max(0, g.total) / pos * 100) : 0;
+        html += '<div class="acc-group">'
+          + '<div class="acc-ghead"><div class="acc-gname"><i class="fa-solid fa-building-columns"></i> ' + xEsc(g.bank) + ' <small>' + toPersianDigits(g.items.length) + ' حساب</small></div>'
+          + '<div class="acc-gtotal' + (g.total < 0 ? ' neg' : '') + '">' + accMask(g.total) + ' <small>ریال</small></div></div>'
+          + '<div class="acc-gshare"><div class="inst-progress"><span style="width:' + pct + '%"></span></div><span class="pct">' + toPersianDigits(pct) + '٪ از کل</span></div>'
+          + '<div class="acc-grid">' + items.map(accCardHtml).join('') + '</div></div>';
+      });
+      if (!html) html = '<div class="inst-empty">' + (accounts.length ? 'موردی با این جستجو پیدا نشد.' : 'هنوز حسابی ثبت نکرده‌اید.<br>با دکمه «حساب جدید» ثبت کنید که کجا و در چه بانکی پول دارید.') + '</div>';
+      listEl.innerHTML = html;
+      accFillSelects(); accEye();
+    }
+    function accCardHtml(a) {
+      const sub = [a.owner, a.branch].filter(Boolean).map(xEsc).join(' · ');
+      return '<div class="acc-card' + (a.balance < 0 ? ' neg' : '') + '">'
+        + '<div class="acc-card-head"><span class="inst-avatar"><i class="fa-solid ' + (ACC_TYPES[a.type] || 'fa-building-columns') + '"></i></span>'
+        + '<div class="inst-head-t"><div class="inst-bank-name">' + xEsc(a.type) + '</div>' + (sub ? '<div class="inst-bank-note">' + sub + '</div>' : '') + '</div></div>'
+        + '<div class="acc-balance"><b>' + accMask(a.balance) + '</b><small>ریال</small></div>'
+        + (a.number ? '<div class="acc-num"><span>' + xEsc(a.number) + '</span><button type="button" onclick="accCopy(\'' + a.id + '\')" aria-label="کپی شماره"><i class="fa-regular fa-copy"></i></button></div>' : '')
+        + (a.note ? '<div class="acc-note"><i class="fa-regular fa-note-sticky"></i> ' + xEsc(a.note) + '</div>' : '')
+        + (a.balanceDate ? (() => { const days = accLast(a) ? Math.floor((Date.now() - accLast(a)) / 864e5) : 0, old = days > 30; return '<div class="acc-date' + (old ? ' warn' : '') + '">' + (old ? '<i class="fa-solid fa-triangle-exclamation"></i> ' + toPersianDigits(days) + ' روز از آخرین بروزرسانی گذشته (' : 'آخرین بروزرسانی موجودی: ') + toPersianDigits(a.balanceDate) + (old ? ')' : '') + '</div>'; })() : '')
+        + '<div class="acc-actions no-print">'
+        + '<button type="button" class="btn btn-primary acc-upd" onclick="accUpdateBalance(\'' + a.id + '\')"><i class="fa-solid fa-pen-to-square"></i> بروزرسانی موجودی</button>'
+        + '<button type="button" class="btn btn-outline acc-ico" onclick="accShowHistory(\'' + a.id + '\')" title="تاریخچه موجودی"><i class="fa-solid fa-clock-rotate-left"></i></button>'
+        + '<button type="button" class="btn btn-outline acc-ico" onclick="openAccForm(\'' + a.id + '\')" title="ویرایش"><i class="fa-solid fa-pen" style="color: var(--primary);"></i></button>'
+        + '<button type="button" class="btn btn-outline acc-ico" onclick="deleteAccount(\'' + a.id + '\')" title="حذف" style="color: var(--danger);"><i class="fa-solid fa-trash"></i></button>'
+        + '</div></div>';
+    }
+
+    /* ---------- فرم ثبت / ویرایش ---------- */
+    function openAccForm(id) {
+      accFillSelects();
+      const a = id ? accounts.find(x => x.id === id) : null;
+      xEl('accForm').reset();
+      xEl('accEditId').value = a ? a.id : '';
+      xEl('accFormTitle').textContent = a ? 'ویرایش حساب' : 'ثبت حساب جدید';
+      if (a) {
+        xEl('accBank').value = a.bank; xEl('accType').value = a.type;
+        xEl('accBalance').value = a.balance.toLocaleString('en-US');
+        xEl('accOwner').value = a.owner; xEl('accNumber').value = a.number;
+        xEl('accBranch').value = a.branch; xEl('accNote').value = a.note;
+      }
+      xEl('accFormCard').style.display = 'block';
+      xEl('accountsView').classList.add('acc-form-open');
+      xEl('accFormCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!a) setTimeout(() => { try { xEl('accBank').focus({ preventScroll: true }); } catch (e) {} }, 300);
+    }
+    function closeAccForm() {
+      const c = xEl('accFormCard'); if (c) c.style.display = 'none';
+      const v = xEl('accountsView'); if (v) v.classList.remove('acc-form-open');
+      const f = xEl('accForm'); if (f) f.reset();
+    }
+    function accApplyBalance(a, balance, note, kind) {
+      if (a.balance !== balance || !a.hist.length) a.hist = a.hist.concat([{ t: Date.now(), b: balance, d: a.hist.length ? balance - a.balance : null, n: accClean(note), k: kind || (a.hist.length ? 'set' : 'init') }]).slice(-200);
+      if (a.balance !== balance || !a.balanceDate) a.balanceDate = getTodayJalaliNormalized();
+      a.balance = balance;
+    }
+    async function saveAccount(e) {
+      e.preventDefault();
+      const id = xEl('accEditId').value;
+      const bank = accClean(xEl('accBank').value);
+      if (!bank) { xToast('نام بانک را وارد کنید'); return; }
+      const balance = accNum(xEl('accBalance').value);
+      const old = id ? accounts.find(x => x.id === id) : null;
+      const a = accNormalize({
+        id: old ? old.id : accNewId(), bank, type: xEl('accType').value, balance,
+        owner: xEl('accOwner').value, number: xEl('accNumber').value, branch: xEl('accBranch').value, note: xEl('accNote').value,
+        balanceDate: old ? old.balanceDate : '', hist: old ? old.hist : []
+      });
+      const prev = old ? old.balance : null;
+      a.balance = prev === null ? 0 : prev;   // تا accApplyBalance تغییر را تشخیص دهد
+      if (prev === null) a.hist = [];
+      accApplyBalance(a, balance);
+      if (old) accounts = accounts.map(x => x.id === a.id ? a : x); else accounts.push(a);
+      a._local = true;
+      accCache(); closeAccForm(); renderAccounts();
+      xToast(old ? 'حساب ویرایش شد' : 'حساب ثبت شد');
+      await accSaveDoc(a); accCache(); renderAccounts();
+    }
+
+    /* ---------- بروزرسانی سریع موجودی (اضافه شدن / کم شدن / موجودی جدید) ---------- */
+    let accQMode = 'add';
+    const ACC_QLABELS = { add: 'مبلغی که اضافه شده (ریال)', sub: 'مبلغی که کم شده (ریال)', set: 'موجودی جدید (ریال)' };
+    function accQNew(a) {
+      const inp = xEl('accQBal'); const amt = accNum(inp ? inp.value : '');
+      if (accQMode === 'add') return a.balance + Math.abs(amt);
+      if (accQMode === 'sub') return a.balance - Math.abs(amt);
+      return amt;
+    }
+    function accCalcPrev(id) {
+      const a = accounts.find(x => x.id === id); const el = xEl('accQPrev'); if (!a || !el) return;
+      const n = accQNew(a), diff = n - a.balance;
+      el.innerHTML = 'موجودی جدید: <b style="color:' + (n < 0 ? 'var(--danger)' : 'var(--success)') + '">' + accMoney(n) + '</b> ریال'
+        + (diff ? '<br><span style="font-size:12px;color:var(--text-muted)">(' + (diff > 0 ? 'افزایش ' : 'کاهش ') + xFa(Math.abs(diff)) + ')</span>' : '');
+    }
+    function accSetMode(id, m) {
+      const a = accounts.find(x => x.id === id); const inp = xEl('accQBal'); if (!a || !inp) return;
+      accQMode = m;
+      document.querySelectorAll('#accQSeg button').forEach(b => b.classList.toggle('active', b.dataset.m === m));
+      xEl('accQLabel').textContent = ACC_QLABELS[m];
+      inp.value = m === 'set' ? a.balance.toLocaleString('en-US') : '';
+      accCalcPrev(id); inp.focus(); inp.select();
+    }
+    function accUpdateBalance(id) {
+      const a = accounts.find(x => x.id === id); if (!a) return;
+      accQMode = 'add';
+      const q = "'" + a.id + "'";
+      xPanel('بروزرسانی موجودی',
+        '<div style="color:var(--text-muted);font-size:13px;line-height:1.9">' + xEsc(a.bank) + ' — ' + xEsc(a.type) + (a.owner ? ' — ' + xEsc(a.owner) : '') + '<br>موجودی فعلی: <b style="color:var(--text-main)">' + accMoney(a.balance) + '</b> ریال</div>'
+        + '<div class="inst-seg" id="accQSeg" style="margin:12px 0 4px">'
+        + '<button type="button" class="active" data-m="add" onclick="accSetMode(' + q + ',\'add\')"><i class="fa-solid fa-plus"></i> اضافه شدن</button>'
+        + '<button type="button" data-m="sub" onclick="accSetMode(' + q + ',\'sub\')"><i class="fa-solid fa-minus"></i> کم شدن</button>'
+        + '<button type="button" data-m="set" onclick="accSetMode(' + q + ',\'set\')"><i class="fa-solid fa-pen"></i> موجودی جدید</button></div>'
+        + '<div id="accQLabel" style="font-size:12px;color:var(--text-muted);margin-top:10px">' + ACC_QLABELS.add + '</div>'
+        + '<input type="text" id="accQBal" class="form-control acc-bal-input" inputmode="numeric" autocomplete="off" placeholder="0" oninput="accFmtAmt(this); accCalcPrev(' + q + ')" onkeydown="if(event.key===\'Enter\'){event.preventDefault();accSaveBalance(' + q + ')}">'
+        + '<div id="accQPrev" class="acc-prev"></div>'
+        + '<input type="text" id="accQNote" class="form-control" style="margin-bottom:12px" placeholder="توضیح (اختیاری): مثلا واریز حقوق">'
+        + '<div style="display:flex;gap:8px;justify-content:flex-end"><button type="button" class="btn btn-outline" onclick="closePanel()">انصراف</button><button type="button" class="btn btn-primary" onclick="accSaveBalance(' + q + ')"><i class="fa-solid fa-check"></i> ذخیره</button></div>');
+      accCalcPrev(id);
+      setTimeout(() => { const i = xEl('accQBal'); if (i) i.focus(); }, 80);
+    }
+    async function accSaveBalance(id) {
+      const a = accounts.find(x => x.id === id); const inp = xEl('accQBal'); if (!a || !inp) return;
+      if (accQMode !== 'set' && !accNum(inp.value)) { xToast('مبلغ را وارد کنید'); return; }
+      const balance = accQNew(a); const note = (xEl('accQNote') || {}).value || '';
+      closePanel();
+      if (balance === a.balance) return;
+      accApplyBalance(a, balance, note, accQMode); a._local = true;
+      accCache(); renderAccounts(); xToast('موجودی بروزرسانی شد');
+      await accSaveDoc(a); accCache(); renderAccounts();
+    }
+    function accShowHistory(id) {
+      const a = accounts.find(x => x.id === id); if (!a) return;
+      const fmt = t => { const d = new Date(t); return d.toLocaleDateString('fa-IR', { year: 'numeric', month: '2-digit', day: '2-digit' }) + ' ' + d.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }); };
+      const LBL = { init: 'موجودی اولیه', add: 'واریز / اضافه شد', sub: 'برداشت / کم شد', set: 'تغییر موجودی' };
+      let inn = 0, out = 0;
+      const ent = a.hist.map((h, i) => ({ ...h, d: h.d != null ? h.d : (i ? h.b - a.hist[i - 1].b : null) }));
+      ent.forEach(h => { if (h.d > 0) inn += h.d; else if (h.d < 0) out += -h.d; });
+      const rows = ent.slice().reverse().map(h => {
+        const dTxt = h.d === null ? '' : (h.d === 0 ? '' : '<span style="color:' + (h.d > 0 ? 'var(--success)' : 'var(--danger)') + ';direction:ltr;display:inline-block;font-weight:800">' + (h.d > 0 ? '+' : '−') + xFa(Math.abs(h.d)) + '</span>');
+        return '<div class="fc-it" style="flex-wrap:wrap"><span>' + fmt(h.t) + '</span><span>' + (LBL[h.k] || LBL.set) + (h.n ? ' — ' + xEsc(h.n) : '') + '</span>' + dTxt + '<b>' + accMoney(h.b) + '</b></div>';
+      }).join('');
+      const sum = '<div class="acc-prev" style="margin-bottom:10px">مجموع واریزها: <b style="color:var(--success)">' + xFa(inn) + '</b><br>مجموع برداشت‌ها: <b style="color:var(--danger)">' + xFa(out) + '</b><br>موجودی فعلی: <b>' + accMoney(a.balance) + '</b> ریال</div>';
+      xPanel('ریز تراکنش‌ها — ' + xEsc(a.bank) + ' (' + xEsc(a.type) + ')', rows ? sum + rows : '<p>تراکنشی ثبت نشده است.</p>');
+    }
+
+    /* ---------- حذف / کپی ---------- */
+    async function deleteAccount(id) {
+      const a = accounts.find(x => x.id === id); if (!a) return;
+      if (!confirm('حساب «' + a.bank + ' — ' + a.type + '» با موجودی ' + a.balance.toLocaleString('en-US') + ' ریال حذف شود؟')) return;
+      accTomb[id] = Date.now();
+      accounts = accounts.filter(x => x.id !== id);
+      accCache(); renderAccounts(); xToast('حساب حذف شد');
+      try { if (window.db && window.deleteDoc) await window.deleteDoc(accRef(id)); } catch (e) { console.warn('حذف حساب از سرور ناموفق:', e); }
+    }
+    async function accCopy(id) {
+      const a = accounts.find(x => x.id === id); if (!a || !a.number) return;
+      try { await navigator.clipboard.writeText(a.number); }
+      catch (e) { const t = document.createElement('textarea'); t.value = a.number; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); } catch (er) {} t.remove(); }
+      xToast('شماره کپی شد');
+    }
+
+    /* ---------- خروجی اکسل ---------- */
+    function accExportExcel() {
+      if (!accounts.length) { xToast('حسابی برای خروجی وجود ندارد'); return; }
+      if (typeof XLSX === 'undefined') { alert('کتابخانه اکسل بارگذاری نشده است؛ اینترنت را بررسی کنید.'); return; }
+      const rows = accounts.slice().sort((a, b) => a.bank.localeCompare(b.bank, 'fa') || b.balance - a.balance).map(a => ({
+        'بانک': a.bank, 'نوع حساب': a.type, 'موجودی (ریال)': a.balance, 'صاحب حساب': a.owner,
+        'شماره حساب/کارت': a.number, 'شعبه/شهر': a.branch, 'آخرین بروزرسانی موجودی': a.balanceDate, 'توضیح': a.note
+      }));
+      rows.push({ 'بانک': 'جمع کل', 'نوع حساب': '', 'موجودی (ریال)': accounts.reduce((s, a) => s + a.balance, 0), 'صاحب حساب': '', 'شماره حساب/کارت': '', 'شعبه/شهر': '', 'آخرین بروزرسانی موجودی': '', 'توضیح': '' });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols'] = [{ wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 16 }, { wch: 24 }, { wch: 16 }, { wch: 20 }, { wch: 28 }];
+      const wb = XLSX.utils.book_new();
+      wb.Workbook = { Views: [{ RTL: true }] };
+      XLSX.utils.book_append_sheet(wb, ws, 'حساب‌های بانکی');
+      XLSX.writeFile(wb, 'حساب‌های_بانکی_' + getTodayJalaliNormalized().replace(/\//g, '-') + '.xlsx');
+    }
+
+    /* ---------- بک‌اپ ---------- */
+    function accExportBackup() {
+      if (!accounts.length) { xToast('حسابی برای بک‌اپ وجود ندارد'); return; }
+      const blob = new Blob([JSON.stringify({ type: 'accounts-backup', accounts: accPlain(), exportDate: new Date().toISOString() }, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'پشتیبان_حساب_های_بانکی_' + getTodayJalaliNormalized().replace(/\//g, '-') + '.json';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+    }
+    async function accRestoreList(arr) {
+      const valid = (Array.isArray(arr) ? arr : []).filter(r => r && r.bank && r.balance != null && !r.serial);
+      if (!valid.length) return 0;
+      for (const r of valid) {
+        const a = accNormalize({ ...r, id: r.id || accNewId() });
+        delete accTomb[a.id];
+        accounts = accounts.filter(x => x.id !== a.id).concat([a]);
+        a._local = true;
+      }
+      accCache(); renderAccounts();
+      for (const a of accounts.filter(x => x._local)) await accSaveDoc(a);
+      accCache(); renderAccounts();
+      return valid.length;
+    }
+    function accImportBackup(event) {
+      const file = event.target.files[0]; if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async function (e) {
+        try {
+          const data = JSON.parse(e.target.result);
+          const arr = data.accounts || data;
+          if (!Array.isArray(arr) || !arr.some(r => r && r.bank && r.balance != null && !r.serial)) { alert('فرمت فایل پشتیبان حساب‌ها معتبر نیست.'); return; }
+          if (!confirm('حساب‌های داخل فایل اضافه یا جایگزین می‌شوند (حساب‌های فعلی حذف نمی‌شوند). ادامه می‌دهید؟')) return;
+          const n = await accRestoreList(arr);
+          xToast(toPersianDigits(n) + ' حساب بازیابی شد');
+        } catch (err) { alert('خطا در خواندن فایل پشتیبان!'); }
+      };
+      reader.readAsText(file);
+      event.target.value = '';
+    }
+    async function autoAccBackup() {
+      try {
+        if (!accounts.length || !(window.db && window.setDoc && window.getDocs)) return;
+        const d = new Date().toISOString().slice(0, 10);
+        const data = JSON.stringify(accPlain());
+        const mark = d + ':' + accHash(data);
+        if (localStorage.last_acc_backup === mark) return;
+        await window.setDoc(window.doc(window.db, ACC_COL, ACC_BK_PREFIX + d), { date: d, count: accounts.length, data });
+        localStorage.last_acc_backup = mark;
+        const all = await window.getDocs(window.collection(window.db, ACC_COL));
+        const ids = []; all.forEach(s => { if (s.id.startsWith(ACC_BK_PREFIX)) ids.push(s.id); }); ids.sort();
+        for (const id of ids.slice(0, -10)) await window.deleteDoc(window.doc(window.db, ACC_COL, id));
+      } catch (e) { console.warn('بک‌اپ خودکار حساب‌ها ناموفق:', e); }
+    }
+    async function accShowBackups() {
+      xPanel('بک‌اپ‌های خودکار حساب‌ها', '<p>در حال دریافت...</p>');
+      try {
+        const all = await window.getDocs(window.collection(window.db, ACC_COL));
+        const rows = []; all.forEach(s => { if (s.id.startsWith(ACC_BK_PREFIX)) rows.push({ id: s.id, ...s.data() }); });
+        rows.sort((a, b) => b.id.localeCompare(a.id));
+        window._accBkRows = rows;
+        const b = xEl('pnlBody'); if (!b) return;
+        b.innerHTML = (rows.length ? '<p style="color:var(--text-muted);margin-bottom:8px">هر روز یک نسخه در فضای ابری ذخیره می‌شود (۱۰ نسخه‌ی آخر).</p>' : '<p>هنوز بک‌اپی ثبت نشده است.</p>')
+          + rows.map(r => '<div class="fc-it"><span>' + toPersianDigits(r.date) + '</span><span>' + toPersianDigits(r.count) + ' حساب</span><button class="btn btn-outline" onclick="accRestoreBackup(\'' + r.id + '\')">بازیابی</button></div>').join('');
+      } catch (e) { const b = xEl('pnlBody'); if (b) b.innerHTML = '<p>خطا در دریافت بک‌اپ‌ها (اتصال یا دسترسی Firestore را بررسی کنید).</p>'; }
+    }
+    async function accRestoreBackup(id) {
+      const r = (window._accBkRows || []).find(x => x.id === id);
+      if (!r || !confirm('حساب‌های این نسخه بازیابی شوند؟ حساب‌های فعلی حذف نمی‌شوند و فقط موارد هم‌شناسه بازنویسی می‌شوند.')) return;
+      try { closePanel(); const n = await accRestoreList(JSON.parse(r.data)); xToast(toPersianDigits(n) + ' حساب بازیابی شد'); }
+      catch (e) { xToast('خطا در بازیابی'); }
+    }
+    async function accWipeAll() {
+      if (!confirm('همه حساب‌های بانکی ثبت‌شده برای همیشه پاک شوند؟\nاین کار بخش چک‌ها و اقساط را تغییر نمی‌دهد و برگشت‌پذیر نیست.')) return;
+      const t = prompt('برای تأیید نهایی، کلمه «حذف» را بنویسید:');
+      if ((t || '').trim() !== 'حذف') { xToast('لغو شد؛ چیزی پاک نشد'); return; }
+      const wipeBk = confirm('بک‌اپ‌های خودکار حساب‌ها هم پاک شوند؟\n\nOK = پاک شوند\nCancel = نگه داشته شوند (برای بازیابی بعدی)');
+      xToast('در حال پاک کردن...');
+      try {
+        if (!(window.db && window.getDocs && window.deleteDoc)) throw new Error('db not ready');
+        const snap = await window.getDocs(window.collection(window.db, ACC_COL));
+        const ids = [];
+        snap.forEach(d => { if (d.id.startsWith(ACC_PREFIX) || (wipeBk && d.id.startsWith(ACC_BK_PREFIX))) ids.push(d.id); });
+        for (const id of ids) await window.deleteDoc(window.doc(window.db, ACC_COL, id));
+      } catch (e) {
+        console.warn('پاک‌سازی ناموفق:', e);
+        alert('اتصال به سرور برقرار نشد و چیزی پاک نشد. اینترنت را بررسی کنید و دوباره تلاش کنید.');
+        return;
+      }
+      accounts.forEach(a => { accTomb[a.id] = Date.now(); }); accounts = []; accCache();
+      try { localStorage.removeItem('last_acc_backup'); } catch (e) {}
+      closeAccForm(); renderAccounts();
+      xToast('همه حساب‌ها پاک شد');
+    }
+
+    function initAccounts() {
+      try { accounts = JSON.parse(localStorage.getItem(ACC_LS) || '[]').map(accNormalize); } catch (e) { accounts = []; }
+      accSetSync('checking');
+      accFillSelects();
+      renderAccounts();
+    }
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initAccounts); else initAccounts();
   </script>
 </body>
 </html>
